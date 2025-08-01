@@ -1,23 +1,25 @@
 # AevorinReports
-
-*A powerful and flexible reporting system for Minecraft servers, designed for serious moderation and ease of use.*
-
----
-
-## 🚀 Features
-
-- 🔄 **Interactive Admin GUI** — Manage and update reports effortlessly with an intuitive click-based interface.  
-- 🔔 **Real-Time Staff Alerts** — Staff are instantly notified when a report is filed.  
-- 📋 **Status Tracking** — Reports go through a clear status flow: pending → resolved → rejected.  
-- 📚 **Report Categories Book GUI** — Players can choose report reasons using an elegant in-game book interface.  
-- 🌐 **Network Sync Support** — Automatically sync reports across Velocity proxies and Paper/Spigot/Bukkit servers for seamless moderation on multi-server networks.  
-- 💾 **Multi-Storage Support** *(coming soon)* — MySQL and file-based data storage.  
-- ⚙️ **Customizable Cooldowns & Limits** *(coming soon)*  
-- 🚀 **Optimized Performance** — Async processing and caching for smooth gameplay, even under heavy load.
+<p align="center">
+  <img src="https://i.postimg.cc/9RR2yP4Z/aevorin-reports-title.png" alt="AevorinReports Banner" width="200"/>
+</p>
+*A strong and flexible reporting system for Minecraft servers that is easy to use and great for serious moderation.*
 
 ---
 
-## 💬 Commands
+## Features
+
+- **Interactive Admin GUI** — Manage and update reports effortlessly with an intuitive click-based interface.  
+- **Real-Time Staff Alerts** — Staff are instantly notified when a report is filed.  
+- **Status Tracking** — Reports go through a clear status flow: pending → resolved → rejected.  
+- **Report Categories Book GUI** — Players can choose report reasons using an elegant in-game book interface.  
+- **Network Sync Support** — Automatically sync reports across Velocity proxies and Paper/Spigot/Bukkit servers for seamless moderation on multi-server networks.  
+- **Multi-Storage Support** *(coming soon)* — MySQL and file-based data storage.  
+- **Customizable Cooldowns & Limits** *(coming soon)*  
+- **Optimized Performance** — Async processing and caching for smooth gameplay, even under heavy load.
+
+---
+
+## Commands
 
 - `/report <player>` — File a report on a player for misconduct.  
 - `/reports` — View and manage submitted reports.  
@@ -26,20 +28,22 @@
 
 ---
 
-## 🖼️ Book GUI Preview
+## Book GUI Preview
 
-![AevorinReports GUI](https://i.postimg.cc/Gh4mVFNK/aevorinreports123.png)
+<p align="center">
+  <img src="https://i.postimg.cc/Gh4mVFNK/aevorinreports123.png" alt="AevorinReports GUI" width="500"/>
+</p>
 
 ---
 
-## 🛠️ Support & Feedback
+## Support & Feedback
 
 Found a bug? Have suggestions?  
-Please contact **Aevorin Studios** — your feedback helps shape the future of AevorinReports.
+Please contact **[Aevorin Studio](https://discord.gg/r2VbJEb8Pj)** — your feedback helps shape the future of AevorinReports.
 
 ---
 
-## 📜 License
+## License
 
 **AevorinReports** is licensed under **ARR (All Rights Reserved)**.  
 You may not redistribute, modify, or republish without explicit permission.
