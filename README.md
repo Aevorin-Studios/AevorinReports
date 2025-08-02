@@ -45,7 +45,7 @@ Please contact **[Aevorin Studio](https://discord.gg/r2VbJEb8Pj)** — your feed
 
 ## License
 
-**AevorinReports** is licensed under **MIT License**.  
+**AevorinReports** is licensed under **[MIT License](https://github.com/Aevorin-Studios/AevorinReports/?tab=MIT-1-ov-file)**.  
 You are free to use, modify, distribute, and sublicense this software, provided that the original copyright and license notice are included in all copies.
 
 ---
