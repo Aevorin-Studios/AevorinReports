@@ -1,0 +1,79 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group = 'dev.aevorinstudios'
+version = '1.0.2'
+description = 'A comprehensive reporting system for Minecraft servers'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+}
+
+dependencies {
+    // Velocity API
+    compileOnly 'com.velocitypowered:velocity-api:3.3.0-SNAPSHOT'
+    annotationProcessor 'com.velocitypowered:velocity-api:3.3.0-SNAPSHOT'
+
+    // Adventure API
+    implementation 'net.kyori:adventure-api:4.14.0'
+    implementation 'net.kyori:adventure-text-minimessage:4.14.0'
+
+    // Paper API
+    compileOnly 'io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT'
+    
+
+
+    // HikariCP (shaded)
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+
+    // MySQL Connector (optional runtime)
+    compileOnly 'mysql:mysql-connector-java:8.0.33'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    // Gson (shaded)
+    implementation 'com.google.code.gson:gson:2.10.1'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+    filteringCharset = 'UTF-8'
+    filesMatching('**/*.yml') {
+        expand(project.properties)
+    }
+}
+
+jar {
+    manifest {
+        attributes(
+                'Implementation-Title': project.name,
+                'Implementation-Version': project.version
+        )
+    }
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+shadowJar {
+    archiveClassifier.set('all')
+    relocate 'com.zaxxer.hikari', 'dev.aevorinstudios.aevorinreports.libs.hikari'
+    relocate 'com.google.gson', 'dev.aevorinstudios.aevorinreports.libs.gson'
+    minimize() // optional to reduce jar size
+    exclude 'velocity-plugin.json'
+}
+
+build.dependsOn shadowJar

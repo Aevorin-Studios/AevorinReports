@@ -1,0 +1,122 @@
+# AevorinReports Configuration File
+
+# Proxy Settings
+proxy:
+  # Whether to enable proxy connection features
+  # Set to false for single-server deployments
+  enabled: false
+  # Authentication Settings for proxy connection
+  auth:
+    # The token used to authenticate with the proxy server
+    # This should match the token generated on your proxy server
+    token: " "
+
+# Database Configuration
+database:
+  type: "file" # mysql or file
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "aevorin_reports"
+    username: "root"
+    password: "password"
+  file:
+    path: "database/reports.db"
+  # Connection pool settings
+  pool:
+    minimum-idle: 5
+    maximum-pool-size: 10
+    connection-timeout: 30000 # 30 seconds
+
+# Security Settings
+security:
+  # Maximum number of false reports before action is taken
+  maxFalseReports: 5
+  # Ban duration in hours for excessive false reports
+  falseReportBanHours: 24
+  # Number of reports before a player is flagged for review
+  maxReportsBeforeFlag: 10
+  # Encryption key for sensitive data (will be auto-generated if empty)
+  encryptionKey: ""
+  # Enable token-based authentication for proxy communication
+  enableTokenAuth: true
+
+# Report Settings
+reports:
+  # Allow players to report themselves (self-reporting)
+  allow-self-reporting: false
+  # GUI type for report interface ("book" or "container")
+  gui:
+    type: "book" # Options: "book" (classic book gui) or "container" (chest GUI)
+  # Cooldown between reports (in seconds)
+  cooldown: 300
+  # Maximum number of active reports per player
+  max-active-reports: 3
+  # Categories for reports - these will appear in the report book or container GUI
+  categories:
+    - "Hacking/Cheating"
+    - "Harassment/Bullying"
+    - "Spam/Advertisement"
+    - "Griefing/Vandalism"
+    - "Exploiting Bugs"
+    - "Inappropriate Skin/Name"
+    - "Inappropriate Language"
+    - "Other"
+
+# Notification Settings
+notifications:
+  # Send notification to staff when a new report is created
+  new-report: true
+  # Send notification when report status changes
+  status-change: true
+  # Sound to play for notifications (set to "" to disable)
+  sound: "BLOCK_NOTE_BLOCK_PLING"
+  # Chat prefix for plugin messages
+  prefix: "&8[&bAevorinReports&8]&r "
+
+# Performance Settings
+performance:
+  # Enable caching for frequently accessed data
+  enable-caching: true
+  # Cache duration in minutes
+  cache-duration: 15
+  # Maximum number of items to keep in cache
+  max-cache-size: 1000
+  # Enable async processing for better performance
+  async-processing: true
+  # Size of batches for processing
+  batch-size: 50
+  # Interval for background tasks in seconds
+  background-task-interval: 300
+  # Interval for cache cleanup in seconds
+  cache-cleanup-interval: 30
+  
+# Debug Settings
+debug:
+  # Enable debug logging
+  enabled: false
+  # Log database queries
+  log-queries: false
+
+# Message Customization
+messages:
+  reports-title: "&6Your Active Reports"
+  report-format: "&7• &e#%id% &7- &f%reason%"
+  no-reports: "&cYou have no active reports!"
+  report-details: "&7Status: &e%status%
+&7Date: &f%date%"
+  report-created: "&aYour report has been submitted successfully!"
+  report-cooldown: "&cYou must wait {time} before submitting another report."
+  report-limit-reached: "&cYou have reached the maximum number of active reports."
+  no-permission: "&cYou don't have permission to do that!"
+  invalid-player: "&cThat player does not exist!"
+  description-too-short: "&cYour report description is too short! Minimum length: {min}"
+  description-too-long: "&cYour report description is too long! Maximum length: {max}"
+  invalid-category: "&cInvalid report category! Available categories: {categories}"
+  report-notification: "&b{reporter} &7has reported &b{reported} &7for &b{category}&7."
+  report-status-change: "&7Report #{id} status has been changed to {color}{status}&7."
+  report-status-update-success: "&aReport status updated successfully!"
+  report-status-update-failed: "&cFailed to update report status!"
+  report-not-found: "&cReport not found!"
+  report-status-invalid: "&cInvalid report status! Available statuses: {statuses}"
+  invalid-status-transition: "&cCannot change report status from {current} to {status}. Invalid transition!"

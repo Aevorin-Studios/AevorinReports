@@ -1,0 +1,72 @@
+name: AevorinReports
+version: '1.0.2'
+main: dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin
+api-version: '1.18'
+authors: [borhani, Aiversity]
+description: A comprehensive reporting system for Minecraft servers
+
+commands:
+  ar:
+    description: Reload the AevorinReports configuration
+    usage: /ar reload
+    permission: aevorinreports.reload
+    permission-message: You don't have permission to reload the config!
+    aliases: [aevorinreports]
+  aevorinreports:
+    description: Reload the AevorinReports configuration
+    usage: /aevorinreports reload
+    permission: aevorinreports.reload
+    permission-message: You don't have permission to reload the config!
+    aliases: [ar]
+  report:
+    description: Report a player for breaking the rules
+    usage: /report <player> <reason>
+    permission: aevorinreports.report
+    permission-message: You don't have permission to use this command!
+
+  reports:
+    description: View and manage player reports
+    usage: /reports
+    permission: aevorinreports.manage
+    permission-message: You don't have permission to use this command!
+  viewreport:
+    description: View detailed information about a specific report
+    permission: aevorinreports.manage
+    permission-message: You don't have permission to use this command!
+    aliases: []
+    hidden: true
+  shiftreport:
+    description: Shift a report to a different category/status
+    permission: aevorinreports.manage
+    permission-message: You don't have permission to use this command!
+    aliases: []
+    hidden: true
+
+permissions:
+  aevorinreports.report:
+    description: Allows players to report others
+    default: true
+  aevorinreports.use:
+    description: Allows players to create reports
+    default: true
+  aevorinreports.anonymous:
+    description: Allows players to submit anonymous reports
+    default: op
+  aevorinreports.manage:
+    description: Allows staff to manage reports
+    default: op
+  aevorinreports.notify:
+    description: Receive notifications about new reports
+    default: op
+  aevorinreports.debug:
+    description: Allows access to debug commands and features
+    default: op
+  aevorinreports.admin:
+    description: Full access to all plugin features
+    default: op
+    children:
+      aevorinreports.use: true
+      aevorinreports.anonymous: true
+      aevorinreports.manage: true
+      aevorinreports.notify: true
+      aevorinreports.debug: true
