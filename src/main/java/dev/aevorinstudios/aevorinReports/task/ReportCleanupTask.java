@@ -1,7 +1,7 @@
 package dev.aevorinstudios.aevorinReports.task;
 
 import dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin;
-import dev.aevorinstudios.aevorinReports.model.Report;
+import dev.aevorinstudios.aevorinReports.reports.Report;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.scheduler.BukkitRunnable;
 

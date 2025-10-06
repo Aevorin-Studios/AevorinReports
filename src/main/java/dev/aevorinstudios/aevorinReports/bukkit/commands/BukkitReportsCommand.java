@@ -2,9 +2,8 @@ package dev.aevorinstudios.aevorinReports.bukkit.commands;
 
 import dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin;
 import dev.aevorinstudios.aevorinReports.database.DatabaseManager;
-import dev.aevorinstudios.aevorinReports.model.Report;
-import dev.aevorinstudios.aevorinReports.util.PlayerNameResolver;
-import dev.aevorinstudios.aevorinReports.config.ConfigManager;
+import dev.aevorinstudios.aevorinReports.reports.Report;
+import dev.aevorinstudios.aevorinReports.utils.PlayerNameResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -22,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static dev.aevorinstudios.aevorinReports.config.ConfigManager.*;
 import static dev.aevorinstudios.aevorinReports.config.ConfigManager.getInstance;
 
 public class BukkitReportsCommand implements CommandExecutor, TabCompleter {

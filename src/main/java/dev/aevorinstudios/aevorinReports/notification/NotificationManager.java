@@ -1,7 +1,7 @@
 package dev.aevorinstudios.aevorinReports.notification;
 
 import dev.aevorinstudios.aevorinReports.config.Settings;
-import dev.aevorinstudios.aevorinReports.model.Report;
+import dev.aevorinstudios.aevorinReports.reports.Report;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;

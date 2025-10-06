@@ -1,6 +1,6 @@
 package dev.aevorinstudios.aevorinReports.bukkit.commands;
 
-import dev.aevorinstudios.aevorinReports.model.Report;
+import dev.aevorinstudios.aevorinReports.reports.Report;
 import dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;

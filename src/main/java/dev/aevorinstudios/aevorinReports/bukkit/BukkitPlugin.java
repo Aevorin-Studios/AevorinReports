@@ -4,15 +4,14 @@ import dev.aevorinstudios.aevorinReports.bukkit.commands.BukkitReportCommand;
 import dev.aevorinstudios.aevorinReports.bukkit.commands.BukkitReportsCommand;
 import dev.aevorinstudios.aevorinReports.bukkit.commands.ViewReportCommand;
 import dev.aevorinstudios.aevorinReports.bukkit.commands.ShiftReportCommand;
-import dev.aevorinstudios.aevorinReports.bukkit.commands.ReportCategoryListener;
 
 import dev.aevorinstudios.aevorinReports.commands.HiddenCommandManager;
 import dev.aevorinstudios.aevorinReports.config.ConfigManager;
 import dev.aevorinstudios.aevorinReports.database.DatabaseManager;
 import dev.aevorinstudios.aevorinReports.listeners.CommandHidingListener;
 import dev.aevorinstudios.aevorinReports.sync.TokenSyncManager;
-import dev.aevorinstudios.aevorinReports.util.ExceptionHandler;
-import dev.aevorinstudios.aevorinReports.util.VersionChecker;
+import dev.aevorinstudios.aevorinReports.utils.ExceptionHandler;
+import dev.aevorinstudios.aevorinReports.utils.ModrinthUpdateChecker;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -37,7 +36,11 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     private DatabaseManager databaseManager;
     @Getter
     private TokenSyncManager tokenSyncManager;
-    private VersionChecker versionChecker;
+    private ModrinthUpdateChecker updateChecker;
+    @Getter
+    private CustomReasonHandler customReasonHandler;
+    @Getter
+    private BukkitReportCommand bukkitReportCommand;
     
     // Plugin state tracking
     private boolean databaseInitialized = false;
@@ -62,6 +65,9 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                 getLogger().severe("Database initialization failed. Plugin functionality will be limited.");
             }
 
+            // Initialize CustomReasonHandler
+            customReasonHandler = new CustomReasonHandler(this);
+
             // Register commands with error handling
             registerCommands();
 
@@ -71,8 +77,6 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             // Register reload commands
             getCommand("ar").setExecutor(this);
             getCommand("aevorinreports").setExecutor(this);
-            // Register report-category command listener
-            getServer().getPluginManager().registerEvents(new ReportCategoryListener(this), this);
             // Register ReportsContainerListener for container GUI
             getServer().getPluginManager().registerEvents(new dev.aevorinstudios.aevorinReports.bukkit.commands.ReportsContainerListener(this), this);
             // Register ReportReasonContainerListener for report container GUI
@@ -102,9 +106,15 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             // Register event listener for hiding commands
             getServer().getPluginManager().registerEvents(new CommandHidingListener(), this);
 
-            // Initialize and start the version checker
-            versionChecker = new VersionChecker(this);
-            versionChecker.startVersionChecking();
+            // Initialize and start the Modrinth update checker
+            String modrinthProjectId = getConfig().getString("update-checker.modrinth-project-id", "your-project-id");
+            if (!modrinthProjectId.equals("your-project-id")) {
+                updateChecker = new ModrinthUpdateChecker(this, modrinthProjectId);
+                updateChecker.startUpdateChecker();
+                getLogger().info("Modrinth update checker initialized with project ID: " + modrinthProjectId);
+            } else {
+                getLogger().warning("Modrinth project ID not configured. Update checking is disabled.");
+            }
 
             getLogger().info("AevorinReports has been enabled!");
         } catch (Exception e) {
@@ -305,8 +315,10 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     private void registerCommands() {
         getLogger().info("Registering commands...");
         try {
-            getCommand("report").setExecutor(new BukkitReportCommand(this));
-            getLogger().info("Registered 'report' command");
+            bukkitReportCommand = new BukkitReportCommand(this);
+            getCommand("report").setExecutor(bukkitReportCommand);
+            getCommand("report").setTabCompleter(bukkitReportCommand);
+            getLogger().info("Registered 'report' command and tab completer");
         } catch (Exception e) {
             ExceptionHandler.getInstance().handleException(e, "Command Registration", 
                 Map.of("command", "report", "class", "BukkitReportCommand"));

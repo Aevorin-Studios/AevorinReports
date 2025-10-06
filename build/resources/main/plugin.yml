@@ -1,5 +1,5 @@
 name: AevorinReports
-version: '1.0.2'
+version: '1.0.3-beta'
 main: dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin
 api-version: '1.18'
 authors: [borhani, Aiversity]
@@ -20,7 +20,9 @@ commands:
     aliases: [ar]
   report:
     description: Report a player for breaking the rules
-    usage: /report <player> <reason>
+    usage: |
+      /report <player> - Opens the report GUI
+      /report <player> <reason> - Directly submit a report
     permission: aevorinreports.report
     permission-message: You don't have permission to use this command!
 
@@ -61,6 +63,9 @@ permissions:
   aevorinreports.debug:
     description: Allows access to debug commands and features
     default: op
+  aevorinreports.update:
+    description: Receive notifications about plugin updates
+    default: op
   aevorinreports.admin:
     description: Full access to all plugin features
     default: op
@@ -70,3 +75,4 @@ permissions:
       aevorinreports.manage: true
       aevorinreports.notify: true
       aevorinreports.debug: true
+      aevorinreports.update: true

@@ -1,58 +1,66 @@
 package dev.aevorinstudios.aevorinReports.reports;
 
+import lombok.Data;
+import lombok.Builder;
+import org.bukkit.configuration.ConfigurationSection;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
+@Data
+@Builder
 public class Report {
-    private UUID id;
+    private Long id;
+    private UUID reporterUuid;
+    private UUID reportedUuid;
     private String reporterName;
     private String reportedPlayerName;
     private String reason;
     private String serverName;
     private ReportStatus status;
     private String lastUpdatedBy;
+    private boolean isAnonymous;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String evidenceData;
+    private String coordinates;
+    private String world;
 
-    public Report(String reporterName, String reportedPlayerName, String reason, String serverName) {
-        this.id = UUID.randomUUID();
-        this.reporterName = reporterName;
-        this.reportedPlayerName = reportedPlayerName;
-        this.reason = reason;
-        this.serverName = serverName;
-        this.status = ReportStatus.PENDING;
+    public enum ReportStatus {
+        PENDING,
+        RESOLVED,
+        REJECTED
     }
 
-    public UUID getId() {
-        return id;
+    public boolean canTransitionTo(ReportStatus newStatus, ConfigurationSection statusConfig) {
+        if (this.status == newStatus) return false;
+
+        String currentStatusKey = this.status.name().toLowerCase();
+        ConfigurationSection currentStatusSection = statusConfig.getConfigurationSection("types." + currentStatusKey);
+        
+        if (currentStatusSection == null) return false;
+        
+        List<String> allowedTransitions = currentStatusSection.getStringList("transitions");
+        return allowedTransitions.contains(newStatus.name().toLowerCase());
     }
 
-    public String getReporterName() {
-        return reporterName;
+    public boolean isActive() {
+        return status == ReportStatus.PENDING;
     }
 
-    public String getReportedPlayerName() {
-        return reportedPlayerName;
+    public boolean canBeUpdated() {
+        return status != ReportStatus.RESOLVED && status != ReportStatus.REJECTED;
     }
 
-    public String getReason() {
+    public UUID getReporter() {
+        return reporterUuid;
+    }
+
+    public UUID getReported() {
+        return reportedUuid;
+    }
+
+    public String getCategory() {
         return reason;
-    }
-
-    public String getServerName() {
-        return serverName;
-    }
-
-    public ReportStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ReportStatus status) {
-        this.status = status;
-    }
-
-    public String getLastUpdatedBy() {
-        return lastUpdatedBy;
-    }
-
-    public void setLastUpdatedBy(String lastUpdatedBy) {
-        this.lastUpdatedBy = lastUpdatedBy;
     }
 }

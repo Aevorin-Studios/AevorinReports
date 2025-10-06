@@ -1,7 +1,7 @@
 package dev.aevorinstudios.aevorinReports.bukkit.commands;
 
 import dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin;
-import dev.aevorinstudios.aevorinReports.model.Report;
+import dev.aevorinstudios.aevorinReports.reports.Report;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -40,18 +40,18 @@ public class ReportsContainerListener implements Listener {
         // Handle category selection
         if (display.contains("Pending Reports")) {
             event.setCancelled(true);
-            List<dev.aevorinstudios.aevorinReports.model.Report> reports = plugin.getDatabaseManager().getReportsByStatus(dev.aevorinstudios.aevorinReports.model.Report.ReportStatus.PENDING);
-            new CategoryContainerGUI(plugin).openCategoryGUI(player, dev.aevorinstudios.aevorinReports.model.Report.ReportStatus.PENDING, reports);
+            List<dev.aevorinstudios.aevorinReports.reports.Report> reports = plugin.getDatabaseManager().getReportsByStatus(dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.PENDING);
+            new CategoryContainerGUI(plugin).openCategoryGUI(player, dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.PENDING, reports);
             return;
         } else if (display.contains("Resolved Reports")) {
             event.setCancelled(true);
-            List<dev.aevorinstudios.aevorinReports.model.Report> reports = plugin.getDatabaseManager().getReportsByStatus(dev.aevorinstudios.aevorinReports.model.Report.ReportStatus.RESOLVED);
-            new CategoryContainerGUI(plugin).openCategoryGUI(player, dev.aevorinstudios.aevorinReports.model.Report.ReportStatus.RESOLVED, reports);
+            List<dev.aevorinstudios.aevorinReports.reports.Report> reports = plugin.getDatabaseManager().getReportsByStatus(dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.RESOLVED);
+            new CategoryContainerGUI(plugin).openCategoryGUI(player, dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.RESOLVED, reports);
             return;
         } else if (display.contains("Rejected Reports")) {
             event.setCancelled(true);
-            List<dev.aevorinstudios.aevorinReports.model.Report> reports = plugin.getDatabaseManager().getReportsByStatus(dev.aevorinstudios.aevorinReports.model.Report.ReportStatus.REJECTED);
-            new CategoryContainerGUI(plugin).openCategoryGUI(player, dev.aevorinstudios.aevorinReports.model.Report.ReportStatus.REJECTED, reports);
+            List<dev.aevorinstudios.aevorinReports.reports.Report> reports = plugin.getDatabaseManager().getReportsByStatus(dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.REJECTED);
+            new CategoryContainerGUI(plugin).openCategoryGUI(player, dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.REJECTED, reports);
             return;
         }
 
@@ -122,26 +122,26 @@ public class ReportsContainerListener implements Listener {
             if (slot != 45 && slot != 49 && slot != 53) return;
             try {
                 long reportId = Long.parseLong(title.replace("Manage Report ", "").trim());
-                dev.aevorinstudios.aevorinReports.model.Report report = plugin.getDatabaseManager().getReport(reportId);
+                dev.aevorinstudios.aevorinReports.reports.Report report = plugin.getDatabaseManager().getReport(reportId);
                 if (report == null) return;
                 if (clickedName == null) return;
                 if (slot == 45 && clickedName.contains("Move to Pending")) {
-                    report.setStatus(dev.aevorinstudios.aevorinReports.model.Report.ReportStatus.PENDING);
+                    report.setStatus(dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.PENDING);
                     plugin.getDatabaseManager().updateReport(report);
                     player.sendMessage("§eReport moved to Pending.");
                 } else if (slot == 49 && clickedName.contains("Move to Resolved")) {
-                    report.setStatus(dev.aevorinstudios.aevorinReports.model.Report.ReportStatus.RESOLVED);
+                    report.setStatus(dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.RESOLVED);
                     plugin.getDatabaseManager().updateReport(report);
                     player.sendMessage("§aReport moved to Resolved.");
                 } else if (slot == 53 && clickedName.contains("Move to Rejected")) {
-                    report.setStatus(dev.aevorinstudios.aevorinReports.model.Report.ReportStatus.REJECTED);
+                    report.setStatus(dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.REJECTED);
                     plugin.getDatabaseManager().updateReport(report);
                     player.sendMessage("§cReport moved to Rejected.");
                 } else {
                     return;
                 }
                 // After move, reopen the new category GUI
-                java.util.List<dev.aevorinstudios.aevorinReports.model.Report> updatedReports = plugin.getDatabaseManager().getReportsByStatus(report.getStatus());
+                java.util.List<dev.aevorinstudios.aevorinReports.reports.Report> updatedReports = plugin.getDatabaseManager().getReportsByStatus(report.getStatus());
                 new CategoryContainerGUI(plugin).openCategoryGUI(player, report.getStatus(), updatedReports);
             } catch (Exception ignored) {}
             return;

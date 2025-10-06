@@ -2,7 +2,7 @@ package dev.aevorinstudios.aevorinReports.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import dev.aevorinstudios.aevorinReports.model.Report;
+import dev.aevorinstudios.aevorinReports.reports.Report;
 import lombok.Getter;
 
 import java.sql.Connection;

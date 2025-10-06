@@ -3,7 +3,7 @@ package dev.aevorinstudios.aevorinReports.performance;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import dev.aevorinstudios.aevorinReports.config.ConfigManager;
-import dev.aevorinstudios.aevorinReports.model.Report;
+import dev.aevorinstudios.aevorinReports.reports.Report;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;

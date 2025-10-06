@@ -1,4 +1,4 @@
-package dev.aevorinstudios.aevorinReports.util;
+package dev.aevorinstudios.aevorinReports.utils;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;

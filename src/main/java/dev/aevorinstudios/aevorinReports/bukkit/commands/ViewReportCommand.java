@@ -1,8 +1,8 @@
 package dev.aevorinstudios.aevorinReports.bukkit.commands;
 
 import dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin;
-import dev.aevorinstudios.aevorinReports.model.Report;
-import dev.aevorinstudios.aevorinReports.util.PlayerNameResolver;
+import dev.aevorinstudios.aevorinReports.reports.Report;
+import dev.aevorinstudios.aevorinReports.utils.PlayerNameResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -12,10 +12,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
-
-import java.util.List;
 
 public class ViewReportCommand implements CommandExecutor {
     private final BukkitPlugin plugin;

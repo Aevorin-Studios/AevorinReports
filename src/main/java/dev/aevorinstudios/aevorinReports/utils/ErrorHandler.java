@@ -1,4 +1,4 @@
-package dev.aevorinstudios.aevorinReports.util;
+package dev.aevorinstudios.aevorinReports.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,12 +12,11 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Enhanced error handling system for AevorinReports plugin.
- * Provides structured error reporting, rate limiting, and context-aware logging
- * to prevent console flooding while providing detailed diagnostic information.
+ * Provides structured error reporting, rate limiting, and context-aware logging.
  */
-public class ExceptionHandler {
-    private static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
-    private static ExceptionHandler instance;
+public class ErrorHandler {
+    private static final Logger logger = LoggerFactory.getLogger(ErrorHandler.class);
+    private static ErrorHandler instance;
     
     // Rate limiting for similar errors
     private final Map<String, ErrorOccurrence> errorOccurrences = new ConcurrentHashMap<>();
@@ -28,31 +27,16 @@ public class ExceptionHandler {
     private long suppressionTimeMinutes = 10;
     private boolean detailedLogging = true;
     private boolean logStackTraces = true;
-    private boolean groupSimilarErrors = true;
     
-    private ExceptionHandler() {
+    private ErrorHandler() {
         // Private constructor for singleton
     }
     
-    public static synchronized ExceptionHandler getInstance() {
+    public static synchronized ErrorHandler getInstance() {
         if (instance == null) {
-            instance = new ExceptionHandler();
+            instance = new ErrorHandler();
         }
         return instance;
-    }
-    
-    /**
-     * Installs a global uncaught exception handler to catch all unhandled exceptions
-     * in the plugin
-     */
-    public void installGlobalHandler() {
-        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
-            Map<String, Object> context = new HashMap<>();
-            context.put("thread", thread.getName());
-            context.put("thread_id", thread.getId());
-            handleException(throwable, "UncaughtExceptionHandler", context);
-        });
-        logger.info("Installed global exception handler for AevorinReports");
     }
     
     /**
@@ -82,18 +66,12 @@ public class ExceptionHandler {
         occurrence.count++;
         occurrence.lastOccurrence = System.currentTimeMillis();
         
-        // Log the error with appropriate level and rate limiting
+        // Log the error with appropriate level
         if (occurrence.count <= maxErrorRepetitions) {
             if (e instanceof RuntimeException || e instanceof Error) {
-                logger.error(formattedMessage);
-                if (logStackTraces) {
-                    logger.error("Stack trace:", e);
-                }
+                logger.error(formattedMessage, e);
             } else {
-                logger.warn(formattedMessage);
-                if (logStackTraces) {
-                    logger.warn("Stack trace:", e);
-                }
+                logger.warn(formattedMessage, e);
             }
         } else if (occurrence.count == maxErrorRepetitions + 1) {
             // Log that we're suppressing this error
@@ -118,17 +96,7 @@ public class ExceptionHandler {
         StringBuilder sb = new StringBuilder();
         sb.append("[AevorinReports] Error in component: ").append(source).append("\n");
         sb.append("Type: ").append(e.getClass().getName()).append("\n");
-        sb.append("Message: ").append(e.getMessage() != null ? e.getMessage() : "<no message>").append("\n");
-        
-        // Add root cause if available
-        Throwable rootCause = getRootCause(e);
-        if (rootCause != e) {
-            sb.append("Root cause: ").append(rootCause.getClass().getName());
-            if (rootCause.getMessage() != null) {
-                sb.append(" - ").append(rootCause.getMessage());
-            }
-            sb.append("\n");
-        }
+        sb.append("Message: ").append(e.getMessage()).append("\n");
         
         if (!context.isEmpty() && detailedLogging) {
             sb.append("Context:\n");
@@ -143,18 +111,11 @@ public class ExceptionHandler {
             }
         }
         
-        return sb.toString();
-    }
-    
-    /**
-     * Gets the root cause of an exception
-     */
-    private Throwable getRootCause(Throwable e) {
-        Throwable cause = e.getCause();
-        if (cause == null) {
-            return e;
+        if (logStackTraces) {
+            sb.append("Stack trace:\n").append(getStackTraceAsString(e));
         }
-        return getRootCause(cause);
+        
+        return sb.toString();
     }
     
     /**
@@ -171,14 +132,6 @@ public class ExceptionHandler {
      * Generates a signature for an error to identify similar errors
      */
     private String generateErrorSignature(Throwable e, String source) {
-        if (!groupSimilarErrors) {
-            // Use a more specific signature if we're not grouping similar errors
-            return source + "-" + e.getClass().getName() + "-" + 
-                    (e.getStackTrace().length > 0 ? e.getStackTrace()[0].toString() : "unknown") +
-                    "-" + System.currentTimeMillis();
-        }
-        
-        // Group similar errors by class, source and first stack trace element
         return source + "-" + e.getClass().getName() + "-" + 
                 (e.getStackTrace().length > 0 ? e.getStackTrace()[0].toString() : "unknown");
     }
@@ -201,6 +154,19 @@ public class ExceptionHandler {
     }
     
     /**
+     * Installs a global uncaught exception handler
+     */
+    public void installGlobalHandler() {
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            Map<String, Object> context = new HashMap<>();
+            context.put("thread", thread.getName());
+            context.put("thread_id", thread.getId());
+            handleException(throwable, "UncaughtExceptionHandler", context);
+        });
+        logger.info("Installed global exception handler");
+    }
+    
+    /**
      * Configure the error handler
      */
     public void configure(int maxRepetitions, long suppressionMinutes, boolean detailed, boolean stackTraces) {
@@ -208,13 +174,6 @@ public class ExceptionHandler {
         this.suppressionTimeMinutes = suppressionMinutes;
         this.detailedLogging = detailed;
         this.logStackTraces = stackTraces;
-    }
-    
-    /**
-     * Set whether to group similar errors
-     */
-    public void setGroupSimilarErrors(boolean groupSimilarErrors) {
-        this.groupSimilarErrors = groupSimilarErrors;
     }
     
     /**

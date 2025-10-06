@@ -2,7 +2,7 @@ package dev.aevorinstudios.aevorinReports.storage;
 
 import dev.aevorinstudios.aevorinReports.config.Settings;
 import dev.aevorinstudios.aevorinReports.database.DatabaseManager;
-import dev.aevorinstudios.aevorinReports.model.Report;
+import dev.aevorinstudios.aevorinReports.reports.Report;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;

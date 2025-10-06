@@ -52,6 +52,12 @@ reports:
   cooldown: 300
   # Maximum number of active reports per player
   max-active-reports: 3
+  # Allow custom reasons in reports
+  allow-custom-reasons: true
+  # Maximum length for custom reasons
+  custom-reason-max-length: 100
+  # Minimum length for custom reasons
+  custom-reason-min-length: 10
   # Categories for reports - these will appear in the report book or container GUI
   categories:
     - "Hacking/Cheating"
@@ -91,6 +97,15 @@ performance:
   # Interval for cache cleanup in seconds
   cache-cleanup-interval: 30
   
+# Update Checker Settings
+update-checker:
+  # Your Modrinth project ID (found in your project's URL)
+  modrinth-project-id: "OwqSnlXx"
+  # How often to check for updates (in minutes)
+  check-interval: 60
+  # Whether to notify players with permission about updates
+  notify-on-join: true
+
 # Debug Settings
 debug:
   # Enable debug logging
@@ -120,3 +135,7 @@ messages:
   report-not-found: "&cReport not found!"
   report-status-invalid: "&cInvalid report status! Available statuses: {statuses}"
   invalid-status-transition: "&cCannot change report status from {current} to {status}. Invalid transition!"
+  custom-reason-prompt: "&eEnter your custom reason in chat. Your message will be private."
+  custom-reason-too-short: "&cYour custom reason is too short! Minimum length: {min} characters"
+  custom-reason-too-long: "&cYour custom reason is too long! Maximum length: {max} characters"
+  custom-reason-disabled: "&cCustom reasons are currently disabled."

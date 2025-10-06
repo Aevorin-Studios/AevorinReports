@@ -1,7 +1,7 @@
 package dev.aevorinstudios.aevorinReports.bukkit.commands;
 
 import dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin;
-import dev.aevorinstudios.aevorinReports.model.Report;
+import dev.aevorinstudios.aevorinReports.reports.Report;
 import dev.aevorinstudios.aevorinReports.notification.NotificationManager;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;

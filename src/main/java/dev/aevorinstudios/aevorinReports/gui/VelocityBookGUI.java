@@ -1,7 +1,7 @@
 package dev.aevorinstudios.aevorinReports.gui;
 
 import com.velocitypowered.api.proxy.Player;
-import dev.aevorinstudios.aevorinReports.model.Report;
+import dev.aevorinstudios.aevorinReports.reports.Report;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;

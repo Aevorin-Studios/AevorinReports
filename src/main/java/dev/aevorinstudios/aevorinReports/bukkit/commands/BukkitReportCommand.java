@@ -2,7 +2,7 @@ package dev.aevorinstudios.aevorinReports.bukkit.commands;
 
 import dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin;
 import dev.aevorinstudios.aevorinReports.database.DatabaseManager;
-import dev.aevorinstudios.aevorinReports.model.Report;
+import dev.aevorinstudios.aevorinReports.reports.Report;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -40,12 +40,12 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
         }
 
         if (!player.hasPermission("aevorinreports.report")) {
-            player.sendMessage(ChatColor.RED + "You don't have permission to use this command!");
+            sender.sendMessage(ChatColor.RED + "You don't have permission to use this command!");
             return true;
         }
 
         if (args.length == 0) {
-            player.sendMessage(ChatColor.RED + "Usage: /report <player>");
+            player.sendMessage(ChatColor.RED + "Usage: /report <player> [reason]");
             return true;
         }
 
@@ -64,6 +64,28 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // If reason is provided, create report directly
+        if (args.length > 1) {
+            String reason = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+            
+            // Handle custom reason
+            if (reason.equalsIgnoreCase("custom")) {
+                if (!plugin.getConfig().getBoolean("reports.allow-custom-reasons", true)) {
+                    player.sendMessage(ChatColor.RED + plugin.getConfig().getString("messages.custom-reason-disabled", "Custom reasons are disabled."));
+                    return true;
+                }
+                
+                // Store player and target info for custom reason handling
+                plugin.getCustomReasonHandler().startCustomReason(player, targetPlayer);
+                player.sendMessage(ChatColor.GREEN + plugin.getConfig().getString("messages.enter-custom-reason", "Please enter your reason in the chat:"));
+                return true;
+            }
+            
+            createReport(player, targetPlayer, reason);
+            return true;
+        }
+
+        // If no reason provided, show GUI
         showReportCategories(player, target.getName());
         return true;
     }
@@ -85,6 +107,16 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
             }
             
             return playerNames;
+        } else if (args.length == 2) {
+            List<String> suggestions = new ArrayList<>(plugin.getConfig().getStringList("reports.categories"));
+            if (plugin.getConfig().getBoolean("reports.allow-custom-reasons", true)) {
+                suggestions.add("custom");
+            }
+            
+            String partialReason = args[1].toLowerCase();
+            return suggestions.stream()
+                .filter(reason -> reason.toLowerCase().startsWith(partialReason))
+                .toList();
         }
         
         return new ArrayList<>();
@@ -204,6 +236,7 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
         boolean isFirstPage = true;
         int currentPage = 1;
 
+        // Add all regular categories
         for (String category : categories) {
             int maxCategoriesForCurrentPage = isFirstPage ? firstPageCategories : subsequentPageCategories;
             
@@ -226,7 +259,7 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
             categoryText.setColor(net.md_5.bungee.api.ChatColor.RED);
             categoryText.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
                 net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND,
-                "/#report-category " + targetPlayer + " " + category
+                "/report " + targetPlayer + " " + category
             ));
             categoryText.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
                 net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
@@ -236,6 +269,40 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
             categoryComponent.addExtra(categoryText);
             categoryComponent.addExtra("\n");
             currentBuilder.append(categoryComponent);
+            currentPageCategories++;
+        }
+
+        // Add custom reason option if enabled
+        if (plugin.getConfig().getBoolean("reports.allow-custom-reasons", true)) {
+            if (currentPageCategories >= (isFirstPage ? firstPageCategories : subsequentPageCategories)) {
+                currentBuilder.append("\n" + ChatColor.GRAY + "Page " + currentPage + " of " + totalPages);
+                pages.add(currentBuilder.create());
+                
+                currentBuilder = new net.md_5.bungee.api.chat.ComponentBuilder()
+                    .append(ChatColor.GRAY + "▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n");
+                
+                currentPageCategories = 0;
+                isFirstPage = false;
+                currentPage++;
+            }
+
+            net.md_5.bungee.api.chat.TextComponent customComponent = new net.md_5.bungee.api.chat.TextComponent();
+            customComponent.addExtra(new net.md_5.bungee.api.chat.TextComponent(ChatColor.RED + "• "));
+            
+            net.md_5.bungee.api.chat.TextComponent customText = new net.md_5.bungee.api.chat.TextComponent("Custom Reason");
+            customText.setColor(net.md_5.bungee.api.ChatColor.RED);
+            customText.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
+                net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND,
+                "/report " + targetPlayer + " custom"
+            ));
+            customText.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
+                net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
+                new net.md_5.bungee.api.chat.ComponentBuilder("Click to enter a custom reason").create()
+            ));
+            
+            customComponent.addExtra(customText);
+            customComponent.addExtra("\n");
+            currentBuilder.append(customComponent);
             currentPageCategories++;
         }
 
