@@ -140,20 +140,6 @@ public class ConfigManager {
             }
         }
 
-        // Performance Configuration
-        if (yamlConfig.containsKey("performance")) {
-            Map<String, Object> performance = (Map<String, Object>) yamlConfig.get("performance");
-            if (performance != null) {
-                config.getPerformance().setEnableCaching((Boolean) performance.getOrDefault("enableCaching", true));
-                config.getPerformance().setCacheDuration((Integer) performance.getOrDefault("cacheDuration", 15));
-                config.getPerformance().setMaxCacheSize((Integer) performance.getOrDefault("maxCacheSize", 1000));
-                config.getPerformance().setAsyncProcessing((Boolean) performance.getOrDefault("asyncProcessing", true));
-                config.getPerformance().setBatchSize((Integer) performance.getOrDefault("batchSize", 50));
-                config.getPerformance().setBackgroundTaskInterval((Integer) performance.getOrDefault("backgroundTaskInterval", 300));
-                config.getPerformance().setCacheCleanupInterval((Integer) performance.getOrDefault("cacheCleanupInterval", 30));
-            }
-        }
-
         // Custom Reasons
         if (yamlConfig.containsKey("customReasons")) {
             Map<?, ?> customReasonsRaw = (Map<?, ?>) yamlConfig.get("customReasons");
