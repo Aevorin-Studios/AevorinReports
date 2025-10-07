@@ -1,14 +1,13 @@
 package dev.aevorinstudios.aevorinReports.bukkit;
 
-import dev.aevorinstudios.aevorinReports.bukkit.commands.BukkitReportCommand;
-import dev.aevorinstudios.aevorinReports.bukkit.commands.BukkitReportsCommand;
-import dev.aevorinstudios.aevorinReports.bukkit.commands.ViewReportCommand;
-import dev.aevorinstudios.aevorinReports.bukkit.commands.ShiftReportCommand;
+import dev.aevorinstudios.aevorinReports.commands.BukkitReportCommand;
+import dev.aevorinstudios.aevorinReports.commands.BukkitReportsCommand;
+import dev.aevorinstudios.aevorinReports.commands.ViewReportCommand;
+import dev.aevorinstudios.aevorinReports.commands.SetReportStatusCommand;
 
-import dev.aevorinstudios.aevorinReports.commands.HiddenCommandManager;
 import dev.aevorinstudios.aevorinReports.config.ConfigManager;
 import dev.aevorinstudios.aevorinReports.database.DatabaseManager;
-import dev.aevorinstudios.aevorinReports.listeners.CommandHidingListener;
+import dev.aevorinstudios.aevorinReports.handlers.CustomReasonHandler;
 import dev.aevorinstudios.aevorinReports.sync.TokenSyncManager;
 import dev.aevorinstudios.aevorinReports.utils.ExceptionHandler;
 import dev.aevorinstudios.aevorinReports.utils.ModrinthUpdateChecker;
@@ -32,9 +31,7 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     @Getter
     private static BukkitPlugin instance;
     private ConfigManager configManager;
-    @Getter
     private DatabaseManager databaseManager;
-    @Getter
     private TokenSyncManager tokenSyncManager;
     private ModrinthUpdateChecker updateChecker;
     @Getter
@@ -78,9 +75,9 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             getCommand("ar").setExecutor(this);
             getCommand("aevorinreports").setExecutor(this);
             // Register ReportsContainerListener for container GUI
-            getServer().getPluginManager().registerEvents(new dev.aevorinstudios.aevorinReports.bukkit.commands.ReportsContainerListener(this), this);
+            getServer().getPluginManager().registerEvents(new dev.aevorinstudios.aevorinReports.listeners.ReportsContainerListener(this), this);
             // Register ReportReasonContainerListener for report container GUI
-            getServer().getPluginManager().registerEvents(new dev.aevorinstudios.aevorinReports.bukkit.commands.ReportReasonContainerListener(this), this);
+            getServer().getPluginManager().registerEvents(new dev.aevorinstudios.aevorinReports.listeners.ReportReasonContainerListener(this), this);
 
             // Register view report command with error handling
             try {
@@ -91,20 +88,16 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             }
             // Register shift report command with error handling
             try {
-                getCommand("shiftreport").setExecutor(new ShiftReportCommand(this));
+                SetReportStatusCommand setReportStatusCommand = new SetReportStatusCommand(this);
+                getCommand("setreportstatus").setExecutor(setReportStatusCommand);
+                getCommand("setreportstatus").setTabCompleter(setReportStatusCommand);
             } catch (Exception e) {
                 ExceptionHandler.getInstance().handleException(e, "Command Registration", 
-                    Map.of("command", "shiftreport", "class", "ShiftReportCommand"));
+                    Map.of("command", "setreportstatus", "class", "SetReportStatusCommand"));
             }
 
             // Initialize token synchronization with enhanced error handling and retry logic
             initializeTokenSync();
-
-            // Initialize hidden commands
-            new HiddenCommandManager(this).registerHiddenCommands();
-            
-            // Register event listener for hiding commands
-            getServer().getPluginManager().registerEvents(new CommandHidingListener(), this);
 
             // Initialize and start the Modrinth update checker
             String modrinthProjectId = getConfig().getString("update-checker.modrinth-project-id", "your-project-id");

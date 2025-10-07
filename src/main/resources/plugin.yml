@@ -37,8 +37,9 @@ commands:
     permission-message: You don't have permission to use this command!
     aliases: []
     hidden: true
-  shiftreport:
-    description: Shift a report to a different category/status
+  setreportstatus:
+    description: Set the status of a report
+    usage: /setreportstatus <id> to <status>
     permission: aevorinreports.manage
     permission-message: You don't have permission to use this command!
     aliases: []
