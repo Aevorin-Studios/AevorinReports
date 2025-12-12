@@ -2,29 +2,49 @@
 <p align="center">
   <img src="https://i.postimg.cc/9RR2yP4Z/aevorin-reports-title.png" alt="AevorinReports Banner" width="200"/>
 </p>
+
 *A strong and flexible reporting system for Minecraft servers that is easy to use and great for serious moderation.*
 
 ---
 
 ## Features
 
-- **Interactive Admin GUI** — Manage and update reports effortlessly with an intuitive click-based interface.  
-- **Real-Time Staff Alerts** — Staff are instantly notified when a report is filed.  
-- **Status Tracking** — Reports go through a clear status flow: pending → resolved → rejected.  
-- **Report Categories Book GUI** — Players can choose report reasons using an elegant in-game book interface.  
-- **Network Sync Support** — Automatically sync reports across Velocity proxies and Paper/Spigot/Bukkit servers for seamless moderation on multi-server networks.  
-- **Multi-Storage Support** *(coming soon)* — MySQL and file-based data storage.  
-- **Customizable Cooldowns & Limits** *(coming soon)*  
-- **Optimized Performance** — Async processing and caching for smooth gameplay, even under heavy load.
+- **Interactive Admin GUI** — Manage and update reports effortlessly with an intuitive click-based interface.
+- **Player Report History** — Players can view the status of their own reports with `/reports`.
+- **MiniMessage Support** — create beautiful, colorful messages (gradients, hover effects) with full MiniMessage support.
+- **Multiple GUI Types** — Choose between a classic **Book GUI** or a modern **Container (Chest) GUI**.
+- **Real-Time Staff Alerts** — Staff are instantly notified when a report is filed.
+- **Status Tracking** — Reports go through a clear status flow: **Pending** → **Resolved** / **Rejected**.
+- **Custom Reasons** — Players can submit custom reasons via chat if the predefined categories don't fit.
+- **bStats Integration** — Anonymous usage metrics to help improve the plugin.
+- **Database Support** — Supports both **SQLite** (local file) and **MySQL** for cross-server synchronization.
+- **Optimized Performance** — Async processing and smart caching ensure smooth gameplay.
 
 ---
 
 ## Commands
 
-- `/report <player>` — File a report on a player for misconduct.  
-- `/reports` — View and manage submitted reports.  
+### User Commands
+- `/report <player> [reason]` — File a report. If no reason is provided, a GUI opens.
+  - *Example:* `/report Notch hacking` or just `/report Notch`
+- `/reports` — View your submitted reports and their status.
 
-*All commands are permission-based for staff and regular users.*
+### Staff Commands
+- `/reports` — Open the Admin Report Management GUI (requires permission).
+- `/viewreport <id>` — View detailed information about a specific report.
+- `/setreportstatus <id> to <status>` — Manually update a report's status (PENDING, RESOLVED, REJECTED).
+- `/ar reload` — Reload the configuration file.
+
+---
+
+## Permissions
+
+| Permission | Description | Default |
+| :--- | :--- | :--- |
+| `aevorinreports.report` | Allows players to file reports | `true` |
+| `aevorinreports.manage` | Allows staff to manage reports (Admin GUI, set status) | `op` |
+| `aevorinreports.notify` | Receive notifications when a report is filed | `op` |
+| `aevorinreports.reload` | Allows reloading the plugin config | `op` |
 
 ---
 

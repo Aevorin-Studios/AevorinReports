@@ -1,8 +1,8 @@
 name: AevorinReports
-version: '1.0.3-beta-2'
+version: '1.0.3'
 main: dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin
 api-version: '1.18'
-authors: [borhani, Aiversity]
+authors: [Aevorin Studios]
 description: A comprehensive reporting system for Minecraft servers
 
 commands:
@@ -29,12 +29,8 @@ commands:
   reports:
     description: View and manage player reports
     usage: /reports
-    permission: aevorinreports.manage
-    permission-message: You don't have permission to use this command!
   viewreport:
     description: View detailed information about a specific report
-    permission: aevorinreports.manage
-    permission-message: You don't have permission to use this command!
     aliases: []
     hidden: true
   setreportstatus:

@@ -127,7 +127,7 @@ messages:
   description-too-short: "&cYour report description is too short! Minimum length: {min}"
   description-too-long: "&cYour report description is too long! Maximum length: {max}"
   invalid-category: "&cInvalid report category! Available categories: {categories}"
-  report-notification: "&b{reporter} &7has reported &b{reported} &7for &b{category}&7."
+  report-notification: "<red>[Reports] <yellow>{reporter} <white>has reported <red>{reported} <white>for: <yellow>{category}"
   report-status-change: "&7Report #{id} status has been changed to {color}{status}&7."
   report-status-update-success: "&aReport status updated successfully!"
   report-status-update-failed: "&cFailed to update report status!"

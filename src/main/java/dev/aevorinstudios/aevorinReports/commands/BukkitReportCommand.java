@@ -2,6 +2,7 @@ package dev.aevorinstudios.aevorinReports.commands;
 
 import dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin;
 import dev.aevorinstudios.aevorinReports.database.DatabaseManager;
+import dev.aevorinstudios.aevorinReports.gui.BookGUI;
 import dev.aevorinstudios.aevorinReports.gui.ReportReasonContainerGUI;
 import dev.aevorinstudios.aevorinReports.reports.Report;
 import org.bukkit.command.Command;
@@ -67,13 +68,13 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
             // Handle custom reason
             if (reason.equalsIgnoreCase("custom")) {
                 if (!plugin.getConfig().getBoolean("reports.allow-custom-reasons", true)) {
-                    player.sendMessage(ChatColor.RED + plugin.getConfig().getString("messages.custom-reason-disabled", "Custom reasons are disabled."));
+                    dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, plugin.getConfig().getString("messages.custom-reason-disabled", "Custom reasons are disabled."));
                     return true;
                 }
                 
                 // Store player and target info for custom reason handling
                 plugin.getCustomReasonHandler().startCustomReason(player, targetPlayer);
-                player.sendMessage(ChatColor.GREEN + plugin.getConfig().getString("messages.enter-custom-reason", "Please enter your reason in the chat:"));
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, plugin.getConfig().getString("messages.enter-custom-reason", "Please enter your reason in the chat:"));
                 return true;
             }
             
@@ -136,46 +137,20 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
         // The report ID is set by the saveReport method
 
         // Notify staff members with permission
+        String notificationFormat = plugin.getConfig().getString("messages.report-notification", "&b{reporter} &7has reported &b{reported} &7for &b{category}&7.");
+        String notification = notificationFormat
+                .replace("{reporter}", reporter.getName())
+                .replace("{reported}", targetPlayer)
+                .replace("{category}", category);
+        
         for (Player staff : plugin.getServer().getOnlinePlayers()) {
             if (staff.hasPermission("aevorinreports.notify")) {
-                staff.sendMessage(ChatColor.RED + "[Reports] " + 
-                    ChatColor.RED + reporter.getName() + 
-                    ChatColor.WHITE + " has reported " + 
-                    ChatColor.YELLOW + targetPlayer + 
-                    ChatColor.WHITE + " for: " + 
-                    ChatColor.YELLOW + category);
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(staff, notification);
             }
         }
-
-        // Send report to proxy if proxy sync is enabled and authenticated
-        if (plugin.getConfig().getBoolean("proxy.enabled", false) && 
-            plugin.getTokenSyncManager() != null && 
-            plugin.getTokenSyncManager().isAuthenticated()) {
-            
-            // Prepare report data for sync
-            Map<String, String> reportData = new HashMap<>();
-            reportData.put("id", String.valueOf(report.getId()));
-            reportData.put("reporter_uuid", report.getReporterUuid().toString());
-            reportData.put("reporter_name", reporter.getName());
-            reportData.put("reported_uuid", report.getReportedUuid().toString());
-            reportData.put("reported_name", targetPlayer);
-            reportData.put("reason", report.getReason());
-            reportData.put("server_name", report.getServerName());
-            reportData.put("status", report.getStatus().toString());
-            reportData.put("created_at", report.getCreatedAt().toString());
-            
-            // Send report to proxy
-            plugin.getTokenSyncManager().sendMessage("NEW_REPORT", reportData)
-                .thenAccept(success -> {
-                    if (success) {
-                        plugin.getLogger().info("Report #" + report.getId() + " successfully synced with proxy");
-                    } else {
-                        plugin.getLogger().warning("Failed to sync report #" + report.getId() + " with proxy");
-                    }
-                });
-        }
-
-        reporter.sendMessage(ChatColor.GREEN + "Your report has been submitted successfully!");
+        
+        // Notify reporter of success
+        dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(reporter, plugin.getConfig().getString("messages.report-created", "&aYour report has been submitted successfully!"));
     }
 
     private void showReportCategories(Player player, String targetPlayer) {
@@ -191,142 +166,6 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
     }
     
     private void showReportBookGUI(Player player, String targetPlayer) {
-        ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
-        BookMeta meta = (BookMeta) book.getItemMeta();
-
-        if (meta == null) return;
-
-        meta.setTitle(ChatColor.GOLD + "Report Player");
-        meta.setAuthor("Server Admin");
-
-        List<String> categories = plugin.getConfig().getStringList("reports.categories");
-        if (categories.isEmpty()) {
-            categories = new ArrayList<>(List.of("Hacking/Cheating", "Harassment/Bullying", "Inappropriate Language", "Spam/Advertisement", "Griefing/Vandalism", "Other"));
-        }
-
-        List<net.md_5.bungee.api.chat.BaseComponent[]> pages = new ArrayList<>();
-        net.md_5.bungee.api.chat.ComponentBuilder currentBuilder = new net.md_5.bungee.api.chat.ComponentBuilder();
-
-        // Add header
-        currentBuilder.append(ChatColor.DARK_RED + "Reporting player:\n")
-                     .append(ChatColor.RED + targetPlayer + "\n\n")
-                     .append(ChatColor.DARK_RED + "Select a reason:\n" + ChatColor.GRAY + "▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n");
-
-        // Use direct command for confirmation blocking
-        String commandPrefix = "/report-category";
-
-        // Calculate pages
-        int headerLines = 5;
-        int maxLinesPerPage = 12;
-        int firstPageCategories = maxLinesPerPage - headerLines - 2;
-        int subsequentPageCategories = maxLinesPerPage - 3 - 2;
-        
-        int totalPages = 1;
-        int remainingCategories = categories.size();
-        if (remainingCategories > firstPageCategories) {
-            remainingCategories -= firstPageCategories;
-            totalPages += (int)Math.ceil((double)remainingCategories / subsequentPageCategories);
-        }
-
-        int currentPageCategories = 0;
-        boolean isFirstPage = true;
-        int currentPage = 1;
-
-        // Add all regular categories
-        for (String category : categories) {
-            int maxCategoriesForCurrentPage = isFirstPage ? firstPageCategories : subsequentPageCategories;
-            
-            if (currentPageCategories >= maxCategoriesForCurrentPage) {
-                currentBuilder.append("\n" + ChatColor.GRAY + "Page " + currentPage + " of " + totalPages);
-                pages.add(currentBuilder.create());
-                
-                currentBuilder = new net.md_5.bungee.api.chat.ComponentBuilder()
-                    .append(ChatColor.GRAY + "▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n");
-                
-                currentPageCategories = 0;
-                isFirstPage = false;
-                currentPage++;
-            }
-
-            net.md_5.bungee.api.chat.TextComponent categoryComponent = new net.md_5.bungee.api.chat.TextComponent();
-            categoryComponent.addExtra(new net.md_5.bungee.api.chat.TextComponent(ChatColor.RED + "• "));
-            
-            net.md_5.bungee.api.chat.TextComponent categoryText = new net.md_5.bungee.api.chat.TextComponent(category);
-            categoryText.setColor(net.md_5.bungee.api.ChatColor.RED);
-            categoryText.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
-                net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND,
-                "/report " + targetPlayer + " " + category
-            ));
-            categoryText.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
-                net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
-                new net.md_5.bungee.api.chat.ComponentBuilder("Click to report for " + category).create()
-            ));
-            
-            categoryComponent.addExtra(categoryText);
-            categoryComponent.addExtra("\n");
-            currentBuilder.append(categoryComponent);
-            currentPageCategories++;
-        }
-
-        // Add custom reason option if enabled
-        if (plugin.getConfig().getBoolean("reports.allow-custom-reasons", true)) {
-            if (currentPageCategories >= (isFirstPage ? firstPageCategories : subsequentPageCategories)) {
-                currentBuilder.append("\n" + ChatColor.GRAY + "Page " + currentPage + " of " + totalPages);
-                pages.add(currentBuilder.create());
-                
-                currentBuilder = new net.md_5.bungee.api.chat.ComponentBuilder()
-                    .append(ChatColor.GRAY + "▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n");
-                
-                currentPageCategories = 0;
-                isFirstPage = false;
-                currentPage++;
-            }
-
-            net.md_5.bungee.api.chat.TextComponent customComponent = new net.md_5.bungee.api.chat.TextComponent();
-            customComponent.addExtra(new net.md_5.bungee.api.chat.TextComponent(ChatColor.RED + "• "));
-            
-            net.md_5.bungee.api.chat.TextComponent customText = new net.md_5.bungee.api.chat.TextComponent("Custom Reason");
-            customText.setColor(net.md_5.bungee.api.ChatColor.RED);
-            customText.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
-                net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND,
-                "/report " + targetPlayer + " custom"
-            ));
-            customText.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
-                net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
-                new net.md_5.bungee.api.chat.ComponentBuilder("Click to enter a custom reason").create()
-            ));
-            
-            customComponent.addExtra(customText);
-            customComponent.addExtra("\n");
-            currentBuilder.append(customComponent);
-            currentPageCategories++;
-        }
-
-        currentBuilder.append("\n" + ChatColor.GRAY + "Page " + currentPage + " of " + totalPages);
-        pages.add(currentBuilder.create());
-
-        try {
-            // Create a new book meta for each page to prevent resource leaks
-            if (!pages.isEmpty()) {
-                // Initialize the book with empty pages first
-                for (int i = 0; i < pages.size(); i++) {
-                    meta.addPage(""); // Add empty pages first
-                }
-                book.setItemMeta(meta); // Set meta with empty pages
-                
-                // Now set the content for each page
-                meta = (BookMeta) book.getItemMeta(); // Get fresh meta after setting empty pages
-                for (int i = 0; i < pages.size(); i++) {
-                    meta.spigot().setPage(i + 1, pages.get(i));
-                }
-                book.setItemMeta(meta);
-                player.openBook(book);
-            } else {
-                player.sendMessage(ChatColor.RED + "No report categories available.");
-            }
-        } catch (Exception e) {
-            player.sendMessage(ChatColor.RED + "An error occurred while creating the report menu.");
-            plugin.getLogger().warning("Error creating report book GUI: " + e.getMessage());
-        }
+        new BookGUI(plugin).showReportCategories(player, targetPlayer);
     }
 }

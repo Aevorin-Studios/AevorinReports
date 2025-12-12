@@ -6,7 +6,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import net.md_5.bungee.api.ChatColor;
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,14 +40,18 @@ public class CustomReasonHandler implements Listener {
             int maxLength = plugin.getConfig().getInt("reports.custom-reason-max-length", 100);
             
             if (reason.length() < minLength) {
-                player.sendMessage(ChatColor.RED + plugin.getConfig().getString("messages.custom-reason-too-short", 
-                    "Your reason is too short. Minimum length is " + minLength + " characters."));
+                String msg = plugin.getConfig().getString("messages.custom-reason-too-short", 
+                    "Your reason is too short. Minimum length is " + minLength + " characters.")
+                    .replace("{min}", String.valueOf(minLength));
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, msg);
                 return;
             }
             
             if (reason.length() > maxLength) {
-                player.sendMessage(ChatColor.RED + plugin.getConfig().getString("messages.custom-reason-too-long", 
-                    "Your reason is too long. Maximum length is " + maxLength + " characters."));
+                String msg = plugin.getConfig().getString("messages.custom-reason-too-long", 
+                    "Your reason is too long. Maximum length is " + maxLength + " characters.")
+                    .replace("{max}", String.valueOf(maxLength));
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, msg);
                 return;
             }
             

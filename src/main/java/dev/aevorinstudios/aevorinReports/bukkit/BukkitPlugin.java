@@ -8,7 +8,6 @@ import dev.aevorinstudios.aevorinReports.commands.SetReportStatusCommand;
 import dev.aevorinstudios.aevorinReports.config.ConfigManager;
 import dev.aevorinstudios.aevorinReports.database.DatabaseManager;
 import dev.aevorinstudios.aevorinReports.handlers.CustomReasonHandler;
-import dev.aevorinstudios.aevorinReports.sync.TokenSyncManager;
 import dev.aevorinstudios.aevorinReports.utils.ExceptionHandler;
 import dev.aevorinstudios.aevorinReports.utils.ModrinthUpdateChecker;
 import lombok.Getter;
@@ -18,9 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
+
 
 /**
  * The Main Bukkit plugin class for AevorinReports
@@ -32,7 +29,6 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     private static BukkitPlugin instance;
     private ConfigManager configManager;
     private DatabaseManager databaseManager;
-    private TokenSyncManager tokenSyncManager;
     private ModrinthUpdateChecker updateChecker;
     @Getter
     private CustomReasonHandler customReasonHandler;
@@ -74,30 +70,7 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             // Register reload commands
             getCommand("ar").setExecutor(this);
             getCommand("aevorinreports").setExecutor(this);
-            // Register ReportsContainerListener for container GUI
-            getServer().getPluginManager().registerEvents(new dev.aevorinstudios.aevorinReports.listeners.ReportsContainerListener(this), this);
-            // Register ReportReasonContainerListener for report container GUI
-            getServer().getPluginManager().registerEvents(new dev.aevorinstudios.aevorinReports.listeners.ReportReasonContainerListener(this), this);
 
-            // Register view report command with error handling
-            try {
-                getCommand("viewreport").setExecutor(new ViewReportCommand(this));
-            } catch (Exception e) {
-                ExceptionHandler.getInstance().handleException(e, "Command Registration", 
-                    Map.of("command", "viewreport", "class", "ViewReportCommand"));
-            }
-            // Register shift report command with error handling
-            try {
-                SetReportStatusCommand setReportStatusCommand = new SetReportStatusCommand(this);
-                getCommand("setreportstatus").setExecutor(setReportStatusCommand);
-                getCommand("setreportstatus").setTabCompleter(setReportStatusCommand);
-            } catch (Exception e) {
-                ExceptionHandler.getInstance().handleException(e, "Command Registration", 
-                    Map.of("command", "setreportstatus", "class", "SetReportStatusCommand"));
-            }
-
-            // Initialize token synchronization with enhanced error handling and retry logic
-            initializeTokenSync();
 
             // Initialize and start the Modrinth update checker
             String modrinthProjectId = getConfig().getString("update-checker.modrinth-project-id", "your-project-id");
@@ -108,6 +81,11 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             } else {
                 getLogger().warning("Modrinth project ID not configured. Update checking is disabled.");
             }
+
+            // Initialize bStats Metrics
+            int pluginId = 28310;
+            new org.bstats.bukkit.Metrics(this, pluginId);
+            getLogger().info("bStats Metrics initialized properly.");
 
             getLogger().info("AevorinReports has been enabled!");
         } catch (Exception e) {
@@ -159,18 +137,6 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             }
         }
         
-        // Clean up token synchronization resources
-        if (tokenSyncManager != null) {
-            try {
-                getLogger().info("Cleaning up token synchronization...");
-                tokenSyncManager.cleanup();
-                getLogger().info("Token synchronization cleaned up successfully.");
-            } catch (Exception e) {
-                ExceptionHandler.getInstance().handleException(e, "TokenSync Shutdown");
-                getLogger().warning("Error while cleaning up token synchronization.");
-            }
-        }
-        
         getLogger().info("AevorinReports has been disabled!");
     }
 
@@ -180,7 +146,7 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
      */
     private boolean initializeConfig() {
         try {
-            getLogger().info("📜 Loading configuration files...");
+            getLogger().info("Loading configuration files...");
             saveDefaultConfig();
             Path dataFolder = getDataFolder().toPath();
             configManager = ConfigManager.initialize(dataFolder);
@@ -222,15 +188,6 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             }
         }
         
-        // Validate token configuration if proxy is enabled
-        if (getConfig().getBoolean("proxy.enabled", false)) {
-            String token = getConfig().getString("auth.token", "");
-            if (token.isEmpty() || token.equals("your_token_here")) {
-                getLogger().warning("Invalid proxy authentication token. Proxy synchronization will not work.");
-                valid = false;
-            }
-        }
-        
         return valid;
     }
 
@@ -239,7 +196,7 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
      * @return true if a database was successfully initialized, false otherwise
      */
     private boolean initializeDatabase() {
-        getLogger().info("🗄️ Initializing database connection...");
+        getLogger().info("Initializing database connection...");
         int maxRetries = 3;
         int retryCount = 0;
         
@@ -325,6 +282,22 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                 Map.of("command", "reports", "class", "BukkitReportsCommand"));
         }
         
+        try {
+            getCommand("viewreport").setExecutor(new ViewReportCommand(this));
+        } catch (Exception e) {
+            ExceptionHandler.getInstance().handleException(e, "Command Registration", 
+                Map.of("command", "viewreport", "class", "ViewReportCommand"));
+        }
+        
+        try {
+            SetReportStatusCommand setReportStatusCommand = new SetReportStatusCommand(this);
+            getCommand("setreportstatus").setExecutor(setReportStatusCommand);
+            getCommand("setreportstatus").setTabCompleter(setReportStatusCommand);
+        } catch (Exception e) {
+            ExceptionHandler.getInstance().handleException(e, "Command Registration", 
+                Map.of("command", "setreportstatus", "class", "SetReportStatusCommand"));
+        }
+
         getLogger().info("Commands registered successfully!");
     }
 
@@ -333,62 +306,14 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
      */
     private void registerListeners() {
         getLogger().info("Registering event listeners...");
-        // TODO: Register event listeners
+        
+        // Register ReportsContainerListener for container GUI
+        getServer().getPluginManager().registerEvents(new dev.aevorinstudios.aevorinReports.listeners.ReportsContainerListener(this), this);
+        
+        // Register ReportReasonContainerListener for report container GUI
+        getServer().getPluginManager().registerEvents(new dev.aevorinstudios.aevorinReports.listeners.ReportReasonContainerListener(this), this);
+        
         getLogger().info("Event listeners registered successfully!");
-    }
-    
-    /**
-     * Initializes token synchronization with enhanced error handling and retry logic
-     */
-    private void initializeTokenSync() {
-        getLogger().info("Initializing token synchronization...");
-        
-        // Check if proxy is enabled in config
-        if (!getConfig().getBoolean("proxy.enabled", false)) {
-            getLogger().info("Proxy synchronization is disabled in config. Skipping token sync initialization.");
-            return;
-        }
-        
-        try {
-            tokenSyncManager = new TokenSyncManager(this);
-            
-            // Set up authentication with retry logic
-            CompletableFuture<Boolean> authFuture = tokenSyncManager.authenticate()
-                .orTimeout(30, TimeUnit.SECONDS)
-                .exceptionally(ex -> {
-                    ExceptionHandler.getInstance().handleException(ex, "TokenSync Authentication");
-                    getLogger().severe("Token authentication timed out or failed with exception.");
-                    return false;
-                });
-            
-            authFuture.thenAccept(success -> {
-                if (success) {
-                    getLogger().info("Successfully authenticated with proxy server!");
-                } else {
-                    getLogger().warning("Failed to authenticate with proxy. Reports will not be synced.");
-                    getLogger().warning("Please check your token configuration in config.yml");
-                    
-                    // Schedule a retry after 5 minutes if the server is still running
-                    Bukkit.getScheduler().runTaskLater(this, () -> {
-                        if (isEnabled()) {
-                            getLogger().info("Retrying proxy authentication...");
-                            tokenSyncManager.authenticate().thenAccept(retrySuccess -> {
-                                if (retrySuccess) {
-                                    getLogger().info("Successfully authenticated with proxy on retry!");
-                                } else {
-                                    getLogger().warning("Retry authentication failed. Reports will not be synced.");
-                                }
-                            });
-                        }
-                    }, 6000); // 5 minutes = 6000 ticks
-                }
-            });
-            
-            getLogger().info("Token synchronization initialized successfully!");
-        } catch (Exception e) {
-            ExceptionHandler.getInstance().handleException(e, "TokenSync Initialization");
-            getLogger().severe("Failed to initialize token synchronization.");
-        }
     }
 
     /**
@@ -412,14 +337,6 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     }
     
     /**
-     * Gets the token sync manager instance
-     * @return The token sync manager or null if not initialized
-     */
-    public TokenSyncManager getTokenSyncManager() {
-        return tokenSyncManager;
-    }
-    
-    /**
      * Initialize the exception handler for better error reporting with enhanced configuration
      */
     private void initializeExceptionHandler() {
@@ -438,39 +355,5 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
         // Configure with enhanced settings
         handler.configure(maxRepetitions, suppressionMinutes, detailedLogging, logStackTraces);
         handler.setGroupSimilarErrors(groupSimilarErrors);
-        
-        // Install the global exception handler
-        handler.installGlobalHandler();
-        
-        // Set up custom exception handling for the logger with enhanced context
-        getLogger().setFilter(record -> {
-            if (record.getThrown() != null) {
-                // Let our handler process the exception with rich context
-                Map<String, Object> context = new HashMap<>();
-                context.put("log_level", record.getLevel().getName());
-                context.put("logger_name", record.getLoggerName());
-                context.put("message", record.getMessage());
-                context.put("thread", Thread.currentThread().getName());
-                context.put("plugin_version", getDescription().getVersion());
-                
-                // Add server information for better diagnostics
-                if (Bukkit.getServer() != null) {
-                    context.put("server_version", Bukkit.getVersion());
-                    context.put("bukkit_version", Bukkit.getBukkitVersion());
-                    context.put("online_mode", Bukkit.getOnlineMode());
-                }
-                
-                handler.handleException(record.getThrown(), "Logger", context);
-                
-                // Only show the message without the stack trace in the regular log
-                // but keep severe errors visible
-                if (record.getLevel() != Level.SEVERE) {
-                    record.setThrown(null);
-                }
-            }
-            return true;
-        });
-        
-        getLogger().info("Enhanced exception handler initialized successfully!");
     }
 }

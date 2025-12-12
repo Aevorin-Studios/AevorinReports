@@ -151,6 +151,39 @@ public class DatabaseManager {
         return reports;
     }
 
+    public List<Report> getReportsByReporter(UUID reporterUuid) {
+        String sql = "SELECT * FROM reports WHERE reporter_uuid = ? ORDER BY created_at DESC";
+        List<Report> reports = new ArrayList<>();
+        
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, reporterUuid.toString());
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    reports.add(Report.builder()
+                        .id(rs.getLong("id"))
+                        .reporterUuid(UUID.fromString(rs.getString("reporter_uuid")))
+                        .reportedUuid(UUID.fromString(rs.getString("reported_uuid")))
+                        .reason(rs.getString("reason"))
+                        .serverName(rs.getString("server_name"))
+                        .status(Report.ReportStatus.valueOf(rs.getString("status")))
+                        .isAnonymous(rs.getBoolean("is_anonymous"))
+                        .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
+                        .updatedAt(rs.getTimestamp("updated_at").toLocalDateTime())
+                        .evidenceData(rs.getString("evidence_data"))
+                        .coordinates(rs.getString("coordinates"))
+                        .world(rs.getString("world"))
+                        .build());
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to fetch reports by reporter: " + reporterUuid, e);
+        }
+        
+        return reports;
+    }
+
     public void deleteOldReports(Report.ReportStatus status, LocalDateTime threshold) {
         String sql = "DELETE FROM reports WHERE status = ? AND updated_at < ?";
 

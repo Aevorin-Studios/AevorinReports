@@ -66,7 +66,8 @@ public class SetReportStatusCommand implements CommandExecutor, TabCompleter {
             plugin.getLogger().fine("Report " + reportId + " status changed to " + newStatus.name() + " by " + player.getName());
             
             // Silently show updated details (avoid dispatching a visible command)
-            new ReportManageGUI(plugin).open(player, report);
+            // Close the GUI instead of re-opening it
+            player.closeInventory();
         } catch (NumberFormatException e) {
             player.sendMessage(ChatColor.RED + "Invalid report ID!");
         } catch (IllegalArgumentException e) {
