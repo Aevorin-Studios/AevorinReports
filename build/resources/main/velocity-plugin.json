@@ -1,9 +1,0 @@
-{
-  "id": "aevorinreports",
-  "name": "AevorinReports",
-  "version": "1.0.2",
-  "description": "A comprehensive reporting system for Minecraft servers",
-  "authors": ["Aevorin Studios"],
-  "dependencies": [],
-  "main": "dev.aevorinstudios.aevorinReports.velocity.VelocityPlugin"
-}

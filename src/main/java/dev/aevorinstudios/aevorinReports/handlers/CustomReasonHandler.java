@@ -56,7 +56,7 @@ public class CustomReasonHandler implements Listener {
             }
             
             // Submit the report
-            plugin.getServer().getScheduler().runTask(plugin, () -> {
+            dev.aevorinstudios.aevorinReports.utils.SchedulerUtils.runTask(plugin, player, () -> {
                 plugin.getBukkitReportCommand().createReport(player, data.targetPlayer(), reason);
                 pendingCustomReasons.remove(player.getUniqueId());
             });

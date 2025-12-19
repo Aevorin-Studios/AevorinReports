@@ -1,19 +1,13 @@
 # AevorinReports Configuration File
 
-# Proxy Settings
-proxy:
-  # Whether to enable proxy connection features
-  # Set to false for single-server deployments
-  enabled: false
-  # Authentication Settings for proxy connection
-  auth:
-    # The token used to authenticate with the proxy server
-    # This should match the token generated on your proxy server
-    token: " "
+# Server Configuration
+# The name of this server, used to identify where reports come from in a multi-server network.
+# If you have multiple servers connected to the same database, give each one a unique name.
+server-name: "survival"
 
 # Database Configuration
 database:
-  type: "file" # mysql or file
+  type: "file" # Options: "mysql" (for multi-server) or "file" (local SQLite)
   mysql:
     host: "localhost"
     port: 3306
@@ -22,43 +16,35 @@ database:
     password: "password"
   file:
     path: "database/reports.db"
-  # Connection pool settings
+  # Connection pool settings (Advanced)
   pool:
     minimum-idle: 5
     maximum-pool-size: 10
     connection-timeout: 30000 # 30 seconds
 
-# Security Settings
-security:
-  # Maximum number of false reports before action is taken
-  maxFalseReports: 5
-  # Ban duration in hours for excessive false reports
-  falseReportBanHours: 24
-  # Number of reports before a player is flagged for review
-  maxReportsBeforeFlag: 10
-  # Encryption key for sensitive data (will be auto-generated if empty)
-  encryptionKey: ""
-  # Enable token-based authentication for proxy communication
-  enableTokenAuth: true
-
 # Report Settings
 reports:
   # Allow players to report themselves (self-reporting)
   allow-self-reporting: false
-  # GUI type for report interface ("book" or "container")
+  
+  # GUI type for report interface
   gui:
     type: "book" # Options: "book" (classic book gui) or "container" (chest GUI)
+  
   # Cooldown between reports (in seconds)
   cooldown: 300
+  
   # Maximum number of active reports per player
   max-active-reports: 3
+  
   # Allow custom reasons in reports
   allow-custom-reasons: true
-  # Maximum length for custom reasons
+  
+  # Custom reason constraints
   custom-reason-max-length: 100
-  # Minimum length for custom reasons
   custom-reason-min-length: 10
-  # Categories for reports - these will appear in the report book or container GUI
+  
+  # Categories for reports - these will appear in the GUI
   categories:
     - "Hacking/Cheating"
     - "Harassment/Bullying"
@@ -76,41 +62,23 @@ notifications:
   # Send notification when report status changes
   status-change: true
   # Sound to play for notifications (set to "" to disable)
+  # Examples: BLOCK_NOTE_BLOCK_PLING, ENTITY_PLAYER_LEVELUP
   sound: "BLOCK_NOTE_BLOCK_PLING"
   # Chat prefix for plugin messages
   prefix: "&8[&bAevorinReports&8]&r "
 
-# Performance Settings
-performance:
-  # Enable caching for frequently accessed data
-  enable-caching: true
-  # Cache duration in minutes
-  cache-duration: 15
-  # Maximum number of items to keep in cache
-  max-cache-size: 1000
-  # Enable async processing for better performance
-  async-processing: true
-  # Size of batches for processing
-  batch-size: 50
-  # Interval for background tasks in seconds
-  background-task-interval: 300
-  # Interval for cache cleanup in seconds
-  cache-cleanup-interval: 30
-  
 # Update Checker Settings
 update-checker:
-  # Your Modrinth project ID (found in your project's URL)
-  modrinth-project-id: "OwqSnlXx"
   # How often to check for updates (in minutes)
   check-interval: 60
-  # Whether to notify players with permission about updates
+  # Whether to notify players with permission about updates on join
   notify-on-join: true
 
 # Debug Settings
 debug:
-  # Enable debug logging
+  # Enable debug logging for troubleshooting
   enabled: false
-  # Log database queries
+  # Log database queries (spammy, use only if needed)
   log-queries: false
 
 # Message Customization

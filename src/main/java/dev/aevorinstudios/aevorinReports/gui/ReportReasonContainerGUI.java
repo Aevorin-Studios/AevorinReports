@@ -55,7 +55,7 @@ public class ReportReasonContainerGUI implements org.bukkit.event.Listener {
             player.closeInventory();
             
             // Submit the report once
-            Bukkit.getScheduler().runTask(plugin, () -> {
+            dev.aevorinstudios.aevorinReports.utils.SchedulerUtils.runTask(plugin, player, () -> {
                 player.performCommand("report " + targetPlayer + " " + reason);
             });
         }

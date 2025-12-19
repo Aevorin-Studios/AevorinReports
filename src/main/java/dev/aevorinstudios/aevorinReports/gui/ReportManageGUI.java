@@ -47,6 +47,12 @@ public class ReportManageGUI {
         infoMeta.setDisplayName("§b§lReport Details");
         infoMeta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
         infoMeta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
+        // Get server name with fallback
+        String serverName = report.getServerName();
+        if (serverName == null || serverName.isEmpty()) {
+            serverName = "Unknown";
+        }
+        
         infoMeta.setLore(java.util.List.of(
             "§8──────────────────",
             "§7Reporter: §f" + reporterName,
@@ -54,6 +60,7 @@ public class ReportManageGUI {
             "§7Reason: §f" + report.getReason(),
             "§7Status: §f" + report.getStatus(),
             "§7ID: §f" + report.getId(),
+            "§7Server: §f" + serverName,
             "§8──────────────────"
         ));
         info.addUnsafeEnchantment(org.bukkit.enchantments.Enchantment.DURABILITY, 1);

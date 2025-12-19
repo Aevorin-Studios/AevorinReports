@@ -78,7 +78,7 @@ public class ModrinthUpdateChecker implements Listener {
         Player player = event.getPlayer();
         if (updateAvailable && player.hasPermission("aevorinreports.update") && 
             plugin.getConfig().getBoolean("update-checker.notify-on-join", true)) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            dev.aevorinstudios.aevorinReports.utils.SchedulerUtils.runTaskLater(plugin, player, () -> {
                 String prefix = plugin.getConfig().getString("notifications.prefix", "&8[&bAevorinReports&8]&r ");
                 player.sendMessage(ChatColor.translateAlternateColorCodes('&', 
                     prefix + "&eA new version is available: &b" + latestVersion));
@@ -90,11 +90,10 @@ public class ModrinthUpdateChecker implements Listener {
 
     public void startUpdateChecker() {
         long interval = plugin.getConfig().getLong("update-checker.check-interval", 60);
-        // Initial check
-        checkUpdate();
-        // Schedule periodic checks
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::checkUpdate, 
-            TimeUnit.MINUTES.toSeconds(interval) * 20L, 
+
+        // Schedule periodic checks (initial delay 0 to run immediately but async)
+        dev.aevorinstudios.aevorinReports.utils.SchedulerUtils.runTaskTimerAsynchronously(plugin, this::checkUpdate, 
+            0L, 
             TimeUnit.MINUTES.toSeconds(interval) * 20L);
     }
 }

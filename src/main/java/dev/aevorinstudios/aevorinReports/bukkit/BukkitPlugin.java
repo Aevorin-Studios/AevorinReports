@@ -73,14 +73,10 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
 
 
             // Initialize and start the Modrinth update checker
-            String modrinthProjectId = getConfig().getString("update-checker.modrinth-project-id", "your-project-id");
-            if (!modrinthProjectId.equals("your-project-id")) {
-                updateChecker = new ModrinthUpdateChecker(this, modrinthProjectId);
-                updateChecker.startUpdateChecker();
-                getLogger().info("Modrinth update checker initialized with project ID: " + modrinthProjectId);
-            } else {
-                getLogger().warning("Modrinth project ID not configured. Update checking is disabled.");
-            }
+            String modrinthProjectId = "OwqSnlXx"; // Hardcoded Project ID
+            updateChecker = new ModrinthUpdateChecker(this, modrinthProjectId);
+            updateChecker.startUpdateChecker();
+            getLogger().info("Modrinth update checker initialized with project ID: " + modrinthProjectId);
 
             // Initialize bStats Metrics
             int pluginId = 28310;
@@ -172,17 +168,18 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
         boolean valid = true;
         
         // Validate database configuration
-        String dbType = getConfig().getString("database.type", "");
-        if (dbType.isEmpty()) {
+        String dbType = configManager.getConfig().getDatabase().getType();
+        if (dbType == null || dbType.isEmpty()) {
+            configManager.getConfig().getDatabase().setType("file"); // Default to file
             getLogger().warning("Database type not specified in config. Defaulting to SQLite.");
-            valid = false;
+            // We validly fell back, so don't return false unless critical
         } else if ("mysql".equalsIgnoreCase(dbType)) {
             // Validate MySQL configuration
-            if (getConfig().getString("database.mysql.host", "").isEmpty()) {
+            if (configManager.getConfig().getDatabase().getMysql().getHost().isEmpty()) {
                 getLogger().warning("MySQL host not specified in config.");
                 valid = false;
             }
-            if (getConfig().getString("database.mysql.database", "").isEmpty()) {
+            if (configManager.getConfig().getDatabase().getMysql().getDatabase().isEmpty()) {
                 getLogger().warning("MySQL database name not specified in config.");
                 valid = false;
             }
@@ -231,6 +228,16 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                 if (databaseManager.testConnection()) {
                     databaseInitialized = true;
                     getLogger().info("Database connection established successfully!");
+                    
+                    // Initialize or retrieve persistent server token
+                    dev.aevorinstudios.aevorinReports.utils.ServerIdentity identity = 
+                        new dev.aevorinstudios.aevorinReports.utils.ServerIdentity(getLogger(), getDataFolder());
+                    String serverToken = identity.getIdentityToken();
+                    
+                    // Sync this server's identity (Name <-> Token) with the database
+                    String serverName = configManager.getConfig().getServerName();
+                    databaseManager.syncServerIdentity(serverToken, serverName);
+                    
                     return true;
                 } else {
                     throw new Exception("Database connection test failed");

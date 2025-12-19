@@ -61,19 +61,11 @@ public class ConfigManager {
         
         if (yamlConfig == null) return config;
 
-        // Auth Configuration
-        if (yamlConfig.containsKey("auth")) {
-            Map<?, ?> authRaw = (Map<?, ?>) yamlConfig.get("auth");
-            Map<String, Object> auth = new HashMap<>();
-            if (authRaw != null) {
-                for (Map.Entry<?, ?> entry : authRaw.entrySet()) {
-                    auth.put(String.valueOf(entry.getKey()), entry.getValue());
-                }
-            }
-            if (!auth.isEmpty()) {
-                config.getAuth().setToken((String) auth.getOrDefault("token", ""));
-                config.getAuth().setRegenerateToken((Boolean) auth.getOrDefault("regenerateToken", false));
-            }
+        // Server Configuration
+        if (yamlConfig.containsKey("server-name")) {
+            config.setServerName((String) yamlConfig.getOrDefault("server-name", "survival"));
+        } else {
+            config.setServerName("survival"); // Default if missing
         }
 
         // Database Configuration
@@ -367,11 +359,8 @@ public class ConfigManager {
     private Map<String, Object> convertConfigToYaml() {
         Map<String, Object> result = new HashMap<>();
         
-        // Auth Configuration
-        Map<String, Object> auth = new HashMap<>();
-        auth.put("token", config.getAuth().getToken());
-        auth.put("regenerateToken", config.getAuth().isRegenerateToken());
-        result.put("auth", auth);
+        // Server Configuration
+        result.put("server-name", config.getServerName());
         
         // Database Configuration
         Map<String, Object> database = new HashMap<>();
@@ -529,7 +518,7 @@ public class ConfigManager {
 
     @Data
     public static class Config {
-        private AuthConfig auth = new AuthConfig();
+        private String serverName = "survival";
         private DatabaseConfig database = new DatabaseConfig();
         private ReportsConfig reports = new ReportsConfig();
         private SecurityConfig security = new SecurityConfig();
@@ -537,12 +526,6 @@ public class ConfigManager {
         private PerformanceConfig performance = new PerformanceConfig();
         private Map<String, String> customReasons = new HashMap<>();
 
-
-        @Data
-        public static class AuthConfig {
-            private String token = "";
-            private boolean regenerateToken = false;
-        }
 
         @Data
         public static class DatabaseConfig {

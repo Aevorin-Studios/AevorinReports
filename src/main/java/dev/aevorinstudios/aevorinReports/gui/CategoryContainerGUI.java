@@ -127,10 +127,17 @@ public class CategoryContainerGUI {
             ItemStack item = new ItemStack(Material.WRITABLE_BOOK);
             ItemMeta meta = item.getItemMeta();
             meta.setDisplayName("§b" + reporterName + " → " + reportedName);
+            // Get server name with fallback
+            String serverName = report.getServerName();
+            if (serverName == null || serverName.isEmpty()) {
+                serverName = "Unknown";
+            }
+            
             meta.setLore(java.util.List.of(
                 "§8──────────────────",
                 "§7Reason: " + report.getReason(),
                 "§7ID: " + report.getId(),
+                "§7Server: " + serverName,
                 "§8──────────────────",
                 "§eClick to manage (read-only)"
             ));

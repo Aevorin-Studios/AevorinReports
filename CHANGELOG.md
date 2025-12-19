@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4] - 2025-12-19
+
+- **Added Folia Server Software Support**
+- **Made the config.yml cleaner**
+- **Removed Velocity Support**
+- **Added an System for Network Servers**: All servers should run the plugin (proxy excluded) and connect to the same database to share and manage reports across the entire network.
+
 ## [1.0.3] - 2025-10-23
 
 ### New Features

@@ -125,7 +125,7 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
                 .reporterUuid(reporter.getUniqueId())
                 .reportedUuid(plugin.getServer().getOfflinePlayer(targetPlayer).getUniqueId())
                 .reason(category)
-                .serverName(plugin.getServer().getName())
+                .serverName(plugin.getConfigManager().getConfig().getServerName())
                 .status(Report.ReportStatus.PENDING)
                 .isAnonymous(false)
                 .createdAt(now)

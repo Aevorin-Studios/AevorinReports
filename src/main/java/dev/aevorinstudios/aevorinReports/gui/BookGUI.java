@@ -316,24 +316,52 @@ public class BookGUI {
         meta.setTitle("Report Details");
         meta.setAuthor("Server");
 
-        ComponentBuilder page = new ComponentBuilder("§cReport Details\n\n");
-
         // Convert UUIDs to player names
         String reporterName = report.isAnonymous() ? "Anonymous" : 
             PlayerNameResolver.resolvePlayerName(report.getReporter());
         String reportedName = PlayerNameResolver.resolvePlayerName(report.getReported());
         
-        // Add report information
-        page.append("§7Reporter: §a" + reporterName + "\n");
-        page.append("§7Reported: §c" + reportedName + "\n");
-        page.append("§7Reason: §7" + report.getCategory() + "\n");
-        page.append("§7Status: §c" + report.getStatus() + "\n");
-        page.append("§7ID: §0" + report.getId() + "\n\n");
+        // Build components manually to prevent hover bleeding
+        List<BaseComponent> components = new ArrayList<>();
+        
+        // Title
+        components.add(new TextComponent("§cReport Details\n\n"));
+        
+        // Reporter
+        components.add(new TextComponent("§7Reporter: §a" + reporterName + "\n"));
+        
+        // Reported
+        components.add(new TextComponent("§7Reported: §c" + reportedName + "\n"));
+        
+        // Reason with hover - THIS IS THE ONLY COMPONENT WITH HOVER
+        TextComponent reasonLabel = new TextComponent("§c[Reason]");
+        reasonLabel.setHoverEvent(new HoverEvent(
+            HoverEvent.Action.SHOW_TEXT,
+            new ComponentBuilder("§f" + report.getCategory()).create()
+        ));
+        components.add(reasonLabel);
+        
+        // Newline after reason
+        components.add(new TextComponent("\n"));
+        
+        // Status
+        components.add(new TextComponent("§7Status: §c" + report.getStatus() + "\n"));
+        
+        // ID
+        components.add(new TextComponent("§7ID: §0" + report.getId() + "\n"));
+        
+        // Only show server if multiple servers exist
+        if (plugin.getDatabaseManager().hasMultipleServers()) {
+            components.add(new TextComponent("§7Server: §c" + report.getServerName() + "\n"));
+        }
+        
+        // Spacing
+        components.add(new TextComponent("\n"));
 
         // Add status change buttons ONLY if player has permission
         if (player.hasPermission("aevorinreports.manage")) {
             // Add "Click to change status" text
-            page.append("§8Click to change status\n");
+            components.add(new TextComponent("§8Click to change status\n"));
 
             if (report.getStatus() == Report.ReportStatus.PENDING) {
                 // Resolve button
@@ -346,7 +374,7 @@ public class BookGUI {
                     HoverEvent.Action.SHOW_TEXT,
                     new ComponentBuilder("§7Click to mark as resolved").create()
                 ));
-                page.append(resolveButton);
+                components.add(resolveButton);
 
                 // Reject button
                 TextComponent rejectButton = new TextComponent("§c✘ Mark as Rejected\n");
@@ -358,7 +386,7 @@ public class BookGUI {
                     HoverEvent.Action.SHOW_TEXT,
                     new ComponentBuilder("§7Click to mark as rejected").create()
                 ));
-                page.append(rejectButton);
+                components.add(rejectButton);
             } else {
                 // Return to pending button
                 TextComponent pendingButton = new TextComponent("§6⚠ Set as Pending\n");
@@ -370,7 +398,7 @@ public class BookGUI {
                     HoverEvent.Action.SHOW_TEXT,
                     new ComponentBuilder("§7Click to return to pending").create()
                 ));
-                page.append(pendingButton);
+                components.add(pendingButton);
             }
         }
 
@@ -384,9 +412,11 @@ public class BookGUI {
             HoverEvent.Action.SHOW_TEXT,
             new ComponentBuilder("§7Return to report categories").create()
         ));
-        page.append(backButton);
+        components.add(backButton);
 
-        meta.spigot().setPages(page.create());
+        // Convert list to array and set as page
+        BaseComponent[] pageComponents = components.toArray(new BaseComponent[0]);
+        meta.spigot().setPages(pageComponents);
         book.setItemMeta(meta);
         player.openBook(book);
     }
@@ -424,15 +454,25 @@ public class BookGUI {
         infoMeta.setDisplayName("§b§lReport Details");
         infoMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         infoMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        infoMeta.setLore(List.of(
+        
+        // Get server name with fallback
+        String serverName = report.getServerName();
+        if (serverName == null || serverName.isEmpty()) {
+            serverName = "Unknown";
+        }
+        
+        List<String> lore = new ArrayList<>(List.of(
             "§8──────────────────",
             "§7Reporter: §f" + reporterName,
             "§7Reported: §f" + reportedName,
             "§7Reason: §f" + report.getCategory(),
             "§7Status: §f" + report.getStatus(),
             "§7ID: §f" + report.getId(),
-            "§8──────────────────"
+            "§7Server: §f" + serverName
         ));
+        
+        lore.add("§8──────────────────");
+        infoMeta.setLore(lore);
         info.addUnsafeEnchantment(org.bukkit.enchantments.Enchantment.DURABILITY, 1);
         info.setItemMeta(infoMeta);
         

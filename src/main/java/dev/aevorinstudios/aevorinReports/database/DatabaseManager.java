@@ -431,8 +431,72 @@ public class DatabaseManager {
             try (PreparedStatement stmt = conn.prepareStatement(createTokensTable)) {
                 stmt.executeUpdate();
             }
+
+            // Ensure schema is up to date (add missing columns for older databases)
+            ensureTableSchema(conn);
+
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void ensureTableSchema(Connection conn) {
+        try {
+            // Use ResultSetMetaData which is more reliable than DatabaseMetaData across drivers
+            try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM reports WHERE 1=0");
+                 ResultSet rs = ps.executeQuery()) {
+                
+                java.sql.ResultSetMetaData meta = rs.getMetaData();
+                int columnCount = meta.getColumnCount();
+                List<String> columns = new ArrayList<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    columns.add(meta.getColumnName(i).toLowerCase());
+                }
+
+                boolean isSqlite = dataSource.getJdbcUrl().contains("sqlite");
+
+                // Check and add missing columns with detailed logging
+                if (!columns.contains("created_at")) {
+                    System.out.println("[AevorinReports] Column 'created_at' missing. Adding...");
+                    // Use NULL for updated_at to avoid "only one TIMESTAMP with DEFAULT CURRENT_TIMESTAMP" error on older MySQL
+                    addColumn(conn, "reports", "created_at", "TIMESTAMP NULL");
+                }
+                if (!columns.contains("updated_at")) {
+                    System.out.println("[AevorinReports] Column 'updated_at' missing. Adding...");
+                    addColumn(conn, "reports", "updated_at", "TIMESTAMP NULL");
+                }
+                if (!columns.contains("evidence_data")) {
+                    System.out.println("[AevorinReports] Column 'evidence_data' missing. Adding...");
+                    addColumn(conn, "reports", "evidence_data", "TEXT");
+                }
+                if (!columns.contains("coordinates")) {
+                    System.out.println("[AevorinReports] Column 'coordinates' missing. Adding...");
+                    addColumn(conn, "reports", "coordinates", "VARCHAR(64)");
+                }
+                if (!columns.contains("world")) {
+                    System.out.println("[AevorinReports] Column 'world' missing. Adding...");
+                    addColumn(conn, "reports", "world", "VARCHAR(64)");
+                }
+                if (!columns.contains("server_name")) {
+                    System.out.println("[AevorinReports] Column 'server_name' missing. Adding...");
+                    addColumn(conn, "reports", "server_name", "VARCHAR(64) NOT NULL DEFAULT 'survival'");
+                }
+                if (!columns.contains("is_anonymous")) {
+                    System.out.println("[AevorinReports] Column 'is_anonymous' missing. Adding...");
+                    addColumn(conn, "reports", "is_anonymous", isSqlite ? "BOOLEAN DEFAULT 0" : "BOOLEAN DEFAULT 0");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("[AevorinReports] Failed to check/update table schema: " + e.getMessage());
+        }
+    }
+
+    private void addColumn(Connection conn, String table, String column, String type) throws SQLException {
+        String sql = "ALTER TABLE " + table + " ADD COLUMN " + column + " " + type;
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.executeUpdate();
+            System.out.println("[AevorinReports] Added missing column '" + column + "' to table '" + table + "'");
         }
     }
 
@@ -501,5 +565,122 @@ public class DatabaseManager {
         if (dataSource != null && !dataSource.isClosed()) {
             dataSource.close();
         }
+    }
+
+    // Server Registration and Identification
+    public void syncServerIdentity(String token, String currentServerName) {
+        String query = "SELECT server_name FROM server_tokens WHERE token = ?";
+        
+        try (Connection conn = getConnection()) {
+            // Check if this token already exists
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, token);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    boolean tokenExists = rs.next();
+                    
+                    if (tokenExists) {
+                        String dbServerName = rs.getString("server_name");
+                        if (!dbServerName.equals(currentServerName)) {
+                            // Server name changed! Update it.
+                            handleServerRename(conn, token, dbServerName, currentServerName);
+                        }
+                    } else {
+                        // New server registration (Token not in DB)
+                        // Should we check if server name exists?
+                        // If users reinstalled plugin but kept DB, server name might be taken by OLD token
+                        // We will allow duplicates or handle it? UNIQUE constraint on server_name prevents duplicates.
+                        // So we must check if name is taken.
+                        
+                        if (isServerNameTaken(conn, currentServerName)) {
+                             // Name taken by another token. 
+                             // We have a new token (file) but name is old.
+                             // We should probably adopt the OLD token? No, file is authority for "Unique Server Instance".
+                             // BUT if valid valid approach: simple overwrite or error?
+                             // User wants simplicity. Let's delete the old mapping for this name if it exists?
+                             // No, that might break other server history.
+                             // Simple: Just Insert. If fail, log warn.
+                        }
+                        
+                        String insert = "INSERT INTO server_tokens (server_name, token) VALUES (?, ?)";
+                        try (PreparedStatement insertStmt = conn.prepareStatement(insert)) {
+                            insertStmt.setString(1, currentServerName);
+                            insertStmt.setString(2, token);
+                            insertStmt.executeUpdate();
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            // If unique constraint violation on server_name (Token is new, but name exists)
+            // It effectively means: This is a "new" server claiming an existing name.
+            // In a pro system we'd block. Here we assume maybe they deleted the token file but want to be "survival" again.
+            // If so, we should UPDATE the old record with the NEW token?
+            // "If they like delete the plugin configs n shit but database there they can reconnect"
+            // If they delete file, they get new token. They want to be 'survival'.
+            // So we should UPDATE the token for 'survival' to the new one.
+            if (e.getMessage().contains("UNIQUE") || e.getMessage().contains("unique")) {
+                forceUpdateTokenForServer(currentServerName, token);
+            } else {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    private void handleServerRename(Connection conn, String token, String oldName, String newName) throws SQLException {
+        // Update valid token mapping
+        String updateToken = "UPDATE server_tokens SET server_name = ? WHERE token = ?";
+        try (PreparedStatement ps = conn.prepareStatement(updateToken)) {
+            ps.setString(1, newName);
+            ps.setString(2, token);
+            ps.executeUpdate();
+        }
+        
+        // Update all reports
+        String updateReports = "UPDATE reports SET server_name = ? WHERE server_name = ?";
+        try (PreparedStatement ps = conn.prepareStatement(updateReports)) {
+            ps.setString(1, newName);
+            ps.setString(2, oldName);
+            ps.executeUpdate();
+        }
+        
+        System.out.println("[AevorinReports] Server renamed from " + oldName + " to " + newName + ". Historic reports updated.");
+    }
+    
+    private boolean isServerNameTaken(Connection conn, String serverName) throws SQLException {
+        String q = "SELECT 1 FROM server_tokens WHERE server_name = ?";
+        try (PreparedStatement ps = conn.prepareStatement(q)) {
+            ps.setString(1, serverName);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+    
+    private void forceUpdateTokenForServer(String serverName, String newToken) {
+        try (Connection conn = getConnection()) {
+             String update = "UPDATE server_tokens SET token = ? WHERE server_name = ?";
+             try (PreparedStatement ps = conn.prepareStatement(update)) {
+                 ps.setString(1, newToken);
+                 ps.setString(2, serverName);
+                 ps.executeUpdate();
+             }
+             System.out.println("[AevorinReports] Re-registered server '" + serverName + "' with new token.");
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public boolean hasMultipleServers() {
+        String query = "SELECT COUNT(DISTINCT server_name) FROM server_tokens";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1) > 1;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

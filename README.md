@@ -9,6 +9,7 @@
 
 ## Features
 
+- **Cross-Platform Support** — Fully compatible with **Folia**, **Paper**, and **Spigot** servers.
 - **Interactive Admin GUI** — Manage and update reports effortlessly with an intuitive click-based interface.
 - **Player Report History** — Players can view the status of their own reports with `/reports`.
 - **MiniMessage Support** — create beautiful, colorful messages (gradients, hover effects) with full MiniMessage support.
@@ -18,6 +19,7 @@
 - **Custom Reasons** — Players can submit custom reasons via chat if the predefined categories don't fit.
 - **bStats Integration** — Anonymous usage metrics to help improve the plugin.
 - **Database Support** — Supports both **SQLite** (local file) and **MySQL** for cross-server synchronization.
+- **Origin Server Tracking** — Displays which server a report came from (essential for networks).
 - **Optimized Performance** — Async processing and smart caching ensure smooth gameplay.
 
 ---
