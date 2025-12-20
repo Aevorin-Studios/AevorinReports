@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4.1] - 2025-12-20
+
+- **Changed the Book Gui's Reason to be like this: "Reason: Hover to See"**
+- **Fixed a bug where the Book Gui's Status colours were always red instead of their own independent colour**
+
 ## [1.0.4] - 2025-12-19
 
 - **Added Folia Server Software Support**

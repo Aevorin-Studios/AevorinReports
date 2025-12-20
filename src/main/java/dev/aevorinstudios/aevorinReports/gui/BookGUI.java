@@ -259,12 +259,7 @@ public class BookGUI {
             }
 
             String reportedName = PlayerNameResolver.resolvePlayerName(report.getReported());
-            String statusColor = switch(report.getStatus()) {
-                case PENDING -> "§6";
-                case RESOLVED -> "§a";
-                case REJECTED -> "§c";
-                default -> "§7";
-            };
+            String statusColor = getStatusColor(report.getStatus());
             
             TextComponent reportEntry = new TextComponent("§4" + reportNumber + ". §c" + reportedName + " " + statusColor + "(" + report.getStatus() + ")");
             reportEntry.setClickEvent(new ClickEvent(
@@ -333,19 +328,22 @@ public class BookGUI {
         // Reported
         components.add(new TextComponent("§7Reported: §c" + reportedName + "\n"));
         
-        // Reason with hover - THIS IS THE ONLY COMPONENT WITH HOVER
-        TextComponent reasonLabel = new TextComponent("§c[Reason]");
-        reasonLabel.setHoverEvent(new HoverEvent(
+        // Reason label
+        components.add(new TextComponent("§7Reason: "));
+        
+        // Hover part - THIS IS THE ONLY COMPONENT WITH HOVER
+        TextComponent reasonHover = new TextComponent("§cHover to See");
+        reasonHover.setHoverEvent(new HoverEvent(
             HoverEvent.Action.SHOW_TEXT,
             new ComponentBuilder("§f" + report.getCategory()).create()
         ));
-        components.add(reasonLabel);
+        components.add(reasonHover);
         
         // Newline after reason
         components.add(new TextComponent("\n"));
         
         // Status
-        components.add(new TextComponent("§7Status: §c" + report.getStatus() + "\n"));
+        components.add(new TextComponent("§7Status: " + getStatusColor(report.getStatus()) + report.getStatus() + "\n"));
         
         // ID
         components.add(new TextComponent("§7ID: §0" + report.getId() + "\n"));
@@ -466,7 +464,7 @@ public class BookGUI {
             "§7Reporter: §f" + reporterName,
             "§7Reported: §f" + reportedName,
             "§7Reason: §f" + report.getCategory(),
-            "§7Status: §f" + report.getStatus(),
+            "§7Status: " + getStatusColor(report.getStatus()) + report.getStatus(),
             "§7ID: §f" + report.getId(),
             "§7Server: §f" + serverName
         ));
@@ -540,5 +538,14 @@ public class BookGUI {
             }
         }
         player.openInventory(gui);
+    }
+
+    private String getStatusColor(Report.ReportStatus status) {
+        return switch (status) {
+            case PENDING -> "§6";
+            case RESOLVED -> "§a";
+            case REJECTED -> "§c";
+            default -> "§7";
+        };
     }
 }
