@@ -1,0 +1,8 @@
+review:
+  enabled: true
+  auto_review_on:
+    - pull_request_opened
+    - pull_request_synchronized
+  summary: true
+  suggestions: true
+  verbosity: medium
