@@ -106,3 +106,41 @@ messages:
   custom-reason-too-short: "&cYour custom reason is too short! Minimum length: {min} characters"
   custom-reason-too-long: "&cYour custom reason is too long! Maximum length: {max} characters"
   custom-reason-disabled: "&cCustom reasons are currently disabled."
+  
+# Discord Integration Settings
+discord:
+  # Enable Discord bot integration
+  enabled: false
+  # Your Discord bot token
+  bot-token: "YOUR_BOT_TOKEN_HERE"
+  # The ID of the channel where reports will be sent
+  channel-id: "YOUR_CHANNEL_ID_HERE"
+  # The ID of the channel where logs (status changes) will be sent
+  log-channel-id: "YOUR_LOG_CHANNEL_ID_HERE"
+  # Role ID that can manage reports from Discord (optional)
+  # If empty, anyone with MANAGE_SERVER or ADMINISTRATOR permission can manage reports
+  staff-role-id: ""
+  # The color of the /lookup command embed (Hex code)
+  lookup-color: "#00ffff"
+  # Network mode settings (for multi-server setups)
+  network-mode:
+    # Enable network mode - only ONE server in your network should have this enabled
+    # This server will poll the database for new reports from all servers
+    enabled: false
+    # How often to check the database for new reports (in seconds)
+    # Recommended: 5-10 seconds. Lower values = more frequent checks but more database load
+    poll-interval: 10
+  # Bot appearance settings
+  bot-settings:
+    status: "ONLINE"  # ONLINE, IDLE, DND, INVISIBLE
+    activity:
+      type: "WATCHING"  # PLAYING, WATCHING, LISTENING, COMPETING
+      message: "Reports | %online_players% players online"
+  # Notification settings
+  notifications:
+    # Title of the embed sent to Discord
+    title: "New Report (#%id%)"
+    # Color of the embed (Hex code)
+    color: "#ff5555"
+    # Footer of the embed
+    footer: "AevorinReports • %date%"

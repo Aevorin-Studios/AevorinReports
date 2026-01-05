@@ -465,9 +465,12 @@ public class BookGUI {
             "§7Reported: §f" + reportedName,
             "§7Reason: §f" + report.getCategory(),
             "§7Status: " + getStatusColor(report.getStatus()) + report.getStatus(),
-            "§7ID: §f" + report.getId(),
-            "§7Server: §f" + serverName
+            "§7ID: §f" + report.getId()
         ));
+        
+        if (plugin.getDatabaseManager().hasMultipleServers()) {
+            lore.add("§7Server: §f" + serverName);
+        }
         
         lore.add("§8──────────────────");
         infoMeta.setLore(lore);

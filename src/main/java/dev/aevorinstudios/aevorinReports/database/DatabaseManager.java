@@ -203,6 +203,62 @@ public class DatabaseManager {
         return getReportsByStatus(Report.ReportStatus.PENDING);
     }
 
+    /**
+     * Get the highest report ID currently in the database.
+     * @return The maximum report ID, or 0 if no reports exist.
+     */
+    public long getMaxReportId() {
+        String sql = "SELECT MAX(id) FROM reports";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
+     * Get all reports with an ID higher than the specified ID (for network polling)
+     * @param lastId The last ID that was processed
+     * @return List of reports with IDs higher than lastId
+     */
+    public List<Report> getReportsAfterId(long lastId) {
+        String sql = "SELECT * FROM reports WHERE id > ? ORDER BY id ASC";
+        List<Report> reports = new ArrayList<>();
+        
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, lastId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    reports.add(Report.builder()
+                        .id(rs.getLong("id"))
+                        .reporterUuid(UUID.fromString(rs.getString("reporter_uuid")))
+                        .reportedUuid(UUID.fromString(rs.getString("reported_uuid")))
+                        .reason(rs.getString("reason"))
+                        .serverName(rs.getString("server_name"))
+                        .status(Report.ReportStatus.valueOf(rs.getString("status")))
+                        .isAnonymous(rs.getBoolean("is_anonymous"))
+                        .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
+                        .updatedAt(rs.getTimestamp("updated_at").toLocalDateTime())
+                        .evidenceData(rs.getString("evidence_data"))
+                        .coordinates(rs.getString("coordinates"))
+                        .world(rs.getString("world"))
+                        .build());
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to fetch reports after ID", e);
+        }
+        
+        return reports;
+    }
+
     public Report getReport(long id) {
         String sql = "SELECT * FROM reports WHERE id = ?";
         

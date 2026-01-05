@@ -109,17 +109,6 @@ public class ConfigManager {
             }
         }
 
-        // Security Configuration
-        if (yamlConfig.containsKey("security")) {
-            Map<String, Object> security = (Map<String, Object>) yamlConfig.get("security");
-            if (security != null) {
-                config.getSecurity().setMaxFalseReports(Integer.parseInt(String.valueOf(security.getOrDefault("maxFalseReports", 5))));
-                config.getSecurity().setFalseReportBanHours((Integer) security.getOrDefault("falseReportBanHours", 24));
-                config.getSecurity().setMaxReportsBeforeFlag((Integer) security.getOrDefault("maxReportsBeforeFlag", 10));
-                config.getSecurity().setEncryptionKey((String) security.getOrDefault("encryptionKey", ""));
-                config.getSecurity().setEnableTokenAuth((Boolean) security.getOrDefault("enableTokenAuth", true));
-            }
-        }
 
         // Notifications Configuration
         if (yamlConfig.containsKey("notifications")) {
@@ -144,6 +133,50 @@ public class ConfigManager {
                     );
                 }
                 config.setCustomReasons(new HashMap<>(customReasons));
+            }
+        }
+
+        // Discord Configuration
+        if (yamlConfig.containsKey("discord")) {
+            Map<String, Object> discordRaw = (Map<String, Object>) yamlConfig.get("discord");
+            if (discordRaw != null) {
+                config.getDiscord().setEnabled((Boolean) discordRaw.getOrDefault("enabled", false));
+                config.getDiscord().setBotToken((String) discordRaw.getOrDefault("bot-token", ""));
+                config.getDiscord().setChannelId((String) discordRaw.getOrDefault("channel-id", ""));
+                config.getDiscord().setLogChannelId((String) discordRaw.getOrDefault("log-channel-id", ""));
+                config.getDiscord().setStaffRoleId((String) discordRaw.getOrDefault("staff-role-id", ""));
+                config.getDiscord().setLookupColor((String) discordRaw.getOrDefault("lookup-color", "#00ffff"));
+                
+                if (discordRaw.containsKey("bot-settings")) {
+                    Map<String, Object> botRaw = (Map<String, Object>) discordRaw.get("bot-settings");
+                    if (botRaw != null) {
+                        config.getDiscord().getBotSettings().setStatus((String) botRaw.getOrDefault("status", "ONLINE"));
+                        if (botRaw.containsKey("activity")) {
+                            Map<String, Object> activityRaw = (Map<String, Object>) botRaw.get("activity");
+                            if (activityRaw != null) {
+                                config.getDiscord().getBotSettings().getActivity().setType((String) activityRaw.getOrDefault("type", "WATCHING"));
+                                config.getDiscord().getBotSettings().getActivity().setMessage((String) activityRaw.getOrDefault("message", "Reports"));
+                            }
+                        }
+                    }
+                }
+
+                if (discordRaw.containsKey("notifications")) {
+                    Map<String, Object> notifyRaw = (Map<String, Object>) discordRaw.get("notifications");
+                    if (notifyRaw != null) {
+                        config.getDiscord().getNotifications().setTitle((String) notifyRaw.getOrDefault("title", "New Report (#%id%)"));
+                        config.getDiscord().getNotifications().setColor((String) notifyRaw.getOrDefault("color", "#ff5555"));
+                        config.getDiscord().getNotifications().setFooter((String) notifyRaw.getOrDefault("footer", "AevorinReports • %date%"));
+                    }
+                }
+
+                if (discordRaw.containsKey("network-mode")) {
+                    Map<String, Object> networkRaw = (Map<String, Object>) discordRaw.get("network-mode");
+                    if (networkRaw != null) {
+                        config.getDiscord().getNetworkMode().setEnabled((Boolean) networkRaw.getOrDefault("enabled", false));
+                        config.getDiscord().getNetworkMode().setPollInterval(Integer.parseInt(String.valueOf(networkRaw.getOrDefault("poll-interval", 10))));
+                    }
+                }
             }
         }
 
@@ -188,11 +221,6 @@ public class ConfigManager {
                     throw new IllegalStateException("Configuration validation failed: " + e.getMessage(), e);
                 }
                 
-                if (config.getSecurity().getEncryptionKey().isEmpty()) {
-                    config.getSecurity().setEncryptionKey(generateSecureKey());
-                    saveConfig();
-                }
-                
                 logger.info("Configuration loaded successfully");
                 
             } catch (IOException e) {
@@ -202,7 +230,6 @@ public class ConfigManager {
             logger.error("Configuration error: {}", e.getMessage(), e);
             logger.warn("Loading default configuration");
             config = createDefaultConfig();
-            config.getSecurity().setEncryptionKey(generateSecureKey());
             try {
                 saveConfig();
             } catch (Exception ex) {
@@ -213,13 +240,6 @@ public class ConfigManager {
         }
     }
     
-    private String generateSecureKey() {
-        // Generate a secure random key that is guaranteed to be at least 32 characters
-        byte[] key = new byte[48]; // Using 48 bytes to ensure the Base64 encoding is over 32 chars
-        new SecureRandom().nextBytes(key);
-        return Base64.getEncoder().encodeToString(key);
-    }
-    
     public Config getConfig() {
         configLock.readLock().lock();
         try {
@@ -228,25 +248,15 @@ public class ConfigManager {
             configLock.readLock().unlock();
         }
     }
-    
+
     private Config createDefaultConfig() {
         Config defaultConfig = new Config();
-        defaultConfig.getSecurity().setEncryptionKey(generateSecureKey());
         return defaultConfig;
     }
     
     private void validateConfiguration() throws IllegalStateException {
         if (config == null) {
             throw new IllegalStateException("Configuration not loaded");
-        }
-        
-        // Check and fix encryption key if needed
-        if (config.getSecurity().getEncryptionKey() == null || 
-            config.getSecurity().getEncryptionKey().isEmpty() || 
-            config.getSecurity().getEncryptionKey().length() < 32) {
-            logger.warn("Encryption key missing or too short, generating a new secure key");
-            config.getSecurity().setEncryptionKey(generateSecureKey());
-            // Don't throw an exception here, just fix it
         }
         
         if (config.getDatabase().getType().equals("mysql") && 
@@ -256,7 +266,6 @@ public class ConfigManager {
         }
         
         validateDatabaseConfig();
-        validateSecurityConfig();
         validatePerformanceConfig();
         validateReportsConfig();
     }
@@ -278,21 +287,6 @@ public class ConfigManager {
         }
     }
     
-    private void validateSecurityConfig() {
-        Config.SecurityConfig security = config.getSecurity();
-        if (security.getMaxFalseReports() < 0) {
-            logger.warn("Invalid maxFalseReports value, setting to default");
-            security.setMaxFalseReports(5);
-        }
-        if (security.getFalseReportBanHours() < 0) {
-            logger.warn("Invalid falseReportBanHours value, setting to default");
-            security.setFalseReportBanHours(24);
-        }
-        if (security.getMaxReportsBeforeFlag() < 0) {
-            logger.warn("Invalid maxReportsBeforeFlag value, setting to default");
-            security.setMaxReportsBeforeFlag(10);
-        }
-    }
     
     private void validatePerformanceConfig() {
         Config.PerformanceConfig performance = config.getPerformance();
@@ -392,14 +386,6 @@ public class ConfigManager {
         reports.put("logLocation", config.getReports().isLogLocation());
         result.put("reports", reports);
         
-        // Security Configuration
-        Map<String, Object> security = new HashMap<>();
-        security.put("maxFalseReports", config.getSecurity().getMaxFalseReports());
-        security.put("falseReportBanHours", config.getSecurity().getFalseReportBanHours());
-        security.put("maxReportsBeforeFlag", config.getSecurity().getMaxReportsBeforeFlag());
-        security.put("encryptionKey", config.getSecurity().getEncryptionKey());
-        security.put("enableTokenAuth", config.getSecurity().isEnableTokenAuth());
-        result.put("security", security);
         
         // Notifications Configuration
         Map<String, Object> notifications = new HashMap<>();
@@ -424,6 +410,36 @@ public class ConfigManager {
         if (config.getCustomReasons() != null) {
             result.put("customReasons", new HashMap<>(config.getCustomReasons()));
         }
+
+        // Discord Configuration
+        Map<String, Object> discord = new HashMap<>();
+        discord.put("enabled", config.getDiscord().isEnabled());
+        discord.put("bot-token", config.getDiscord().getBotToken());
+        discord.put("channel-id", config.getDiscord().getChannelId());
+        discord.put("log-channel-id", config.getDiscord().getLogChannelId());
+        discord.put("staff-role-id", config.getDiscord().getStaffRoleId());
+        discord.put("lookup-color", config.getDiscord().getLookupColor());
+        
+        Map<String, Object> botSettings = new HashMap<>();
+        botSettings.put("status", config.getDiscord().getBotSettings().getStatus());
+        Map<String, Object> activity = new HashMap<>();
+        activity.put("type", config.getDiscord().getBotSettings().getActivity().getType());
+        activity.put("message", config.getDiscord().getBotSettings().getActivity().getMessage());
+        botSettings.put("activity", activity);
+        discord.put("bot-settings", botSettings);
+
+        Map<String, Object> discordNotify = new HashMap<>();
+        discordNotify.put("title", config.getDiscord().getNotifications().getTitle());
+        discordNotify.put("color", config.getDiscord().getNotifications().getColor());
+        discordNotify.put("footer", config.getDiscord().getNotifications().getFooter());
+        discord.put("notifications", discordNotify);
+
+        Map<String, Object> networkMode = new HashMap<>();
+        networkMode.put("enabled", config.getDiscord().getNetworkMode().isEnabled());
+        networkMode.put("poll-interval", config.getDiscord().getNetworkMode().getPollInterval());
+        discord.put("network-mode", networkMode);
+        
+        result.put("discord", discord);
 
         return result;
     }
@@ -521,10 +537,49 @@ public class ConfigManager {
         private String serverName = "survival";
         private DatabaseConfig database = new DatabaseConfig();
         private ReportsConfig reports = new ReportsConfig();
-        private SecurityConfig security = new SecurityConfig();
         private NotificationsConfig notifications = new NotificationsConfig();
         private PerformanceConfig performance = new PerformanceConfig();
+        private DiscordConfig discord = new DiscordConfig();
         private Map<String, String> customReasons = new HashMap<>();
+
+
+        @Data
+        public static class DiscordConfig {
+            private boolean enabled = false;
+            private String botToken = "";
+            private String channelId = "";
+            private String logChannelId = "";
+            private String staffRoleId = "";
+            private String lookupColor = "#00ffff";
+            private NetworkModeConfig networkMode = new NetworkModeConfig();
+            private DiscordBotSettingsConfig botSettings = new DiscordBotSettingsConfig();
+            private DiscordNotificationsConfig notifications = new DiscordNotificationsConfig();
+
+            @Data
+            public static class NetworkModeConfig {
+                private boolean enabled = false;
+                private int pollInterval = 10;
+            }
+
+            @Data
+            public static class DiscordBotSettingsConfig {
+                private String status = "ONLINE";
+                private ActivityConfig activity = new ActivityConfig();
+
+                @Data
+                public static class ActivityConfig {
+                    private String type = "WATCHING";
+                    private String message = "Reports";
+                }
+            }
+
+            @Data
+            public static class DiscordNotificationsConfig {
+                private String title = "New Report (#%id%)";
+                private String color = "#ff5555";
+                private String footer = "AevorinReports • %date%";
+            }
+        }
 
 
         @Data
@@ -558,14 +613,6 @@ public class ConfigManager {
             private boolean logLocation = true;
         }
 
-        @Data
-        public static class SecurityConfig {
-            private int maxFalseReports = 5;
-            private int falseReportBanHours = 24;
-            private int maxReportsBeforeFlag = 10;
-            private String encryptionKey = "";
-            private boolean enableTokenAuth = true;
-        }
 
         @Data
         public static class NotificationsConfig {

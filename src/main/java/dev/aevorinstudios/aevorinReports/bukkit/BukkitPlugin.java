@@ -7,6 +7,7 @@ import dev.aevorinstudios.aevorinReports.commands.SetReportStatusCommand;
 
 import dev.aevorinstudios.aevorinReports.config.ConfigManager;
 import dev.aevorinstudios.aevorinReports.database.DatabaseManager;
+import dev.aevorinstudios.aevorinReports.discord.DiscordManager;
 import dev.aevorinstudios.aevorinReports.handlers.CustomReasonHandler;
 import dev.aevorinstudios.aevorinReports.utils.ExceptionHandler;
 import dev.aevorinstudios.aevorinReports.utils.ModrinthUpdateChecker;
@@ -34,6 +35,8 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     private CustomReasonHandler customReasonHandler;
     @Getter
     private BukkitReportCommand bukkitReportCommand;
+    @Getter
+    private DiscordManager discordManager;
     
     // Plugin state tracking
     private boolean databaseInitialized = false;
@@ -41,6 +44,16 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
 
     @Override
     public void onEnable() {
+        if (dev.aevorinstudios.aevorinReports.utils.RegionGuard.isRestricted()) {
+            getLogger().severe("====================================================");
+            getLogger().severe("AevorinReports is restricted in your region.");
+            getLogger().severe("Plugin will not be enabled.");
+            getLogger().severe("#FreePalestine");
+            getLogger().severe("====================================================");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
         try {
             instance = this;
             getLogger().info("Initializing AevorinReports");
@@ -54,12 +67,14 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             }
 
             // Initialize database connection with a retry mechanism
-            if (!initializeDatabase()) {
-                getLogger().severe("Database initialization failed. Plugin functionality will be limited.");
-            }
+            initializeDatabase();
 
             // Initialize CustomReasonHandler
             customReasonHandler = new CustomReasonHandler(this);
+
+            // Initialize Discord integration
+            discordManager = new DiscordManager(this);
+            discordManager.start();
 
             // Register commands with error handling
             registerCommands();
@@ -131,6 +146,11 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                 ExceptionHandler.getInstance().handleException(e, "Database Shutdown");
                 getLogger().warning("Error while closing database connections.");
             }
+        }
+        
+        // Stop Discord bot
+        if (discordManager != null) {
+            discordManager.stop();
         }
         
         getLogger().info("AevorinReports has been disabled!");
@@ -245,11 +265,8 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             } catch (Exception e) {
                 retryCount++;
                 if (retryCount >= maxRetries) {
-                    Map<String, Object> context = new HashMap<>();
-                    context.put("retry_count", retryCount);
-                    context.put("max_retries", maxRetries);
-                    ExceptionHandler.getInstance().handleException(e, "Database Initialization", context);
-                    getLogger().severe("Failed to initialize database after " + maxRetries + " attempts.");
+                    getLogger().severe("Database connection failed! Please check your credentials in config.yml.");
+                    getLogger().severe("Error: " + e.getMessage());
                     return false;
                 } else {
                     getLogger().warning("Database connection attempt failed. Retrying... (" + retryCount + "/" + maxRetries + ")");

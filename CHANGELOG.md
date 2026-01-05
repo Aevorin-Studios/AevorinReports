@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4.3] - 2026-01-05
+
+### Discord Network Mode
+- **Network Mode for Multi-Server Setups**: Added a new `network-mode` configuration option for Discord integration.
+  - Only ONE server in your network should enable `discord.network-mode.enabled: true`
+  - This designated server will poll the database for new reports from ALL servers in the network via a reliable ID-based system.
+  - Configurable poll interval (default: 10 seconds).
+  - Perfect for networks where you want centralized Discord notifications without running the bot on every server.
+- **Improved Reliability**: Switched to ID-based tracking to ensure no reports are duplicated or missed, even across server restarts.
+- **Duplication Fix**: Resolved issues where reports on the bot-server could be sent twice.
+
+### General & Security
+- **Region Restriction**: Added a restriction to prevent the plugin from running on servers located in Israel (via IP geolocation and server timezone checks) with a #FreePalestine message.
+- **Improved Database Logs**: Simplified database connection error messages to be cleaner and more readable.
+- **Configuration Cleanup**: Removed unused security and encryption sections for a leaner setup.
+
+## [1.0.4.2] - 2026-01-04
+
+### General
+- **Discord Integration**: Added a robust Discord integration with a dedicated bot.
+- **Improved Database Logs**: Simplified database connection error messages to be cleaner and more readable (no more giant stack traces).
+- **Configuration Cleanup**: Removed the unused "Security" section and encryption key logic for a leaner `config.yml`.
+- **Folia Compatibility**: Ensured all new features, including the Discord bot's background tasks, are fully compatible with Folia servers.
+
+### Discord Integration Features
+- **Dynamic Bot Presence**: Configure the bot's status (Online, Idle, etc.) and activity (Watching, Playing, etc.) with support for the `%online_players%` placeholder.
+- **Real-time Notifications**: Receive beautifully formatted embeds for new reports in your Discord channel.
+- **Slash Commands**:
+    - `/reports`: List all active pending reports.
+    - `/lookup <id>`: View detailed information about a specific report.
+    - `/resolve <id>`, `/reject <id>`, `/pending <id>`: Manage report statuses directly from Discord.
+    - `/help`: Detailed help menu for the bot.
+- **Smart Formatting**: The "Server" field in Discord embeds automatically hides itself if you are only running a single server, matching the in-game behavior.
+- **Customizable Aesthetics**: Independent color settings for report alerts and lookup results in `config.yml`.
+
 ## [1.0.4.1] - 2025-12-20
 
 - **Changed the Book Gui's Reason to be like this: "Reason: Hover to See"**

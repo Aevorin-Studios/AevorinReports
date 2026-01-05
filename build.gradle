@@ -1,10 +1,10 @@
 plugins {
     id 'java'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.gradleup.shadow' version '8.3.0'
 }
 
 group = 'dev.aevorinstudios'
-version = '1.0.4.1'
+version = '1.0.4.3'
 description = 'A comprehensive reporting system for Minecraft servers'
 
 java {
@@ -44,6 +44,11 @@ dependencies {
 
     // Gson (shaded)
     implementation 'com.google.code.gson:gson:2.10.1'
+
+    // JDA (Discord API)
+    implementation ('net.dv8tion:JDA:5.1.2') {
+        exclude group: 'opus-java' // Not needed for a bot that only sends messages/commands
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -72,7 +77,13 @@ shadowJar {
     relocate 'com.zaxxer.hikari', 'dev.aevorinstudios.aevorinreports.libs.hikari'
     relocate 'com.google.gson', 'dev.aevorinstudios.aevorinreports.libs.gson'
     relocate 'org.bstats', 'dev.aevorinstudios.aevorinreports.libs.bstats'
-    minimize() // optional to reduce jar size
+    relocate 'net.dv8tion.jda', 'dev.aevorinstudios.aevorinreports.libs.jda'
+    relocate 'com.neovisionaries.ws', 'dev.aevorinstudios.aevorinreports.libs.neovisionaries'
+    relocate 'com.fasterxml.jackson', 'dev.aevorinstudios.aevorinreports.libs.jackson'
+    relocate 'org.apache.commons.collections4', 'dev.aevorinstudios.aevorinreports.libs.collections4'
+    relocate 'gnu.trove', 'dev.aevorinstudios.aevorinreports.libs.trove'
+    relocate 'okhttp3', 'dev.aevorinstudios.aevorinreports.libs.okhttp3'
+    relocate 'okio', 'dev.aevorinstudios.aevorinreports.libs.okio'
 }
 
 build.dependsOn shadowJar

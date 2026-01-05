@@ -124,9 +124,13 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
         Report report = Report.builder()
                 .reporterUuid(reporter.getUniqueId())
                 .reportedUuid(plugin.getServer().getOfflinePlayer(targetPlayer).getUniqueId())
+                .reporterName(reporter.getName())
+                .reportedPlayerName(targetPlayer)
                 .reason(category)
                 .serverName(plugin.getConfigManager().getConfig().getServerName())
                 .status(Report.ReportStatus.PENDING)
+                .coordinates(String.format("%.1f, %.1f, %.1f", reporter.getLocation().getX(), reporter.getLocation().getY(), reporter.getLocation().getZ()))
+                .world(reporter.getWorld().getName())
                 .isAnonymous(false)
                 .createdAt(now)
                 .updatedAt(now)
@@ -135,6 +139,11 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
         // Save report to database
         DatabaseManager.getInstance().saveReport(report);
         // The report ID is set by the saveReport method
+
+        // Send Discord notification
+        if (plugin.getDiscordManager() != null) {
+            plugin.getDiscordManager().sendReportNotification(report);
+        }
 
         // Notify staff members with permission
         String notificationFormat = plugin.getConfig().getString("messages.report-notification", "&b{reporter} &7has reported &b{reported} &7for &b{category}&7.");
