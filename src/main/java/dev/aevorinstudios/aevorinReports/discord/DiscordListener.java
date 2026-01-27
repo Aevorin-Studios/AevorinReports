@@ -34,6 +34,13 @@ public class DiscordListener extends ListenerAdapter {
             return;
         }
 
+        if (plugin.getDatabaseManager() == null) {
+            event.reply(
+                    "The report database is currently unavailable. Please contact an administrator or check the server console.")
+                    .setEphemeral(true).queue();
+            return;
+        }
+
         switch (event.getName()) {
             case "resolve" -> handleSetStatusSlash(event, Report.ReportStatus.RESOLVED);
             case "reject" -> handleSetStatusSlash(event, Report.ReportStatus.REJECTED);
@@ -69,7 +76,8 @@ public class DiscordListener extends ListenerAdapter {
         }
 
         if (report.getStatus() == status) {
-            event.reply("Report #" + id + " is already " + status.name().toLowerCase() + ".").setEphemeral(true).queue();
+            event.reply("Report #" + id + " is already " + status.name().toLowerCase() + ".").setEphemeral(true)
+                    .queue();
             return;
         }
 
@@ -80,8 +88,10 @@ public class DiscordListener extends ListenerAdapter {
         // Professional Embed for the Ephemeral success message
         EmbedBuilder successEmbed = new EmbedBuilder()
                 .setTitle("Report Updated")
-                .setDescription("Successfully updated Report **#" + id + "** to **" + status.name().toLowerCase() + "**.")
-                .setColor(status == Report.ReportStatus.RESOLVED ? Color.GREEN : (status == Report.ReportStatus.REJECTED ? Color.RED : Color.ORANGE));
+                .setDescription(
+                        "Successfully updated Report **#" + id + "** to **" + status.name().toLowerCase() + "**.")
+                .setColor(status == Report.ReportStatus.RESOLVED ? Color.GREEN
+                        : (status == Report.ReportStatus.REJECTED ? Color.RED : Color.ORANGE));
 
         event.replyEmbeds(successEmbed.build()).setEphemeral(true).queue();
 
@@ -105,7 +115,8 @@ public class DiscordListener extends ListenerAdapter {
         Color color = Color.CYAN;
         try {
             color = Color.decode(colorHex);
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
 
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("Report Details: #" + id)
@@ -118,8 +129,12 @@ public class DiscordListener extends ListenerAdapter {
         }
 
         embed.addField("Status", report.getStatus().name(), true)
-                .addField("Location", (report.getWorld() != null ? report.getWorld() : "Unknown") + " (" + (report.getCoordinates() != null ? report.getCoordinates() : "Unknown") + ")", false)
-                .addField("Submitted At", report.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), false)
+                .addField("Location",
+                        (report.getWorld() != null ? report.getWorld() : "Unknown") + " ("
+                                + (report.getCoordinates() != null ? report.getCoordinates() : "Unknown") + ")",
+                        false)
+                .addField("Submitted At",
+                        report.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), false)
                 .setColor(color);
 
         event.replyEmbeds(embed.build()).setEphemeral(true).queue();
@@ -140,8 +155,9 @@ public class DiscordListener extends ListenerAdapter {
         StringBuilder sb = new StringBuilder();
         for (Report report : activeReports) {
             String reported = PlayerNameResolver.resolvePlayerName(report.getReportedUuid());
-            sb.append("`#").append(report.getId()).append("` - **").append(reported).append("** (").append(report.getReason()).append(")\n");
-            
+            sb.append("`#").append(report.getId()).append("` - **").append(reported).append("** (")
+                    .append(report.getReason()).append(")\n");
+
             if (sb.length() > 1800) {
                 sb.append("*...and more*");
                 break;
@@ -153,13 +169,16 @@ public class DiscordListener extends ListenerAdapter {
     }
 
     private boolean hasPermission(Member member) {
-        if (member == null) return false;
-        if (member.hasPermission(Permission.ADMINISTRATOR) || member.hasPermission(Permission.MANAGE_SERVER)) return true;
+        if (member == null)
+            return false;
+        if (member.hasPermission(Permission.ADMINISTRATOR) || member.hasPermission(Permission.MANAGE_SERVER))
+            return true;
 
         String roleId = plugin.getConfig().getString("discord.staff-role-id");
         if (roleId != null && !roleId.isEmpty()) {
             for (Role role : member.getRoles()) {
-                if (role.getId().equals(roleId)) return true;
+                if (role.getId().equals(roleId))
+                    return true;
             }
         }
 

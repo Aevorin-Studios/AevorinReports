@@ -45,7 +45,8 @@ public class DiscordManager {
     }
 
     public void start() {
-        if (!enabled) return;
+        if (!enabled)
+            return;
 
         String token = plugin.getConfig().getString("discord.bot-token");
         if (token == null || token.isEmpty() || token.equals("YOUR_BOT_TOKEN_HERE")) {
@@ -59,10 +60,10 @@ public class DiscordManager {
                     .addEventListeners(new DiscordListener(plugin))
                     .build();
             jda.awaitReady();
-            
+
             // Set initial Presence
             updatePresence();
-            
+
             // Folia compatible scheduler (Java Executor)
             scheduler = Executors.newSingleThreadScheduledExecutor();
             presenceTask = scheduler.scheduleAtFixedRate(this::updatePresence, 5, 5, TimeUnit.MINUTES);
@@ -74,17 +75,24 @@ public class DiscordManager {
 
             // Register Slash Commands
             jda.updateCommands().addCommands(
-                net.dv8tion.jda.api.interactions.commands.build.Commands.slash("resolve", "Resolve a report")
-                    .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.INTEGER, "id", "The Report ID", true),
-                net.dv8tion.jda.api.interactions.commands.build.Commands.slash("reject", "Reject a report")
-                    .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.INTEGER, "id", "The Report ID", true),
-                net.dv8tion.jda.api.interactions.commands.build.Commands.slash("pending", "Set report status back to pending")
-                    .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.INTEGER, "id", "The Report ID", true),
-                net.dv8tion.jda.api.interactions.commands.build.Commands.slash("lookup", "Lookup detailed information about a report")
-                    .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.INTEGER, "id", "The Report ID", true),
-                net.dv8tion.jda.api.interactions.commands.build.Commands.slash("reports", "List all active reports"),
-                net.dv8tion.jda.api.interactions.commands.build.Commands.slash("help", "Show the help menu")
-            ).queue();
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("resolve", "Resolve a report")
+                            .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.INTEGER, "id",
+                                    "The Report ID", true),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("reject", "Reject a report")
+                            .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.INTEGER, "id",
+                                    "The Report ID", true),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands
+                            .slash("pending", "Set report status back to pending")
+                            .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.INTEGER, "id",
+                                    "The Report ID", true),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands
+                            .slash("lookup", "Lookup detailed information about a report")
+                            .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.INTEGER, "id",
+                                    "The Report ID", true),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("reports",
+                            "List all active reports"),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("help", "Show the help menu"))
+                    .queue();
 
             plugin.getLogger().info("Discord bot successfully started and commands registered!");
         } catch (IllegalStateException e) {
@@ -96,26 +104,38 @@ public class DiscordManager {
                 plugin.getLogger().severe("Link: https://discord.com/developers/applications");
                 plugin.getLogger().severe("--------------------------------------------------");
             } else {
-                plugin.getLogger().log(Level.SEVERE, "Failed to start Discord bot: " + e.getMessage());
+                plugin.getLogger().severe("Failed to initialize Discord bot: " + e.getMessage());
             }
         } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Unexpected error starting Discord bot: " + e.getMessage(), e);
+            plugin.getLogger().severe("--------------------------------------------------");
+            plugin.getLogger().severe("UNEXPECTED ERROR STARTING DISCORD BOT");
+            plugin.getLogger().severe("Error: " + e.getMessage());
+
+            if (plugin.getConfig().getBoolean("debug.enabled", false)) {
+                plugin.getLogger().log(Level.SEVERE, "Stack trace for support:", e);
+            } else {
+                plugin.getLogger().severe("Enable 'debug.enabled' in config.yml for the full stack trace.");
+            }
+            plugin.getLogger().severe("--------------------------------------------------");
         }
     }
 
     private void updatePresence() {
-        if (jda == null) return;
-        
-        ConfigManager.Config.DiscordConfig.DiscordBotSettingsConfig settings = plugin.getConfigManager().getConfig().getDiscord().getBotSettings();
-        
+        if (jda == null)
+            return;
+
+        ConfigManager.Config.DiscordConfig.DiscordBotSettingsConfig settings = plugin.getConfigManager().getConfig()
+                .getDiscord().getBotSettings();
+
         // Status
         OnlineStatus status = OnlineStatus.fromKey(settings.getStatus().toLowerCase());
-        if (status == OnlineStatus.UNKNOWN) status = OnlineStatus.ONLINE;
-        
+        if (status == OnlineStatus.UNKNOWN)
+            status = OnlineStatus.ONLINE;
+
         // Activity
         String message = settings.getActivity().getMessage()
                 .replace("%online_players%", String.valueOf(Bukkit.getOnlinePlayers().size()));
-        
+
         String typeStr = settings.getActivity().getType().toUpperCase();
         Activity activity = switch (typeStr) {
             case "PLAYING" -> Activity.playing(message);
@@ -123,7 +143,7 @@ public class DiscordManager {
             case "COMPETING" -> Activity.competing(message);
             default -> Activity.watching(message);
         };
-        
+
         jda.getPresence().setPresence(status, activity);
     }
 
@@ -143,36 +163,45 @@ public class DiscordManager {
     }
 
     private void startNetworkPolling() {
+        dev.aevorinstudios.aevorinReports.database.DatabaseManager db = plugin.getDatabaseManager();
+        if (db == null) {
+            throw new IllegalStateException(
+                    "Database manager is not initialized. Discord network mode requires a working database connection.");
+        }
+
         // Initialize with high current ID so we only poll for NEW reports
-        lastReportId = plugin.getDatabaseManager().getMaxReportId();
+        lastReportId = db.getMaxReportId();
         int pollInterval = plugin.getConfigManager().getConfig().getDiscord().getNetworkMode().getPollInterval();
-        
-        plugin.getLogger().info("[Discord] Network mode enabled - polling database every " + pollInterval + " seconds (Starting from ID: " + lastReportId + ")");
-        
+
+        plugin.getLogger().info("[Discord] Network mode enabled - polling database every " + pollInterval
+                + " seconds (Starting from ID: " + lastReportId + ")");
+
         pollTask = scheduler.scheduleAtFixedRate(this::pollForNewReports, pollInterval, pollInterval, TimeUnit.SECONDS);
     }
 
     private void pollForNewReports() {
         try {
-            List<dev.aevorinstudios.aevorinReports.reports.Report> newReports = 
-                plugin.getDatabaseManager().getReportsAfterId(lastReportId);
-            
+            List<dev.aevorinstudios.aevorinReports.reports.Report> newReports = plugin.getDatabaseManager()
+                    .getReportsAfterId(lastReportId);
+
             for (dev.aevorinstudios.aevorinReports.reports.Report report : newReports) {
                 // Update tracker immediately to the highest ID processed
                 if (report.getId() > lastReportId) {
                     lastReportId = report.getId();
                 }
-                
+
                 // Resolve player names before sending
-                String reporterName = dev.aevorinstudios.aevorinReports.utils.PlayerNameResolver.resolvePlayerName(report.getReporterUuid());
-                String reportedName = dev.aevorinstudios.aevorinReports.utils.PlayerNameResolver.resolvePlayerName(report.getReportedUuid());
-                
+                String reporterName = dev.aevorinstudios.aevorinReports.utils.PlayerNameResolver
+                        .resolvePlayerName(report.getReporterUuid());
+                String reportedName = dev.aevorinstudios.aevorinReports.utils.PlayerNameResolver
+                        .resolvePlayerName(report.getReportedUuid());
+
                 report.setReporterName(reporterName);
                 report.setReportedPlayerName(reportedName);
-                
+
                 sendReportEmbed(report);
             }
-            
+
             if (!newReports.isEmpty()) {
                 plugin.getLogger().info("[Discord] Polled and sent " + newReports.size() + " new report(s) to Discord");
             }
@@ -195,7 +224,8 @@ public class DiscordManager {
     }
 
     private void sendReportEmbed(Report report) {
-        if (!enabled || jda == null || channelId == null || channelId.isEmpty()) return;
+        if (!enabled || jda == null || channelId == null || channelId.isEmpty())
+            return;
 
         TextChannel channel = jda.getTextChannelById(channelId);
         if (channel == null) {
@@ -205,18 +235,20 @@ public class DiscordManager {
 
         String title = plugin.getConfig().getString("discord.notifications.title", "New Report (#%id%)")
                 .replace("%id%", String.valueOf(report.getId()));
-        
+
         String colorHex = plugin.getConfig().getString("discord.notifications.color", "#ff5555");
         Color color = Color.RED;
         try {
             color = Color.decode(colorHex);
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
 
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle(title)
                 .setColor(color)
                 .addField("Reporter", report.getReporterName() != null ? report.getReporterName() : "Unknown", true)
-                .addField("Reported", report.getReportedPlayerName() != null ? report.getReportedPlayerName() : "Unknown", true)
+                .addField("Reported",
+                        report.getReportedPlayerName() != null ? report.getReportedPlayerName() : "Unknown", true)
                 .addField("ID", "#" + report.getId(), true)
                 .addField("Reason", "```" + report.getReason() + "```", false);
 
@@ -224,7 +256,8 @@ public class DiscordManager {
             embed.addField("Server", "`" + report.getServerName() + "`", true);
         }
 
-        embed.addField("Location", "`" + (report.getWorld() != null ? report.getWorld() : "Unknown") + "` (" + (report.getCoordinates() != null ? report.getCoordinates() : "Unknown") + ")", true);
+        embed.addField("Location", "`" + (report.getWorld() != null ? report.getWorld() : "Unknown") + "` ("
+                + (report.getCoordinates() != null ? report.getCoordinates() : "Unknown") + ")", true);
 
         String footer = plugin.getConfig().getString("discord.notifications.footer", "AevorinReports • %date%")
                 .replace("%date%", report.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -234,7 +267,8 @@ public class DiscordManager {
     }
 
     public void sendLogUpdate(Report report, String adminName) {
-        if (!enabled || jda == null || logChannelId == null || logChannelId.isEmpty()) return;
+        if (!enabled || jda == null || logChannelId == null || logChannelId.isEmpty())
+            return;
 
         TextChannel channel = jda.getTextChannelById(logChannelId);
         if (channel == null) {
@@ -251,7 +285,8 @@ public class DiscordManager {
 
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("Report Updated")
-                .setDescription("Report **#" + report.getId() + "** has been **" + status.name().toLowerCase() + "** by " + adminName + ".")
+                .setDescription("Report **#" + report.getId() + "** has been **" + status.name().toLowerCase()
+                        + "** by " + adminName + ".")
                 .setColor(color);
 
         channel.sendMessageEmbeds(embed.build()).queue();

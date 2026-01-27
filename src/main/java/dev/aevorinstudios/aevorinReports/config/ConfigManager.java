@@ -25,10 +25,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ConfigManager {
     private static final Logger logger = LoggerFactory.getLogger(ConfigManager.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    
+
     private static volatile ConfigManager instance;
     private static final ReentrantReadWriteLock configLock = new ReentrantReadWriteLock();
-    
+
     private final Path configPath;
     private Config config;
 
@@ -36,7 +36,7 @@ public class ConfigManager {
         this.configPath = dataDirectory.resolve("config.yml");
         loadConfig();
     }
-    
+
     public static ConfigManager initialize(Path dataDirectory) {
         if (instance == null) {
             synchronized (ConfigManager.class) {
@@ -47,7 +47,7 @@ public class ConfigManager {
         }
         return instance;
     }
-    
+
     public static ConfigManager getInstance() {
         if (instance == null) {
             throw new IllegalStateException("ConfigManager has not been initialized. Call initialize() first.");
@@ -58,8 +58,9 @@ public class ConfigManager {
     @SuppressWarnings("unchecked")
     private Config convertYamlToConfig(Map<String, Object> yamlConfig) {
         Config config = new Config();
-        
-        if (yamlConfig == null) return config;
+
+        if (yamlConfig == null)
+            return config;
 
         // Server Configuration
         if (yamlConfig.containsKey("server-name")) {
@@ -73,14 +74,16 @@ public class ConfigManager {
             Map<String, Object> db = (Map<String, Object>) yamlConfig.get("database");
             if (db != null) {
                 config.getDatabase().setType((String) db.getOrDefault("type", "file"));
-                
+
                 // MySQL Config
                 if (db.containsKey("mysql")) {
                     Map<String, Object> mysql = (Map<String, Object>) db.get("mysql");
                     if (mysql != null) {
                         config.getDatabase().getMysql().setHost((String) mysql.getOrDefault("host", "localhost"));
-                        config.getDatabase().getMysql().setPort(Integer.parseInt(String.valueOf(mysql.getOrDefault("port", 3306))));
-                        config.getDatabase().getMysql().setDatabase((String) mysql.getOrDefault("database", "aevorinreports"));
+                        config.getDatabase().getMysql()
+                                .setPort(Integer.parseInt(String.valueOf(mysql.getOrDefault("port", 3306))));
+                        config.getDatabase().getMysql()
+                                .setDatabase((String) mysql.getOrDefault("database", "aevorinreports"));
                         config.getDatabase().getMysql().setUsername((String) mysql.getOrDefault("username", "root"));
                         config.getDatabase().getMysql().setPassword((String) mysql.getOrDefault("password", ""));
                     }
@@ -90,7 +93,8 @@ public class ConfigManager {
                 if (db.containsKey("file")) {
                     Map<String, Object> file = (Map<String, Object>) db.get("file");
                     if (file != null) {
-                        config.getDatabase().getFile().setPath((String) file.getOrDefault("path", "database/reports.db"));
+                        config.getDatabase().getFile()
+                                .setPath((String) file.getOrDefault("path", "database/reports.db"));
                     }
                 }
             }
@@ -100,24 +104,28 @@ public class ConfigManager {
         if (yamlConfig.containsKey("reports")) {
             Map<String, Object> reports = (Map<String, Object>) yamlConfig.get("reports");
             if (reports != null) {
-                config.getReports().setCooldownSeconds((Integer) reports.getOrDefault("cooldownSeconds", 300));
-                config.getReports().setAllowAnonymousReports((Boolean) reports.getOrDefault("allowAnonymousReports", true));
-                config.getReports().setMaxActiveReportsPerPlayer((Integer) reports.getOrDefault("maxActiveReportsPerPlayer", 3));
-                config.getReports().setChatHistoryLines((Integer) reports.getOrDefault("chatHistoryLines", 50));
+                config.getReports().setCooldownSeconds((Integer) reports.getOrDefault("cooldown", 300));
+                config.getReports().setAllowAnonymousReports((Boolean) reports.getOrDefault("allow-anonymous", true));
+                config.getReports()
+                        .setMaxActiveReportsPerPlayer((Integer) reports.getOrDefault("max-active-reports", 3));
+                config.getReports().setChatHistoryLines((Integer) reports.getOrDefault("chat-history-lines", 50));
                 config.getReports().setLogInventory((Boolean) reports.getOrDefault("logInventory", true));
                 config.getReports().setLogLocation((Boolean) reports.getOrDefault("logLocation", true));
             }
         }
 
-
         // Notifications Configuration
         if (yamlConfig.containsKey("notifications")) {
             Map<String, Object> notifications = (Map<String, Object>) yamlConfig.get("notifications");
             if (notifications != null) {
-                config.getNotifications().setEnableChatNotifications((Boolean) notifications.getOrDefault("enableChatNotifications", true));
-                config.getNotifications().setEnableTitleNotifications((Boolean) notifications.getOrDefault("enableTitleNotifications", true));
-                config.getNotifications().setEnableSoundNotifications((Boolean) notifications.getOrDefault("enableSoundNotifications", true));
-                config.getNotifications().setNotificationSound((String) notifications.getOrDefault("notificationSound", "BLOCK_NOTE_BLOCK_PLING"));
+                config.getNotifications().setEnableChatNotifications(
+                        (Boolean) notifications.getOrDefault("enableChatNotifications", true));
+                config.getNotifications().setEnableTitleNotifications(
+                        (Boolean) notifications.getOrDefault("enableTitleNotifications", true));
+                config.getNotifications().setEnableSoundNotifications(
+                        (Boolean) notifications.getOrDefault("enableSoundNotifications", true));
+                config.getNotifications().setNotificationSound(
+                        (String) notifications.getOrDefault("notificationSound", "BLOCK_NOTE_BLOCK_PLING"));
             }
         }
 
@@ -128,9 +136,8 @@ public class ConfigManager {
             if (customReasonsRaw != null) {
                 for (Map.Entry<?, ?> entry : customReasonsRaw.entrySet()) {
                     customReasons.put(
-                        String.valueOf(entry.getKey()), 
-                        String.valueOf(entry.getValue())
-                    );
+                            String.valueOf(entry.getKey()),
+                            String.valueOf(entry.getValue()));
                 }
                 config.setCustomReasons(new HashMap<>(customReasons));
             }
@@ -146,16 +153,19 @@ public class ConfigManager {
                 config.getDiscord().setLogChannelId((String) discordRaw.getOrDefault("log-channel-id", ""));
                 config.getDiscord().setStaffRoleId((String) discordRaw.getOrDefault("staff-role-id", ""));
                 config.getDiscord().setLookupColor((String) discordRaw.getOrDefault("lookup-color", "#00ffff"));
-                
+
                 if (discordRaw.containsKey("bot-settings")) {
                     Map<String, Object> botRaw = (Map<String, Object>) discordRaw.get("bot-settings");
                     if (botRaw != null) {
-                        config.getDiscord().getBotSettings().setStatus((String) botRaw.getOrDefault("status", "ONLINE"));
+                        config.getDiscord().getBotSettings()
+                                .setStatus((String) botRaw.getOrDefault("status", "ONLINE"));
                         if (botRaw.containsKey("activity")) {
                             Map<String, Object> activityRaw = (Map<String, Object>) botRaw.get("activity");
                             if (activityRaw != null) {
-                                config.getDiscord().getBotSettings().getActivity().setType((String) activityRaw.getOrDefault("type", "WATCHING"));
-                                config.getDiscord().getBotSettings().getActivity().setMessage((String) activityRaw.getOrDefault("message", "Reports"));
+                                config.getDiscord().getBotSettings().getActivity()
+                                        .setType((String) activityRaw.getOrDefault("type", "WATCHING"));
+                                config.getDiscord().getBotSettings().getActivity()
+                                        .setMessage((String) activityRaw.getOrDefault("message", "Reports"));
                             }
                         }
                     }
@@ -164,17 +174,22 @@ public class ConfigManager {
                 if (discordRaw.containsKey("notifications")) {
                     Map<String, Object> notifyRaw = (Map<String, Object>) discordRaw.get("notifications");
                     if (notifyRaw != null) {
-                        config.getDiscord().getNotifications().setTitle((String) notifyRaw.getOrDefault("title", "New Report (#%id%)"));
-                        config.getDiscord().getNotifications().setColor((String) notifyRaw.getOrDefault("color", "#ff5555"));
-                        config.getDiscord().getNotifications().setFooter((String) notifyRaw.getOrDefault("footer", "AevorinReports • %date%"));
+                        config.getDiscord().getNotifications()
+                                .setTitle((String) notifyRaw.getOrDefault("title", "New Report (#%id%)"));
+                        config.getDiscord().getNotifications()
+                                .setColor((String) notifyRaw.getOrDefault("color", "#ff5555"));
+                        config.getDiscord().getNotifications()
+                                .setFooter((String) notifyRaw.getOrDefault("footer", "AevorinReports • %date%"));
                     }
                 }
 
                 if (discordRaw.containsKey("network-mode")) {
                     Map<String, Object> networkRaw = (Map<String, Object>) discordRaw.get("network-mode");
                     if (networkRaw != null) {
-                        config.getDiscord().getNetworkMode().setEnabled((Boolean) networkRaw.getOrDefault("enabled", false));
-                        config.getDiscord().getNetworkMode().setPollInterval(Integer.parseInt(String.valueOf(networkRaw.getOrDefault("poll-interval", 10))));
+                        config.getDiscord().getNetworkMode()
+                                .setEnabled((Boolean) networkRaw.getOrDefault("enabled", false));
+                        config.getDiscord().getNetworkMode().setPollInterval(
+                                Integer.parseInt(String.valueOf(networkRaw.getOrDefault("poll-interval", 10))));
                     }
                 }
             }
@@ -192,37 +207,37 @@ public class ConfigManager {
                 saveConfig();
                 return;
             }
-            
+
             logger.info("Loading configuration from {}", configPath);
             try (InputStream inputStream = Files.newInputStream(configPath)) {
                 LoaderOptions loaderOptions = new LoaderOptions();
                 loaderOptions.setAllowDuplicateKeys(false);
                 loaderOptions.setMaxAliasesForCollections(50);
-                
+
                 Yaml yaml = new Yaml(new SafeConstructor(loaderOptions));
                 Object loadedYaml = yaml.load(inputStream);
-                
+
                 if (!(loadedYaml instanceof Map)) {
                     throw new IllegalStateException("Invalid configuration format: Root element must be a mapping");
                 }
-                
+
                 @SuppressWarnings("unchecked")
                 Map<String, Object> yamlConfig = (Map<String, Object>) loadedYaml;
-                
+
                 try {
                     config = convertYamlToConfig(yamlConfig);
                 } catch (Exception e) {
                     throw new IllegalStateException("Failed to convert configuration: " + e.getMessage(), e);
                 }
-                
+
                 try {
                     validateConfiguration();
                 } catch (Exception e) {
                     throw new IllegalStateException("Configuration validation failed: " + e.getMessage(), e);
                 }
-                
+
                 logger.info("Configuration loaded successfully");
-                
+
             } catch (IOException e) {
                 throw new IllegalStateException("Failed to read configuration file: " + e.getMessage(), e);
             }
@@ -239,7 +254,7 @@ public class ConfigManager {
             configLock.writeLock().unlock();
         }
     }
-    
+
     public Config getConfig() {
         configLock.readLock().lock();
         try {
@@ -253,23 +268,23 @@ public class ConfigManager {
         Config defaultConfig = new Config();
         return defaultConfig;
     }
-    
+
     private void validateConfiguration() throws IllegalStateException {
         if (config == null) {
             throw new IllegalStateException("Configuration not loaded");
         }
-        
-        if (config.getDatabase().getType().equals("mysql") && 
-            (config.getDatabase().getMysql().getPassword().isEmpty() || 
-             config.getDatabase().getMysql().getUsername().isEmpty())) {
+
+        if (config.getDatabase().getType().equals("mysql") &&
+                (config.getDatabase().getMysql().getPassword().isEmpty() ||
+                        config.getDatabase().getMysql().getUsername().isEmpty())) {
             throw new IllegalStateException("MySQL credentials must be provided");
         }
-        
+
         validateDatabaseConfig();
         validatePerformanceConfig();
         validateReportsConfig();
     }
-    
+
     private void validateDatabaseConfig() {
         Config.DatabaseConfig db = config.getDatabase();
         if (!"mysql".equals(db.getType()) && !"file".equals(db.getType())) {
@@ -286,8 +301,7 @@ public class ConfigManager {
             }
         }
     }
-    
-    
+
     private void validatePerformanceConfig() {
         Config.PerformanceConfig performance = config.getPerformance();
         if (performance.getCacheDuration() < 0) {
@@ -311,7 +325,7 @@ public class ConfigManager {
             performance.setCacheCleanupInterval(30);
         }
     }
-    
+
     private void validateReportsConfig() {
         Config.ReportsConfig reports = config.getReports();
         if (reports.getCooldownSeconds() < 0) {
@@ -334,13 +348,13 @@ public class ConfigManager {
             DumperOptions options = new DumperOptions();
             options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
             options.setPrettyFlow(true);
-            
+
             Yaml yaml = new Yaml(options);
             Map<String, Object> configMap = convertConfigToYaml();
-            
+
             Files.createDirectories(configPath.getParent());
             Files.writeString(configPath, yaml.dump(configMap));
-            
+
             logger.info("Configuration saved successfully to {}", configPath);
         } catch (IOException e) {
             logger.error("Failed to save configuration: {}", e.getMessage(), e);
@@ -348,18 +362,18 @@ public class ConfigManager {
             configLock.writeLock().unlock();
         }
     }
-    
+
     @SuppressWarnings("unchecked")
     private Map<String, Object> convertConfigToYaml() {
         Map<String, Object> result = new HashMap<>();
-        
+
         // Server Configuration
         result.put("server-name", config.getServerName());
-        
+
         // Database Configuration
         Map<String, Object> database = new HashMap<>();
         database.put("type", config.getDatabase().getType());
-        
+
         // MySQL Config
         Map<String, Object> mysql = new HashMap<>();
         mysql.put("host", config.getDatabase().getMysql().getHost());
@@ -368,25 +382,24 @@ public class ConfigManager {
         mysql.put("username", config.getDatabase().getMysql().getUsername());
         mysql.put("password", config.getDatabase().getMysql().getPassword());
         database.put("mysql", mysql);
-        
+
         // File Storage Config
         Map<String, Object> file = new HashMap<>();
         file.put("path", config.getDatabase().getFile().getPath());
         database.put("file", file);
-        
+
         result.put("database", database);
-        
+
         // Reports Configuration
         Map<String, Object> reports = new HashMap<>();
-        reports.put("cooldownSeconds", config.getReports().getCooldownSeconds());
-        reports.put("allowAnonymousReports", config.getReports().isAllowAnonymousReports());
-        reports.put("maxActiveReportsPerPlayer", config.getReports().getMaxActiveReportsPerPlayer());
-        reports.put("chatHistoryLines", config.getReports().getChatHistoryLines());
+        reports.put("cooldown", config.getReports().getCooldownSeconds());
+        reports.put("allow-anonymous", config.getReports().isAllowAnonymousReports());
+        reports.put("max-active-reports", config.getReports().getMaxActiveReportsPerPlayer());
+        reports.put("chat-history-lines", config.getReports().getChatHistoryLines());
         reports.put("logInventory", config.getReports().isLogInventory());
         reports.put("logLocation", config.getReports().isLogLocation());
         result.put("reports", reports);
-        
-        
+
         // Notifications Configuration
         Map<String, Object> notifications = new HashMap<>();
         notifications.put("enableChatNotifications", config.getNotifications().isEnableChatNotifications());
@@ -394,7 +407,7 @@ public class ConfigManager {
         notifications.put("enableSoundNotifications", config.getNotifications().isEnableSoundNotifications());
         notifications.put("notificationSound", config.getNotifications().getNotificationSound());
         result.put("notifications", notifications);
-        
+
         // Performance Configuration
         Map<String, Object> performance = new HashMap<>();
         performance.put("enableCaching", config.getPerformance().isEnableCaching());
@@ -419,7 +432,7 @@ public class ConfigManager {
         discord.put("log-channel-id", config.getDiscord().getLogChannelId());
         discord.put("staff-role-id", config.getDiscord().getStaffRoleId());
         discord.put("lookup-color", config.getDiscord().getLookupColor());
-        
+
         Map<String, Object> botSettings = new HashMap<>();
         botSettings.put("status", config.getDiscord().getBotSettings().getStatus());
         Map<String, Object> activity = new HashMap<>();
@@ -438,7 +451,7 @@ public class ConfigManager {
         networkMode.put("enabled", config.getDiscord().getNetworkMode().isEnabled());
         networkMode.put("poll-interval", config.getDiscord().getNetworkMode().getPollInterval());
         discord.put("network-mode", networkMode);
-        
+
         result.put("discord", discord);
 
         return result;
@@ -446,11 +459,12 @@ public class ConfigManager {
 
     public @Nullable String getMessage(String key) {
         // Return a proper message based on the key
-        // This is a placeholder implementation - in a real scenario, this would retrieve from a messages file
+        // This is a placeholder implementation - in a real scenario, this would
+        // retrieve from a messages file
         if (key == null) {
             return "";
         }
-        
+
         // Default messages for common keys
         Map<String, String> defaultMessages = new HashMap<>();
         defaultMessages.put("messages.book.main-title", "Report Management");
@@ -462,7 +476,7 @@ public class ConfigManager {
         defaultMessages.put("messages.errors.player-only", "This command is for players only.");
         defaultMessages.put("messages.errors.no-permission", "You don't have permission to use this command.");
         defaultMessages.put("messages.errors.invalid-group", "Invalid report status group.");
-        
+
         return defaultMessages.getOrDefault(key, "");
     }
 
@@ -470,7 +484,7 @@ public class ConfigManager {
         // Return appropriate symbols based on the key
         Map<String, String> symbols = new HashMap<>();
         symbols.put("group_bullet", "• ");
-        
+
         return symbols.getOrDefault(symbolKey, "");
     }
 
@@ -479,22 +493,23 @@ public class ConfigManager {
         return "------------------------";
     }
 
-    public @NotNull String getFormattedMessage(String messageKey, String placeholder1, String value1, String placeholder2, String value2) {
+    public @NotNull String getFormattedMessage(String messageKey, String placeholder1, String value1,
+            String placeholder2, String value2) {
         // Get the base message
         String message = getMessage(messageKey);
         if (message == null || message.isEmpty()) {
             return "Message not found: " + messageKey;
         }
-        
+
         // Replace placeholders
         if (placeholder1 != null && value1 != null) {
             message = message.replace(placeholder1, value1);
         }
-        
+
         if (placeholder2 != null && value2 != null) {
             message = message.replace(placeholder2, value2);
         }
-        
+
         return message;
     }
 
@@ -508,7 +523,7 @@ public class ConfigManager {
         if (statusName == null) {
             return Style.empty();
         }
-        
+
         switch (statusName.toUpperCase()) {
             case "PENDING":
                 return Style.style(net.kyori.adventure.text.format.NamedTextColor.GOLD);
@@ -528,7 +543,7 @@ public class ConfigManager {
         Map<String, String> textMap = new HashMap<>();
         textMap.put("messages.report-format.number-prefix", "#");
         textMap.put("gui.spacing.after_number", ": ");
-        
+
         return textMap.getOrDefault(key, "");
     }
 
@@ -541,7 +556,6 @@ public class ConfigManager {
         private PerformanceConfig performance = new PerformanceConfig();
         private DiscordConfig discord = new DiscordConfig();
         private Map<String, String> customReasons = new HashMap<>();
-
 
         @Data
         public static class DiscordConfig {
@@ -581,7 +595,6 @@ public class ConfigManager {
             }
         }
 
-
         @Data
         public static class DatabaseConfig {
             private String type = "file";
@@ -612,7 +625,6 @@ public class ConfigManager {
             private boolean logInventory = true;
             private boolean logLocation = true;
         }
-
 
         @Data
         public static class NotificationsConfig {

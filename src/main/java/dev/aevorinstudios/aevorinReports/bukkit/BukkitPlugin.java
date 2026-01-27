@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-
 /**
  * The Main Bukkit plugin class for AevorinReports
  * Handles initialization, configuration, and lifecycle management
@@ -37,7 +36,7 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     private BukkitReportCommand bukkitReportCommand;
     @Getter
     private DiscordManager discordManager;
-    
+
     // Plugin state tracking
     private boolean databaseInitialized = false;
     private boolean configInitialized = false;
@@ -86,7 +85,6 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             getCommand("ar").setExecutor(this);
             getCommand("aevorinreports").setExecutor(this);
 
-
             // Initialize and start the Modrinth update checker
             String modrinthProjectId = "OwqSnlXx"; // Hardcoded Project ID
             updateChecker = new ModrinthUpdateChecker(this, modrinthProjectId);
@@ -106,7 +104,7 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             context.put("server_version", Bukkit.getVersion());
             context.put("config_initialized", configInitialized);
             context.put("database_initialized", databaseInitialized);
-            
+
             ExceptionHandler.getInstance().handleException(e, "Plugin Startup", context);
             getLogger().severe("Failed to enable AevorinReports due to a critical error. Check the logs for details.");
             getServer().getPluginManager().disablePlugin(this);
@@ -114,14 +112,22 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     }
 
     @Override
-    public boolean onCommand(org.bukkit.command.CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
-        if ((command.getName().equalsIgnoreCase("ar") || command.getName().equalsIgnoreCase("aevorinreports")) && args.length > 0 && args[0].equalsIgnoreCase("reload")) {
+    public boolean onCommand(org.bukkit.command.CommandSender sender, org.bukkit.command.Command command, String label,
+            String[] args) {
+        if ((command.getName().equalsIgnoreCase("ar") || command.getName().equalsIgnoreCase("aevorinreports"))
+                && args.length > 0 && args[0].equalsIgnoreCase("reload")) {
             if (!sender.hasPermission("aevorinreports.reload")) {
                 sender.sendMessage("§cYou don't have permission to reload the config!");
                 return true;
             }
             try {
                 this.reloadConfig();
+                if (configManager != null) {
+                    configManager.loadConfig();
+                }
+                if (customReasonHandler != null) {
+                    // Refresh categories or other state if needed
+                }
                 sender.sendMessage("§aAevorinReports configuration reloaded successfully!");
             } catch (Exception e) {
                 sender.sendMessage("§cFailed to reload configuration. Check the console for errors.");
@@ -135,7 +141,7 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     @Override
     public void onDisable() {
         getLogger().info("Shutting down AevorinReports");
-        
+
         // Gracefully close database connections
         if (databaseManager != null) {
             try {
@@ -147,17 +153,18 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                 getLogger().warning("Error while closing database connections.");
             }
         }
-        
+
         // Stop Discord bot
         if (discordManager != null) {
             discordManager.stop();
         }
-        
+
         getLogger().info("AevorinReports has been disabled!");
     }
 
     /**
      * Initializes and validates the plugin configuration
+     * 
      * @return true if configuration was successfully initialized, false otherwise
      */
     private boolean initializeConfig() {
@@ -166,10 +173,10 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             saveDefaultConfig();
             Path dataFolder = getDataFolder().toPath();
             configManager = ConfigManager.initialize(dataFolder);
-            
+
             // Validate critical configuration sections
             boolean valid = validateConfiguration();
-            
+
             configInitialized = true;
             getLogger().info("Configuration loaded successfully" + (valid ? "." : " with warnings."));
             return valid;
@@ -179,14 +186,15 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             return false;
         }
     }
-    
+
     /**
      * Validates critical configuration sections
+     * 
      * @return true if all critical configurations are valid, false otherwise
      */
     private boolean validateConfiguration() {
         boolean valid = true;
-        
+
         // Validate database configuration
         String dbType = configManager.getConfig().getDatabase().getType();
         if (dbType == null || dbType.isEmpty()) {
@@ -204,38 +212,38 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                 valid = false;
             }
         }
-        
+
         return valid;
     }
 
     /**
      * Initializes the database connection with a retry mechanism
+     * 
      * @return true if a database was successfully initialized, false otherwise
      */
     private boolean initializeDatabase() {
         getLogger().info("Initializing database connection...");
         int maxRetries = 3;
         int retryCount = 0;
-        
+
         while (retryCount < maxRetries) {
             try {
                 ConfigManager.Config.DatabaseConfig dbConfig = configManager.getConfig().getDatabase();
                 if ("mysql".equalsIgnoreCase(dbConfig.getType())) {
                     getLogger().info("Using MySQL database connection");
                     ConfigManager.Config.DatabaseConfig.MySQLConfig mysqlConfig = dbConfig.getMysql();
-                    
+
                     // Log connection attempt (without password)
-                    getLogger().info(String.format("Connecting to MySQL database: %s@%s:%d/%s", 
-                        mysqlConfig.getUsername(), mysqlConfig.getHost(), 
-                        mysqlConfig.getPort(), mysqlConfig.getDatabase()));
-                    
+                    getLogger().info(String.format("Connecting to MySQL database: %s@%s:%d/%s",
+                            mysqlConfig.getUsername(), mysqlConfig.getHost(),
+                            mysqlConfig.getPort(), mysqlConfig.getDatabase()));
+
                     databaseManager = new DatabaseManager(
-                        mysqlConfig.getHost(),
-                        mysqlConfig.getPort(),
-                        mysqlConfig.getDatabase(),
-                        mysqlConfig.getUsername(),
-                        mysqlConfig.getPassword()
-                    );
+                            mysqlConfig.getHost(),
+                            mysqlConfig.getPort(),
+                            mysqlConfig.getDatabase(),
+                            mysqlConfig.getUsername(),
+                            mysqlConfig.getPassword());
                 } else {
                     // Handle SQLite storage
                     getLogger().info("Using SQLite database connection");
@@ -243,21 +251,21 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                     getLogger().info("SQLite database path: " + fileConfig.getPath());
                     databaseManager = new DatabaseManager(fileConfig.getPath());
                 }
-                
+
                 // Test the connection
                 if (databaseManager.testConnection()) {
                     databaseInitialized = true;
                     getLogger().info("Database connection established successfully!");
-                    
+
                     // Initialize or retrieve persistent server token
-                    dev.aevorinstudios.aevorinReports.utils.ServerIdentity identity = 
-                        new dev.aevorinstudios.aevorinReports.utils.ServerIdentity(getLogger(), getDataFolder());
+                    dev.aevorinstudios.aevorinReports.utils.ServerIdentity identity = new dev.aevorinstudios.aevorinReports.utils.ServerIdentity(
+                            getLogger(), getDataFolder());
                     String serverToken = identity.getIdentityToken();
-                    
+
                     // Sync this server's identity (Name <-> Token) with the database
                     String serverName = configManager.getConfig().getServerName();
                     databaseManager.syncServerIdentity(serverToken, serverName);
-                    
+
                     return true;
                 } else {
                     throw new Exception("Database connection test failed");
@@ -269,7 +277,8 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                     getLogger().severe("Error: " + e.getMessage());
                     return false;
                 } else {
-                    getLogger().warning("Database connection attempt failed. Retrying... (" + retryCount + "/" + maxRetries + ")");
+                    getLogger().warning(
+                            "Database connection attempt failed. Retrying... (" + retryCount + "/" + maxRetries + ")");
                     try {
                         // Wait before retrying
                         Thread.sleep(2000 * retryCount);
@@ -279,7 +288,7 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                 }
             }
         }
-        
+
         return false;
     }
 
@@ -294,32 +303,32 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             getCommand("report").setTabCompleter(bukkitReportCommand);
             getLogger().info("Registered 'report' command and tab completer");
         } catch (Exception e) {
-            ExceptionHandler.getInstance().handleException(e, "Command Registration", 
-                Map.of("command", "report", "class", "BukkitReportCommand"));
+            ExceptionHandler.getInstance().handleException(e, "Command Registration",
+                    Map.of("command", "report", "class", "BukkitReportCommand"));
         }
-        
+
         try {
             getCommand("reports").setExecutor(new BukkitReportsCommand(this));
             getLogger().info("Registered 'reports' command");
         } catch (Exception e) {
-            ExceptionHandler.getInstance().handleException(e, "Command Registration", 
-                Map.of("command", "reports", "class", "BukkitReportsCommand"));
+            ExceptionHandler.getInstance().handleException(e, "Command Registration",
+                    Map.of("command", "reports", "class", "BukkitReportsCommand"));
         }
-        
+
         try {
             getCommand("viewreport").setExecutor(new ViewReportCommand(this));
         } catch (Exception e) {
-            ExceptionHandler.getInstance().handleException(e, "Command Registration", 
-                Map.of("command", "viewreport", "class", "ViewReportCommand"));
+            ExceptionHandler.getInstance().handleException(e, "Command Registration",
+                    Map.of("command", "viewreport", "class", "ViewReportCommand"));
         }
-        
+
         try {
             SetReportStatusCommand setReportStatusCommand = new SetReportStatusCommand(this);
             getCommand("setreportstatus").setExecutor(setReportStatusCommand);
             getCommand("setreportstatus").setTabCompleter(setReportStatusCommand);
         } catch (Exception e) {
-            ExceptionHandler.getInstance().handleException(e, "Command Registration", 
-                Map.of("command", "setreportstatus", "class", "SetReportStatusCommand"));
+            ExceptionHandler.getInstance().handleException(e, "Command Registration",
+                    Map.of("command", "setreportstatus", "class", "SetReportStatusCommand"));
         }
 
         getLogger().info("Commands registered successfully!");
@@ -330,18 +339,21 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
      */
     private void registerListeners() {
         getLogger().info("Registering event listeners...");
-        
+
         // Register ReportsContainerListener for container GUI
-        getServer().getPluginManager().registerEvents(new dev.aevorinstudios.aevorinReports.listeners.ReportsContainerListener(this), this);
-        
+        getServer().getPluginManager()
+                .registerEvents(new dev.aevorinstudios.aevorinReports.listeners.ReportsContainerListener(this), this);
+
         // Register ReportReasonContainerListener for report container GUI
-        getServer().getPluginManager().registerEvents(new dev.aevorinstudios.aevorinReports.listeners.ReportReasonContainerListener(this), this);
-        
+        getServer().getPluginManager().registerEvents(
+                new dev.aevorinstudios.aevorinReports.listeners.ReportReasonContainerListener(this), this);
+
         getLogger().info("Event listeners registered successfully!");
     }
 
     /**
      * Gets the configuration manager instance
+     * 
      * @return The configuration manager
      */
     public ConfigManager getConfigManager() {
@@ -350,6 +362,7 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
 
     /**
      * Gets the database manager instance
+     * 
      * @return The database manager
      * @throws IllegalStateException if a database is not initialized
      */
@@ -359,23 +372,24 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
         }
         return databaseManager;
     }
-    
+
     /**
-     * Initialize the exception handler for better error reporting with enhanced configuration
+     * Initialize the exception handler for better error reporting with enhanced
+     * configuration
      */
     private void initializeExceptionHandler() {
         getLogger().info("Initializing enhanced exception handler...");
-        
+
         // Get the exception handler instance and configure it
         ExceptionHandler handler = ExceptionHandler.getInstance();
-        
+
         // Read configuration from config if available, otherwise use enhanced defaults
         int maxRepetitions = getConfig().getInt("error_handler.max_repetitions", 5);
         long suppressionMinutes = getConfig().getLong("error_handler.suppression_minutes", 15);
         boolean detailedLogging = getConfig().getBoolean("error_handler.detailed_logging", true);
         boolean logStackTraces = getConfig().getBoolean("error_handler.log_stack_traces", true);
         boolean groupSimilarErrors = getConfig().getBoolean("error_handler.group_similar_errors", true);
-        
+
         // Configure with enhanced settings
         handler.configure(maxRepetitions, suppressionMinutes, detailedLogging, logStackTraces);
         handler.setGroupSimilarErrors(groupSimilarErrors);

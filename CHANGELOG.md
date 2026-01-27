@@ -2,9 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4.4] - 2026-01-25
+
+### Bug Fixes & Improvements
+
+- **Fixed Report Cooldown**: Resolved an issue where the report cooldown was not being enforced. Players must now wait the configured time between reports.
+- **Fixed Active Report Limit**: Implemented the `max-active-reports` check to prevent players from exceeding the configured limit of pending reports.
+- **Corrected Config Keys**: Fixed a bug where some configuration settings (like `cooldown` and `max-active-reports`) were not being read correctly from `config.yml`.
+- **Improved Discord Error Handling**:
+  - Added simplified, readable error messages for Discord bot initialization failures.
+  - Added explicit database availability checks to prevent crashes if the database is disconnected.
+  - Stack traces are now hidden by default and can be enabled via `debug.enabled` in `config.yml`.
+
+### Security & Permissions
+
+- **New Bypass Permissions**:
+  - `aevorinreports.bypass.cooldown`: Allows specified players/ranks to bypass the reporting cooldown.
+  - `aevorinreports.bypass.limit`: Allows specified players/ranks to bypass the active report limit.
+
 ## [1.0.4.3] - 2026-01-05
 
 ### Discord Network Mode
+
 - **Network Mode for Multi-Server Setups**: Added a new `network-mode` configuration option for Discord integration.
   - Only ONE server in your network should enable `discord.network-mode.enabled: true`
   - This designated server will poll the database for new reports from ALL servers in the network via a reliable ID-based system.
@@ -14,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - **Duplication Fix**: Resolved issues where reports on the bot-server could be sent twice.
 
 ### General & Security
+
 - **Region Restriction**: Added a restriction to prevent the plugin from running on servers located in Israel (via IP geolocation and server timezone checks) with a #FreePalestine message.
 - **Improved Database Logs**: Simplified database connection error messages to be cleaner and more readable.
 - **Configuration Cleanup**: Removed unused security and encryption sections for a leaner setup.
@@ -21,19 +41,21 @@ All notable changes to this project will be documented in this file.
 ## [1.0.4.2] - 2026-01-04
 
 ### General
+
 - **Discord Integration**: Added a robust Discord integration with a dedicated bot.
 - **Improved Database Logs**: Simplified database connection error messages to be cleaner and more readable (no more giant stack traces).
 - **Configuration Cleanup**: Removed the unused "Security" section and encryption key logic for a leaner `config.yml`.
 - **Folia Compatibility**: Ensured all new features, including the Discord bot's background tasks, are fully compatible with Folia servers.
 
 ### Discord Integration Features
+
 - **Dynamic Bot Presence**: Configure the bot's status (Online, Idle, etc.) and activity (Watching, Playing, etc.) with support for the `%online_players%` placeholder.
 - **Real-time Notifications**: Receive beautifully formatted embeds for new reports in your Discord channel.
 - **Slash Commands**:
-    - `/reports`: List all active pending reports.
-    - `/lookup <id>`: View detailed information about a specific report.
-    - `/resolve <id>`, `/reject <id>`, `/pending <id>`: Manage report statuses directly from Discord.
-    - `/help`: Detailed help menu for the bot.
+  - `/reports`: List all active pending reports.
+  - `/lookup <id>`: View detailed information about a specific report.
+  - `/resolve <id>`, `/reject <id>`, `/pending <id>`: Manage report statuses directly from Discord.
+  - `/help`: Detailed help menu for the bot.
 - **Smart Formatting**: The "Server" field in Discord embeds automatically hides itself if you are only running a single server, matching the in-game behavior.
 - **Customizable Aesthetics**: Independent color settings for report alerts and lookup results in `config.yml`.
 
@@ -52,6 +74,7 @@ All notable changes to this project will be documented in this file.
 ## [1.0.3] - 2025-10-23
 
 ### New Features
+
 - **Enhanced Report Command**: Added `/report <player> <reason>` for direct reporting.
 - **Custom Reasons in GUI**: Added a "Custom Reason" option to the Book GUI. Selecting this closes the GUI and prompts the player to enter a reason in chat.
 - **Container GUI**: The Container GUI interface is now fully functional.
@@ -61,9 +84,10 @@ All notable changes to this project will be documented in this file.
 - **Update Checker**: Implemented an update checker using the Modrinth API.
 
 ### Changes & Improvements
+
 - **Command Renaming**: Renamed `/shiftreport <id> <status>` to `/setreportstatus <id> to <status>` for better clarity.
 - **Smart Permissions**: The `/viewreport` command now allows players to view their own reports without needing admin permissions.
-- **GUI Experience**: 
+- **GUI Experience**:
   - Improved Book GUI readability (Fixed invisible Report IDs).
   - Status change actions now close the inventory for a smoother workflow.
   - "Your Reports" view added for non-staff players.
@@ -72,4 +96,5 @@ All notable changes to this project will be documented in this file.
 - **Codebase Optimization**: Comprehensive cleanup of imports, command registration, and error handling logic.
 
 ### Removed
+
 - **Legacy Command**: Removed `/report-category <player> <reason>` as it has been replaced by the streamlined `/report` command.

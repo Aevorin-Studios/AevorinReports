@@ -1,7 +1,7 @@
 name: AevorinReports
-version: '1.0.4.3'
+version: "1.0.4.4"
 main: dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin
-api-version: '1.18'
+api-version: "1.18"
 folia-supported: true
 authors: [Aevorin Studios]
 description: A comprehensive reporting system for Minecraft servers

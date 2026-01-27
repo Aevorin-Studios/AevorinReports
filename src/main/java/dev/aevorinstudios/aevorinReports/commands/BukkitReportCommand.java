@@ -24,6 +24,7 @@ import java.util.Map;
 
 public class BukkitReportCommand implements CommandExecutor, TabCompleter {
     private final BukkitPlugin plugin;
+    private final Map<java.util.UUID, Long> cooldowns = new HashMap<>();
 
     public BukkitReportCommand(BukkitPlugin plugin) {
         this.plugin = plugin;
@@ -48,36 +49,70 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
 
         String targetPlayer = args[0];
         Player target = plugin.getServer().getPlayer(targetPlayer);
-        
+
         if (target == null) {
             player.sendMessage(ChatColor.RED + "Player not found!");
             return true;
         }
 
         // Self-reporting check
-        boolean allowSelfReporting = plugin.getConfig().getBoolean("reports.allow-self-reporting", true);
+        boolean allowSelfReporting = plugin.getConfig().getBoolean("reports.allow-self-reporting", false);
         if (!allowSelfReporting && player.getName().equalsIgnoreCase(targetPlayer)) {
             player.sendMessage(ChatColor.RED + "You cannot report yourself.");
             return true;
         }
 
+        // Check report cooldown
+        if (!player.hasPermission("aevorinreports.bypass.cooldown")) {
+            long lastReport = cooldowns.getOrDefault(player.getUniqueId(), 0L);
+            int cooldownSeconds = plugin.getConfigManager().getConfig().getReports().getCooldownSeconds();
+            long currentTime = System.currentTimeMillis();
+
+            if (currentTime < lastReport + (cooldownSeconds * 1000L)) {
+                long timeLeft = (lastReport + (cooldownSeconds * 1000L) - currentTime) / 1000L;
+                String message = plugin.getConfig()
+                        .getString("messages.report-cooldown",
+                                "&cYou must wait {time} before submitting another report.")
+                        .replace("{time}", formatTime(timeLeft));
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, message);
+                return true;
+            }
+        }
+
+        // Check active reports limit
+        if (!player.hasPermission("aevorinreports.bypass.limit")) {
+            int maxActive = plugin.getConfigManager().getConfig().getReports().getMaxActiveReportsPerPlayer();
+            long activeCount = plugin.getDatabaseManager().getReportsByReporter(player.getUniqueId()).stream()
+                    .filter(r -> r.getStatus() == Report.ReportStatus.PENDING)
+                    .count();
+
+            if (activeCount >= maxActive) {
+                String message = plugin.getConfig().getString("messages.report-limit-reached",
+                        "&cYou have reached the maximum number of active reports.");
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, message);
+                return true;
+            }
+        }
+
         // If reason is provided, create report directly
         if (args.length > 1) {
             String reason = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-            
+
             // Handle custom reason
             if (reason.equalsIgnoreCase("custom")) {
                 if (!plugin.getConfig().getBoolean("reports.allow-custom-reasons", true)) {
-                    dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, plugin.getConfig().getString("messages.custom-reason-disabled", "Custom reasons are disabled."));
+                    dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, plugin.getConfig()
+                            .getString("messages.custom-reason-disabled", "Custom reasons are disabled."));
                     return true;
                 }
-                
+
                 // Store player and target info for custom reason handling
                 plugin.getCustomReasonHandler().startCustomReason(player, targetPlayer);
-                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, plugin.getConfig().getString("messages.enter-custom-reason", "Please enter your reason in the chat:"));
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, plugin.getConfig()
+                        .getString("messages.enter-custom-reason", "Please enter your reason in the chat:"));
                 return true;
             }
-            
+
             createReport(player, targetPlayer, reason);
             return true;
         }
@@ -96,26 +131,26 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             List<String> playerNames = new ArrayList<>();
             String partialName = args[0].toLowerCase();
-            
+
             for (Player player : plugin.getServer().getOnlinePlayers()) {
                 if (player.getName().toLowerCase().startsWith(partialName)) {
                     playerNames.add(player.getName());
                 }
             }
-            
+
             return playerNames;
         } else if (args.length == 2) {
             List<String> suggestions = new ArrayList<>(plugin.getConfig().getStringList("reports.categories"));
             if (plugin.getConfig().getBoolean("reports.allow-custom-reasons", true)) {
                 suggestions.add("custom");
             }
-            
+
             String partialReason = args[1].toLowerCase();
             return suggestions.stream()
-                .filter(reason -> reason.toLowerCase().startsWith(partialReason))
-                .toList();
+                    .filter(reason -> reason.toLowerCase().startsWith(partialReason))
+                    .toList();
         }
-        
+
         return new ArrayList<>();
     }
 
@@ -129,7 +164,8 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
                 .reason(category)
                 .serverName(plugin.getConfigManager().getConfig().getServerName())
                 .status(Report.ReportStatus.PENDING)
-                .coordinates(String.format("%.1f, %.1f, %.1f", reporter.getLocation().getX(), reporter.getLocation().getY(), reporter.getLocation().getZ()))
+                .coordinates(String.format("%.1f, %.1f, %.1f", reporter.getLocation().getX(),
+                        reporter.getLocation().getY(), reporter.getLocation().getZ()))
                 .world(reporter.getWorld().getName())
                 .isAnonymous(false)
                 .createdAt(now)
@@ -146,25 +182,38 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
         }
 
         // Notify staff members with permission
-        String notificationFormat = plugin.getConfig().getString("messages.report-notification", "&b{reporter} &7has reported &b{reported} &7for &b{category}&7.");
+        String notificationFormat = plugin.getConfig().getString("messages.report-notification",
+                "&b{reporter} &7has reported &b{reported} &7for &b{category}&7.");
         String notification = notificationFormat
                 .replace("{reporter}", reporter.getName())
                 .replace("{reported}", targetPlayer)
                 .replace("{category}", category);
-        
+
         for (Player staff : plugin.getServer().getOnlinePlayers()) {
             if (staff.hasPermission("aevorinreports.notify")) {
                 dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(staff, notification);
             }
         }
-        
+
         // Notify reporter of success
-        dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(reporter, plugin.getConfig().getString("messages.report-created", "&aYour report has been submitted successfully!"));
+        dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(reporter, plugin.getConfig()
+                .getString("messages.report-created", "&aYour report has been submitted successfully!"));
+
+        // Update cooldown
+        cooldowns.put(reporter.getUniqueId(), System.currentTimeMillis());
+    }
+
+    private String formatTime(long seconds) {
+        if (seconds < 60)
+            return seconds + "s";
+        long minutes = seconds / 60;
+        long remainingSeconds = seconds % 60;
+        return minutes + "m " + remainingSeconds + "s";
     }
 
     private void showReportCategories(Player player, String targetPlayer) {
         String guiType = plugin.getConfig().getString("reports.gui.type", "book");
-        
+
         if (guiType.equalsIgnoreCase("container")) {
             // Use container GUI
             new ReportReasonContainerGUI(plugin).showReasonContainerGUI(player, targetPlayer);
@@ -173,7 +222,7 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
             showReportBookGUI(player, targetPlayer);
         }
     }
-    
+
     private void showReportBookGUI(Player player, String targetPlayer) {
         new BookGUI(plugin).showReportCategories(player, targetPlayer);
     }
