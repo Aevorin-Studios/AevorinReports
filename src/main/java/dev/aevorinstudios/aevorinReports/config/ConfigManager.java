@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.bukkit.plugin.Plugin;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -31,17 +32,19 @@ public class ConfigManager {
 
     private final Path configPath;
     private Config config;
+    private final Plugin plugin;
 
-    private ConfigManager(Path dataDirectory) {
+    private ConfigManager(Plugin plugin, Path dataDirectory) {
+        this.plugin = plugin;
         this.configPath = dataDirectory.resolve("config.yml");
         loadConfig();
     }
 
-    public static ConfigManager initialize(Path dataDirectory) {
+    public static ConfigManager initialize(Plugin plugin, Path dataDirectory) {
         if (instance == null) {
             synchronized (ConfigManager.class) {
                 if (instance == null) {
-                    instance = new ConfigManager(dataDirectory);
+                    instance = new ConfigManager(plugin, dataDirectory);
                 }
             }
         }
@@ -64,28 +67,45 @@ public class ConfigManager {
 
         // Server Configuration
         if (yamlConfig.containsKey("server-name")) {
-            config.setServerName((String) yamlConfig.getOrDefault("server-name", "survival"));
+            config.setServerName(asString(yamlConfig.get("server-name"), "survival"));
         } else {
             config.setServerName("survival"); // Default if missing
+        }
+
+        // Configuration Version
+        Object versionObj = yamlConfig.get("config-version");
+        if (versionObj != null) {
+            try {
+                if (versionObj instanceof Number) {
+                    config.setConfigVersion(((Number) versionObj).intValue());
+                } else {
+                    config.setConfigVersion(Integer.parseInt(String.valueOf(versionObj)));
+                }
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(
+                        "Invalid 'config-version' value: '" + versionObj + "'. It must be an integer.");
+            }
+        } else {
+            config.setConfigVersion(0);
         }
 
         // Database Configuration
         if (yamlConfig.containsKey("database")) {
             Map<String, Object> db = (Map<String, Object>) yamlConfig.get("database");
             if (db != null) {
-                config.getDatabase().setType((String) db.getOrDefault("type", "file"));
+                config.getDatabase().setType(asString(db.get("type"), "file"));
 
                 // MySQL Config
                 if (db.containsKey("mysql")) {
                     Map<String, Object> mysql = (Map<String, Object>) db.get("mysql");
                     if (mysql != null) {
-                        config.getDatabase().getMysql().setHost((String) mysql.getOrDefault("host", "localhost"));
+                        config.getDatabase().getMysql().setHost(asString(mysql.get("host"), "localhost"));
                         config.getDatabase().getMysql()
-                                .setPort(Integer.parseInt(String.valueOf(mysql.getOrDefault("port", 3306))));
+                                .setPort(asInt(mysql.get("port"), 3306));
                         config.getDatabase().getMysql()
-                                .setDatabase((String) mysql.getOrDefault("database", "aevorinreports"));
-                        config.getDatabase().getMysql().setUsername((String) mysql.getOrDefault("username", "root"));
-                        config.getDatabase().getMysql().setPassword((String) mysql.getOrDefault("password", ""));
+                                .setDatabase(asString(mysql.get("database"), "aevorinreports"));
+                        config.getDatabase().getMysql().setUsername(asString(mysql.get("username"), "root"));
+                        config.getDatabase().getMysql().setPassword(asString(mysql.get("password"), ""));
                     }
                 }
 
@@ -94,7 +114,7 @@ public class ConfigManager {
                     Map<String, Object> file = (Map<String, Object>) db.get("file");
                     if (file != null) {
                         config.getDatabase().getFile()
-                                .setPath((String) file.getOrDefault("path", "database/reports.db"));
+                                .setPath(asString(file.get("path"), "database/reports.db"));
                     }
                 }
             }
@@ -104,13 +124,13 @@ public class ConfigManager {
         if (yamlConfig.containsKey("reports")) {
             Map<String, Object> reports = (Map<String, Object>) yamlConfig.get("reports");
             if (reports != null) {
-                config.getReports().setCooldownSeconds((Integer) reports.getOrDefault("cooldown", 300));
-                config.getReports().setAllowAnonymousReports((Boolean) reports.getOrDefault("allow-anonymous", true));
+                config.getReports().setCooldownSeconds(asInt(reports.get("cooldown"), 300));
+                config.getReports().setAllowAnonymousReports(asBoolean(reports.get("allow-anonymous"), true));
                 config.getReports()
-                        .setMaxActiveReportsPerPlayer((Integer) reports.getOrDefault("max-active-reports", 3));
-                config.getReports().setChatHistoryLines((Integer) reports.getOrDefault("chat-history-lines", 50));
-                config.getReports().setLogInventory((Boolean) reports.getOrDefault("logInventory", true));
-                config.getReports().setLogLocation((Boolean) reports.getOrDefault("logLocation", true));
+                        .setMaxActiveReportsPerPlayer(asInt(reports.get("max-active-reports"), 3));
+                config.getReports().setChatHistoryLines(asInt(reports.get("chat-history-lines"), 50));
+                config.getReports().setLogInventory(asBoolean(reports.get("logInventory"), true));
+                config.getReports().setLogLocation(asBoolean(reports.get("logLocation"), true));
             }
         }
 
@@ -119,13 +139,13 @@ public class ConfigManager {
             Map<String, Object> notifications = (Map<String, Object>) yamlConfig.get("notifications");
             if (notifications != null) {
                 config.getNotifications().setEnableChatNotifications(
-                        (Boolean) notifications.getOrDefault("enableChatNotifications", true));
+                        asBoolean(notifications.get("enableChatNotifications"), true));
                 config.getNotifications().setEnableTitleNotifications(
-                        (Boolean) notifications.getOrDefault("enableTitleNotifications", true));
+                        asBoolean(notifications.get("enableTitleNotifications"), true));
                 config.getNotifications().setEnableSoundNotifications(
-                        (Boolean) notifications.getOrDefault("enableSoundNotifications", true));
+                        asBoolean(notifications.get("enableSoundNotifications"), true));
                 config.getNotifications().setNotificationSound(
-                        (String) notifications.getOrDefault("notificationSound", "BLOCK_NOTE_BLOCK_PLING"));
+                        asString(notifications.get("notificationSound"), "BLOCK_NOTE_BLOCK_PLING"));
             }
         }
 
@@ -147,25 +167,25 @@ public class ConfigManager {
         if (yamlConfig.containsKey("discord")) {
             Map<String, Object> discordRaw = (Map<String, Object>) yamlConfig.get("discord");
             if (discordRaw != null) {
-                config.getDiscord().setEnabled((Boolean) discordRaw.getOrDefault("enabled", false));
-                config.getDiscord().setBotToken((String) discordRaw.getOrDefault("bot-token", ""));
-                config.getDiscord().setChannelId((String) discordRaw.getOrDefault("channel-id", ""));
-                config.getDiscord().setLogChannelId((String) discordRaw.getOrDefault("log-channel-id", ""));
-                config.getDiscord().setStaffRoleId((String) discordRaw.getOrDefault("staff-role-id", ""));
-                config.getDiscord().setLookupColor((String) discordRaw.getOrDefault("lookup-color", "#00ffff"));
+                config.getDiscord().setEnabled(asBoolean(discordRaw.get("enabled"), false));
+                config.getDiscord().setBotToken(asString(discordRaw.get("bot-token"), ""));
+                config.getDiscord().setChannelId(asString(discordRaw.get("channel-id"), ""));
+                config.getDiscord().setLogChannelId(asString(discordRaw.get("log-channel-id"), ""));
+                config.getDiscord().setStaffRoleId(asString(discordRaw.get("staff-role-id"), ""));
+                config.getDiscord().setLookupColor(asString(discordRaw.get("lookup-color"), "#00ffff"));
 
                 if (discordRaw.containsKey("bot-settings")) {
                     Map<String, Object> botRaw = (Map<String, Object>) discordRaw.get("bot-settings");
                     if (botRaw != null) {
                         config.getDiscord().getBotSettings()
-                                .setStatus((String) botRaw.getOrDefault("status", "ONLINE"));
+                                .setStatus(asString(botRaw.get("status"), "ONLINE"));
                         if (botRaw.containsKey("activity")) {
                             Map<String, Object> activityRaw = (Map<String, Object>) botRaw.get("activity");
                             if (activityRaw != null) {
                                 config.getDiscord().getBotSettings().getActivity()
-                                        .setType((String) activityRaw.getOrDefault("type", "WATCHING"));
+                                        .setType(asString(activityRaw.get("type"), "WATCHING"));
                                 config.getDiscord().getBotSettings().getActivity()
-                                        .setMessage((String) activityRaw.getOrDefault("message", "Reports"));
+                                        .setMessage(asString(activityRaw.get("message"), "Reports"));
                             }
                         }
                     }
@@ -175,11 +195,11 @@ public class ConfigManager {
                     Map<String, Object> notifyRaw = (Map<String, Object>) discordRaw.get("notifications");
                     if (notifyRaw != null) {
                         config.getDiscord().getNotifications()
-                                .setTitle((String) notifyRaw.getOrDefault("title", "New Report (#%id%)"));
+                                .setTitle(asString(notifyRaw.get("title"), "New Report (#%id%)"));
                         config.getDiscord().getNotifications()
-                                .setColor((String) notifyRaw.getOrDefault("color", "#ff5555"));
+                                .setColor(asString(notifyRaw.get("color"), "#ff5555"));
                         config.getDiscord().getNotifications()
-                                .setFooter((String) notifyRaw.getOrDefault("footer", "AevorinReports • %date%"));
+                                .setFooter(asString(notifyRaw.get("footer"), "AevorinReports • %date%"));
                     }
                 }
 
@@ -187,9 +207,9 @@ public class ConfigManager {
                     Map<String, Object> networkRaw = (Map<String, Object>) discordRaw.get("network-mode");
                     if (networkRaw != null) {
                         config.getDiscord().getNetworkMode()
-                                .setEnabled((Boolean) networkRaw.getOrDefault("enabled", false));
+                                .setEnabled(asBoolean(networkRaw.get("enabled"), false));
                         config.getDiscord().getNetworkMode().setPollInterval(
-                                Integer.parseInt(String.valueOf(networkRaw.getOrDefault("poll-interval", 10))));
+                                asInt(networkRaw.get("poll-interval"), 10));
                     }
                 }
             }
@@ -198,15 +218,110 @@ public class ConfigManager {
         return config;
     }
 
+    private void checkForUpdates() {
+        if (!Files.exists(configPath))
+            return;
+
+        try {
+            // Load bundled default config from JAR
+            Map<String, Object> defaultConfigMap;
+            try (InputStream inputStream = getClass().getResourceAsStream("/config.yml")) {
+                if (inputStream == null)
+                    return;
+                Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
+                defaultConfigMap = yaml.load(inputStream);
+            }
+
+            // Load user config
+            Map<String, Object> userConfigMap;
+            try (InputStream inputStream = Files.newInputStream(configPath)) {
+                Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
+                userConfigMap = yaml.load(inputStream);
+            }
+
+            if (userConfigMap == null || defaultConfigMap == null)
+                return;
+
+            Object userVersionObj = userConfigMap.getOrDefault("config-version", 0);
+            int userVersion;
+            try {
+                if (userVersionObj instanceof Number) {
+                    userVersion = ((Number) userVersionObj).intValue();
+                } else {
+                    userVersion = Integer.parseInt(String.valueOf(userVersionObj));
+                }
+            } catch (NumberFormatException e) {
+                logger.error(
+                        "Invalid 'config-version' in config.yml: '{}'. Skipping update check to prevent corruption.",
+                        userVersionObj);
+                return;
+            }
+
+            Object jarVersionObj = defaultConfigMap.getOrDefault("config-version", 0);
+            int jarVersion = (jarVersionObj instanceof Number) ? ((Number) jarVersionObj).intValue()
+                    : Integer.parseInt(String.valueOf(jarVersionObj));
+
+            if (userVersion < jarVersion) {
+                logger.info("Configuration update detected (v{} -> v{}). Creating backup...", userVersion, jarVersion);
+
+                // 1. Create a backup
+                Path backupPath = configPath.resolveSibling("config.yml.old");
+                Files.copy(configPath, backupPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+                // 2. Perform Migration steps if needed before merging (structural changes)
+                applyMigrations(userConfigMap, userVersion);
+
+                // 3. Update using our comment-preserving ConfigUpdater
+                ConfigUpdater.update(plugin, "config.yml", configPath.toFile());
+                logger.info("Configuration successfully updated while preserving comments.");
+            }
+        } catch (Exception e) {
+            logger.error("Failed to update configuration: {}. Please check your config.yml manually.", e.getMessage());
+        }
+    }
+
+    private void applyMigrations(Map<String, Object> config, int version) {
+        // Add historical migrations here as the config structure changes
+        // Example: if (version < 1) { ... }
+    }
+
+    private String asString(Object value, String defaultValue) {
+        return value == null ? defaultValue : String.valueOf(value);
+    }
+
+    private int asInt(Object value, int defaultValue) {
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value instanceof String) {
+            try {
+                return (int) Double.parseDouble((String) value);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return defaultValue;
+    }
+
+    private boolean asBoolean(Object value, boolean defaultValue) {
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        if (value instanceof String) {
+            return Boolean.parseBoolean((String) value);
+        }
+        return defaultValue;
+    }
+
     public void loadConfig() {
         configLock.writeLock().lock();
         try {
             if (!Files.exists(configPath)) {
-                logger.info("Configuration file not found, creating default config.yml");
-                config = createDefaultConfig();
-                saveConfig();
-                return;
+                logger.info("Configuration file not found, creating default config.yml from template");
+                plugin.saveResource("config.yml", false);
             }
+
+            // Check for updates and merge before loading into memory
+            checkForUpdates();
 
             logger.info("Loading configuration from {}", configPath);
             try (InputStream inputStream = Files.newInputStream(configPath)) {
@@ -241,14 +356,23 @@ public class ConfigManager {
             } catch (IOException e) {
                 throw new IllegalStateException("Failed to read configuration file: " + e.getMessage(), e);
             }
-        } catch (IllegalStateException e) {
-            logger.error("Configuration error: {}", e.getMessage(), e);
-            logger.warn("Loading default configuration");
-            config = createDefaultConfig();
-            try {
-                saveConfig();
-            } catch (Exception ex) {
-                logger.error("Failed to save default configuration: {}", ex.getMessage(), ex);
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            if (Files.exists(configPath)) {
+                // If the file exists but is invalid, DO NOT overwrite it.
+                // Log a clean error and let the plugin shutdown.
+                logger.error("CRITICAL CONFIGURATION ERROR: {}", e.getMessage());
+                logger.error("The plugin will NOT start to prevent overwriting your existing configuration.");
+                logger.error("Please fix the error in your config.yml and restart the server.");
+                throw new IllegalStateException("CRITICAL CONFIGURATION ERROR: " + e.getMessage(), e);
+            } else {
+                // Only load defaults if the file is missing
+                logger.warn("Configuration file missing or empty. Loading default configuration.");
+                config = createDefaultConfig();
+                try {
+                    saveConfig();
+                } catch (Exception ex) {
+                    logger.error("Failed to save default configuration: {}", ex.getMessage(), ex);
+                }
             }
         } finally {
             configLock.writeLock().unlock();
@@ -369,6 +493,7 @@ public class ConfigManager {
 
         // Server Configuration
         result.put("server-name", config.getServerName());
+        result.put("config-version", config.getConfigVersion());
 
         // Database Configuration
         Map<String, Object> database = new HashMap<>();
@@ -550,6 +675,7 @@ public class ConfigManager {
     @Data
     public static class Config {
         private String serverName = "survival";
+        private int configVersion = 1;
         private DatabaseConfig database = new DatabaseConfig();
         private ReportsConfig reports = new ReportsConfig();
         private NotificationsConfig notifications = new NotificationsConfig();

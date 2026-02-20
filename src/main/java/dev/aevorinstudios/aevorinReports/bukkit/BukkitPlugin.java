@@ -62,7 +62,9 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
 
             // Initialize configuration with validation
             if (!initializeConfig()) {
-                getLogger().severe("Configuration initialization failed. Using default values where possible.");
+                getLogger().severe("Shutting down AevorinReports due to a critical configuration error.");
+                getServer().getPluginManager().disablePlugin(this);
+                return;
             }
 
             // Initialize database connection with a retry mechanism
@@ -170,9 +172,8 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     private boolean initializeConfig() {
         try {
             getLogger().info("Loading configuration files...");
-            saveDefaultConfig();
             Path dataFolder = getDataFolder().toPath();
-            configManager = ConfigManager.initialize(dataFolder);
+            configManager = ConfigManager.initialize(this, dataFolder);
 
             // Validate critical configuration sections
             boolean valid = validateConfiguration();
@@ -181,8 +182,12 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             getLogger().info("Configuration loaded successfully" + (valid ? "." : " with warnings."));
             return valid;
         } catch (Exception e) {
-            ExceptionHandler.getInstance().handleException(e, "Config Initialization");
-            getLogger().severe("Failed to initialize configuration. Using default values where possible.");
+            // Check if it's our critical config error
+            if (e.getMessage() != null && e.getMessage().contains("CRITICAL CONFIGURATION ERROR")) {
+                getLogger().severe(e.getMessage());
+            } else {
+                ExceptionHandler.getInstance().handleException(e, "Config Initialization");
+            }
             return false;
         }
     }

@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.5.1] - 2026-01-30
+
+### Bug Fixes & Optimization
+
+- **Fixed "Nag Author" Warnings**: Removed all usage of `System.out.println` and `printStackTrace` in favor of the official plugin logger. This ensures compliance with modern server software (Paper/Spigot) and cleans up console output.
+- **Improved Database Logging**: Structured log messages for server renames, table schema updates, and database connectivity issues.
+- **Code Audit**: Audited the entire codebase to ensure all component logs follow a standardized logging format.
+
+## [1.0.5] - 2026-01-29
+
+### Configuration & Persistence
+
+- **Next-Gen Configuration Update System**: Re-engineered the entire configuration engine to support automated, comment-preserving updates. When a new plugin version (detected via `config-version`) requires configuration changes, the system now:
+  - Creates a safe backup of your existing settings as `config.yml.old`.
+  - Seamlessly migrates all user data into the updated structure while perfectly preserving all custom comments, layout, and section headers.
+- **Fixed Critical Config Crashing**: Added resilient type-handling to prevent the plugin from shutting down when invalid data types (like numbers in string fields) are encountered in `config.yml`.
+- **Improved YAML Aesthetics**: Standardized string quoting and formatting to ensure professional, valid YAML output across all platforms.
+
 ## [1.0.4.4] - 2026-01-25
 
 ### Bug Fixes & Improvements

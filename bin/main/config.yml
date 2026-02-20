@@ -1,5 +1,8 @@
 # AevorinReports Configuration File
 
+# Please Do not change the config version
+config-version: 1
+
 # Server Configuration
 # The name of this server, used to identify where reports come from in a multi-server network.
 # If you have multiple servers connected to the same database, give each one a unique name.
@@ -26,24 +29,24 @@ database:
 reports:
   # Allow players to report themselves (self-reporting)
   allow-self-reporting: false
-  
+
   # GUI type for report interface
   gui:
     type: "book" # Options: "book" (classic book gui) or "container" (chest GUI)
-  
+
   # Cooldown between reports (in seconds)
   cooldown: 300
-  
+
   # Maximum number of active reports per player
   max-active-reports: 3
-  
+
   # Allow custom reasons in reports
   allow-custom-reasons: true
-  
+
   # Custom reason constraints
   custom-reason-max-length: 100
   custom-reason-min-length: 10
-  
+
   # Categories for reports - these will appear in the GUI
   categories:
     - "Hacking/Cheating"
@@ -106,7 +109,7 @@ messages:
   custom-reason-too-short: "&cYour custom reason is too short! Minimum length: {min} characters"
   custom-reason-too-long: "&cYour custom reason is too long! Maximum length: {max} characters"
   custom-reason-disabled: "&cCustom reasons are currently disabled."
-  
+
 # Discord Integration Settings
 discord:
   # Enable Discord bot integration
@@ -132,9 +135,9 @@ discord:
     poll-interval: 10
   # Bot appearance settings
   bot-settings:
-    status: "ONLINE"  # ONLINE, IDLE, DND, INVISIBLE
+    status: "ONLINE" # ONLINE, IDLE, DND, INVISIBLE
     activity:
-      type: "WATCHING"  # PLAYING, WATCHING, LISTENING, COMPETING
+      type: "WATCHING" # PLAYING, WATCHING, LISTENING, COMPETING
       message: "Reports | %online_players% players online"
   # Notification settings
   notifications:
