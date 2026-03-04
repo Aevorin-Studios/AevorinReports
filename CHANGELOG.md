@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6-Beta-3] - 2026-03-04
+
+### Bug Fixes & Stability
+
+- **Improved Discord Robustness**: Resolved a "Guild does not have a self member" error by implementing explicit member caching and chunking policies.
+- **Enhanced Discord Logging**: Added detailed error reporting for Discord message failures, including channel and guild identification to aid troubleshooting.
+- **Safety Checks**: Implemented verification steps to ensure the bot's identity is fully loaded before attempting to send report notifications or log updates.
+
+### Contributors
+
+Special thanks to **clessidra** for identifying the Discord "self member" issue.
+
+---
+
+## [1.0.6-Beta-2] - 2026-03-03
+
+### Bug Fixes
+
+- **Fixed Update Checker**: Resolved a bug in the update checker that caused incorrect behaviour when fetching or comparing version information.
+- **Fixed Discord Module Crash**: Resolved a bug in the Discord integration where a malformed `GUILD_CREATE` payload (forum channels with a `null` `available_tags` field) triggered a `ParsingException` in JDA, flooding the console with errors and causing the guild to become unavailable, effectively disabling the Discord module entirely.
+
+### Contributors
+
+Special thanks to **clessidra** for helping test and identify the Discord module crash.
+
+---
+
+## [1.0.6-Beta-1] - 2026-02-20
+
+### New Features
+
+- **Update Channel Selection**: Added an option in `config.yml` to choose between `alpha`, `beta`, and `release` update channels.
+  - Release channel: Only notifies about stable releases.
+  - Beta channel: Notifies about beta and stable releases.
+  - Alpha channel: Notifies about all updates (alpha, beta, and stable).
+
+### Configuration
+
+- **Config Migration**: Incremented `config-version` to `2` to support new update checker settings.
+
 ## [1.0.5.1] - 2026-01-30
 
 ### Bug Fixes & Optimization

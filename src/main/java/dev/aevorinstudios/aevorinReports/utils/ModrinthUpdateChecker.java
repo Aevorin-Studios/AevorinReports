@@ -46,21 +46,38 @@ public class ModrinthUpdateChecker implements Listener {
                 }
                 reader.close();
 
-                JsonObject[] versions = JsonParser.parseString(response.toString()).getAsJsonArray().asList()
-                    .stream()
-                    .map(element -> element.getAsJsonObject())
-                    .toArray(JsonObject[]::new);
+                JsonObject[] allVersions = JsonParser.parseString(response.toString()).getAsJsonArray().asList()
+                        .stream()
+                        .map(element -> element.getAsJsonObject())
+                        .toArray(JsonObject[]::new);
 
-                if (versions.length > 0) {
-                    JsonObject latest = versions[0];
+                String channel = plugin.getConfigManager().getConfig().getUpdateChecker().getUpdateChannel()
+                        .toLowerCase();
+
+                java.util.Optional<JsonObject> latestVersionObj = java.util.Arrays.stream(allVersions)
+                        .filter(v -> {
+                            String type = v.get("version_type").getAsString().toLowerCase();
+                            if (channel.equals("all"))
+                                return true;
+                            if (channel.equals("alpha"))
+                                return type.equals("alpha");
+                            if (channel.equals("beta"))
+                                return type.equals("beta");
+                            return type.equals("release");
+                        })
+                        .findFirst();
+
+                if (latestVersionObj.isPresent()) {
+                    JsonObject latest = latestVersionObj.get();
                     latestVersion = latest.get("version_number").getAsString();
                     downloadUrl = latest.getAsJsonArray("files").get(0).getAsJsonObject().get("url").getAsString();
 
                     String currentVersion = plugin.getDescription().getVersion();
-                    updateAvailable = !currentVersion.equals(latestVersion);
+                    updateAvailable = isNewer(latestVersion, currentVersion);
 
                     if (updateAvailable) {
-                        plugin.getLogger().info("A new version of AevorinReports is available: " + latestVersion);
+                        plugin.getLogger().info(
+                                "A new version of AevorinReports (" + channel + ") is available: " + latestVersion);
                         plugin.getLogger().info("Download it from: " + downloadUrl);
                     }
                 }
@@ -73,27 +90,82 @@ public class ModrinthUpdateChecker implements Listener {
         }
     }
 
+    private boolean isNewer(String latest, String current) {
+        if (latest == null || current == null || latest.equalsIgnoreCase(current))
+            return false;
+
+        try {
+            String[] latestSub = latest.split("-", 2);
+            String[] currentSub = current.split("-", 2);
+
+            String latestBase = latestSub[0];
+            String currentBase = currentSub[0];
+
+            int baseComparison = compareVersions(latestBase, currentBase);
+            if (baseComparison != 0)
+                return baseComparison > 0;
+
+            // Base versions are equal (e.g. 1.0.6 vs 1.0.6-Beta)
+            boolean latestHasSuffix = latestSub.length > 1;
+            boolean currentHasSuffix = currentSub.length > 1;
+
+            if (!latestHasSuffix && currentHasSuffix)
+                return true; // 1.0.6 > 1.0.6-Beta
+            if (latestHasSuffix && !currentHasSuffix)
+                return false; // 1.0.6-Beta < 1.0.6
+
+            if (latestHasSuffix && currentHasSuffix) {
+                // Both have suffixes (1.0.6-Beta-2 vs 1.0.6-Beta-1)
+                return latestSub[1].compareToIgnoreCase(currentSub[1]) > 0;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+        return false;
+    }
+
+    private int compareVersions(String v1, String v2) {
+        String[] parts1 = v1.split("\\.");
+        String[] parts2 = v2.split("\\.");
+        int length = Math.max(parts1.length, parts2.length);
+        for (int i = 0; i < length; i++) {
+            int p1 = i < parts1.length ? tryParsePart(parts1[i]) : 0;
+            int p2 = i < parts2.length ? tryParsePart(parts2[i]) : 0;
+            if (p1 != p2)
+                return p1 - p2;
+        }
+        return 0;
+    }
+
+    private int tryParsePart(String s) {
+        try {
+            return Integer.parseInt(s.replaceAll("[^0-9]", ""));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (updateAvailable && player.hasPermission("aevorinreports.update") && 
-            plugin.getConfig().getBoolean("update-checker.notify-on-join", true)) {
+        if (updateAvailable && player.hasPermission("aevorinreports.update") &&
+                plugin.getConfigManager().getConfig().getUpdateChecker().isNotifyOnJoin()) {
             dev.aevorinstudios.aevorinReports.utils.SchedulerUtils.runTaskLater(plugin, player, () -> {
                 String prefix = plugin.getConfig().getString("notifications.prefix", "&8[&bAevorinReports&8]&r ");
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', 
-                    prefix + "&eA new version is available: &b" + latestVersion));
                 player.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                    prefix + "&eDownload it from: &b" + downloadUrl));
+                        prefix + "&eA new version is available: &b" + latestVersion));
+                player.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                        prefix + "&eDownload it from: &b" + downloadUrl));
             }, 40L); // Delay notification by 2 seconds after join
         }
     }
 
     public void startUpdateChecker() {
-        long interval = plugin.getConfig().getLong("update-checker.check-interval", 60);
+        long interval = plugin.getConfigManager().getConfig().getUpdateChecker().getCheckInterval();
 
         // Schedule periodic checks (initial delay 0 to run immediately but async)
-        dev.aevorinstudios.aevorinReports.utils.SchedulerUtils.runTaskTimerAsynchronously(plugin, this::checkUpdate, 
-            0L, 
-            TimeUnit.MINUTES.toSeconds(interval) * 20L);
+        dev.aevorinstudios.aevorinReports.utils.SchedulerUtils.runTaskTimerAsynchronously(plugin, this::checkUpdate,
+                0L,
+                TimeUnit.MINUTES.toSeconds(interval) * 20L);
     }
 }

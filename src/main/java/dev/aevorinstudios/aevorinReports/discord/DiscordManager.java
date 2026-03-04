@@ -10,6 +10,9 @@ import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.ChunkingFilter;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.bukkit.Bukkit;
 
 import java.awt.Color;
@@ -56,7 +59,12 @@ public class DiscordManager {
 
         try {
             jda = JDABuilder.createDefault(token)
-                    .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
+                    .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT,
+                            GatewayIntent.GUILD_MEMBERS)
+                    .setMemberCachePolicy(MemberCachePolicy.ALL)
+                    .setChunkingFilter(ChunkingFilter.ALL)
+                    .disableCache(CacheFlag.FORUM_TAGS) // Workaround: JDA 5.4.0 crashes on forum channels with null
+                                                        // available_tags
                     .addEventListeners(new DiscordListener(plugin))
                     .build();
             jda.awaitReady();
@@ -99,8 +107,8 @@ public class DiscordManager {
             if (e.getMessage().contains("intents")) {
                 plugin.getLogger().severe("--------------------------------------------------");
                 plugin.getLogger().severe("DISCORD BOT ERROR: DISALLOWED INTENTS");
-                plugin.getLogger().severe("Please enable 'MESSAGE_CONTENT' intent in the");
-                plugin.getLogger().severe("Discord Developer Portal under the 'Bot' tab!");
+                plugin.getLogger().severe("Please enable 'MESSAGE_CONTENT' and 'SERVER MEMBERS'");
+                plugin.getLogger().severe("intents in the Discord Developer Portal under the 'Bot' tab!");
                 plugin.getLogger().severe("Link: https://discord.com/developers/applications");
                 plugin.getLogger().severe("--------------------------------------------------");
             } else {
@@ -180,6 +188,10 @@ public class DiscordManager {
     }
 
     private void pollForNewReports() {
+        if (jda == null || jda.getStatus() != JDA.Status.CONNECTED) {
+            return;
+        }
+
         try {
             List<dev.aevorinstudios.aevorinReports.reports.Report> newReports = plugin.getDatabaseManager()
                     .getReportsAfterId(lastReportId);
@@ -263,7 +275,23 @@ public class DiscordManager {
                 .replace("%date%", report.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         embed.setFooter(footer);
 
-        channel.sendMessageEmbeds(embed.build()).queue();
+        try {
+            if (channel.getGuild().getSelfMember() == null) {
+                plugin.getLogger().warning("[Discord] Cannot send report: Self member not cached for guild "
+                        + channel.getGuild().getName());
+                return;
+            }
+
+            channel.sendMessageEmbeds(embed.build()).queue(
+                    success -> {
+                    },
+                    error -> plugin.getLogger()
+                            .warning("[Discord] Failed to send report embed to #" + channel.getName() + ": "
+                                    + error.getMessage()));
+        } catch (Exception e) {
+            plugin.getLogger().warning(
+                    "[Discord] Could not send report notification to channel " + channelId + " - " + e.getMessage());
+        }
     }
 
     public void sendLogUpdate(Report report, String adminName) {
@@ -289,6 +317,22 @@ public class DiscordManager {
                         + "** by " + adminName + ".")
                 .setColor(color);
 
-        channel.sendMessageEmbeds(embed.build()).queue();
+        try {
+            if (channel.getGuild().getSelfMember() == null) {
+                plugin.getLogger().warning("[Discord] Cannot send log update: Self member not cached for guild "
+                        + channel.getGuild().getName());
+                return;
+            }
+
+            channel.sendMessageEmbeds(embed.build()).queue(
+                    success -> {
+                    },
+                    error -> plugin.getLogger()
+                            .warning("[Discord] Failed to send log update embed to #" + channel.getName() + ": "
+                                    + error.getMessage()));
+        } catch (Exception e) {
+            plugin.getLogger().warning(
+                    "[Discord] Could not send log update to channel " + logChannelId + " - " + e.getMessage());
+        }
     }
 }

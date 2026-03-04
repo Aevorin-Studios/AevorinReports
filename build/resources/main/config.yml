@@ -1,7 +1,7 @@
 # AevorinReports Configuration File
 
 # Please Do not change the config version
-config-version: 1
+config-version: 2
 
 # Server Configuration
 # The name of this server, used to identify where reports come from in a multi-server network.
@@ -76,6 +76,9 @@ update-checker:
   check-interval: 60
   # Whether to notify players with permission about updates on join
   notify-on-join: true
+  # Update channel to use for update notifications
+  # Options: "all" (every update), "alpha" (only alpha), "beta" (only beta), "release" (only release)
+  update-channel: "release"
 
 # Debug Settings
 debug:

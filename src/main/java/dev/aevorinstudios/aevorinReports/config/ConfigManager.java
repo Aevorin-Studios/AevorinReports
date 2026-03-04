@@ -149,6 +149,17 @@ public class ConfigManager {
             }
         }
 
+        // Update Checker Configuration
+        if (yamlConfig.containsKey("update-checker")) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> updateChecker = (Map<String, Object>) yamlConfig.get("update-checker");
+            if (updateChecker != null) {
+                config.getUpdateChecker().setCheckInterval(asInt(updateChecker.get("check-interval"), 60));
+                config.getUpdateChecker().setNotifyOnJoin(asBoolean(updateChecker.get("notify-on-join"), true));
+                config.getUpdateChecker().setUpdateChannel(asString(updateChecker.get("update-channel"), "release"));
+            }
+        }
+
         // Custom Reasons
         if (yamlConfig.containsKey("customReasons")) {
             Map<?, ?> customReasonsRaw = (Map<?, ?>) yamlConfig.get("customReasons");
@@ -281,8 +292,16 @@ public class ConfigManager {
     }
 
     private void applyMigrations(Map<String, Object> config, int version) {
-        // Add historical migrations here as the config structure changes
-        // Example: if (version < 1) { ... }
+        if (version < 2) {
+            // New update-checker settings added in v2
+            if (!config.containsKey("update-checker")) {
+                Map<String, Object> updateChecker = new HashMap<>();
+                updateChecker.put("check-interval", 60);
+                updateChecker.put("notify-on-join", true);
+                updateChecker.put("update-channel", "release");
+                config.put("update-checker", updateChecker);
+            }
+        }
     }
 
     private String asString(Object value, String defaultValue) {
@@ -407,6 +426,21 @@ public class ConfigManager {
         validateDatabaseConfig();
         validatePerformanceConfig();
         validateReportsConfig();
+        validateUpdateCheckerConfig();
+    }
+
+    private void validateUpdateCheckerConfig() {
+        Config.UpdateCheckerConfig updateChecker = config.getUpdateChecker();
+        if (updateChecker.getCheckInterval() < 1) {
+            logger.warn("Invalid update check-interval {}, defaulting to 60", updateChecker.getCheckInterval());
+            updateChecker.setCheckInterval(60);
+        }
+        String channel = updateChecker.getUpdateChannel().toLowerCase();
+        if (!channel.equals("all") && !channel.equals("alpha") && !channel.equals("beta")
+                && !channel.equals("release")) {
+            logger.warn("Invalid update channel '{}', defaulting to 'release'", updateChecker.getUpdateChannel());
+            updateChecker.setUpdateChannel("release");
+        }
     }
 
     private void validateDatabaseConfig() {
@@ -577,6 +611,13 @@ public class ConfigManager {
         networkMode.put("poll-interval", config.getDiscord().getNetworkMode().getPollInterval());
         discord.put("network-mode", networkMode);
 
+        // Update Checker Configuration
+        Map<String, Object> updateChecker = new HashMap<>();
+        updateChecker.put("check-interval", config.getUpdateChecker().getCheckInterval());
+        updateChecker.put("notify-on-join", config.getUpdateChecker().isNotifyOnJoin());
+        updateChecker.put("update-channel", config.getUpdateChecker().getUpdateChannel());
+        result.put("update-checker", updateChecker);
+
         result.put("discord", discord);
 
         return result;
@@ -681,6 +722,7 @@ public class ConfigManager {
         private NotificationsConfig notifications = new NotificationsConfig();
         private PerformanceConfig performance = new PerformanceConfig();
         private DiscordConfig discord = new DiscordConfig();
+        private UpdateCheckerConfig updateChecker = new UpdateCheckerConfig();
         private Map<String, String> customReasons = new HashMap<>();
 
         @Data
@@ -769,6 +811,13 @@ public class ConfigManager {
             private int batchSize = 50;
             private int backgroundTaskInterval = 300;
             private int cacheCleanupInterval = 30;
+        }
+
+        @Data
+        public static class UpdateCheckerConfig {
+            private int checkInterval = 60;
+            private boolean notifyOnJoin = true;
+            private String updateChannel = "release";
         }
     }
 
