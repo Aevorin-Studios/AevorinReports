@@ -1,0 +1,36 @@
+# Gradle
+.gradle/
+build/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# VS Code
+.vscode/
+
+# Compiled files
+*.class
+bin/
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# Log files
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Gradle properties (optional, but often contains local environment paths)
+# local.properties
+
+# Stop unnecessary files from being tracked
+.project
+.classpath
+.settings/
