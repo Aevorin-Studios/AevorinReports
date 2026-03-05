@@ -716,7 +716,7 @@ public class ConfigManager {
     @Data
     public static class Config {
         private String serverName = "survival";
-        private int configVersion = 1;
+        private int configVersion = 3;
         private DatabaseConfig database = new DatabaseConfig();
         private ReportsConfig reports = new ReportsConfig();
         private NotificationsConfig notifications = new NotificationsConfig();

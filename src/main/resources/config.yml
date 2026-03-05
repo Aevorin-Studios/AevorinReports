@@ -1,7 +1,7 @@
 # AevorinReports Configuration File
 
 # Please Do not change the config version
-config-version: 2
+config-version: 3
 
 # Server Configuration
 # The name of this server, used to identify where reports come from in a multi-server network.

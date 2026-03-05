@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6] - 2026-03-05
+
+> **Developer's Note**: While this is a relatively small update focused on stability and internal improvements, we are already hard at work on a major upcoming update centered around **localization and language support**. Stay tuned!
+
+### New Features
+
+- **Update Channel Selection**: Added an option in `config.yml` to choose the update notification channel.
+  - `all`: Notifies about ALL updates (alpha, beta, and stable releases).
+  - `release`: Only notifies about stable releases.
+  - `beta`: Notifies about beta releases.
+  - `alpha`: Notifies about alpha releases.
+
+### Bug Fixes & Stability
+
+- **Improved Discord Robustness**: Resolved a "Guild does not have a self member" error by implementing explicit member caching and chunking policies.
+- **Enhanced Discord Logging**: Added detailed error reporting for Discord message failures, including channel and guild identification to aid troubleshooting.
+- **Safety Checks**: Implemented verification steps to ensure the bot's identity is fully loaded before attempting to send report notifications or log updates.
+- **Fixed Update Checker**: Resolved a bug in the update checker that caused incorrect behaviour when fetching or comparing version information.
+- **Fixed Discord Module Crash**: Resolved a bug in the Discord integration where a malformed `GUILD_CREATE` payload triggered a `ParsingException` in JDA.
+
+### Configuration
+
+- **Config Migration**: Incremented `config-version` to `3` to support new update checker settings and improvements.
+
+### Contributors
+
+Special thanks to **clessidra** for their help in identifying and testing various **Discord-related bugs**.
+
+---
+
 ## [1.0.6-Beta-3] - 2026-03-04
 
 ### Bug Fixes & Stability
@@ -33,10 +63,11 @@ Special thanks to **clessidra** for helping test and identify the Discord module
 
 ### New Features
 
-- **Update Channel Selection**: Added an option in `config.yml` to choose between `alpha`, `beta`, and `release` update channels.
-  - Release channel: Only notifies about stable releases.
-  - Beta channel: Notifies about beta and stable releases.
-  - Alpha channel: Notifies about all updates (alpha, beta, and stable).
+- **Update Channel Selection**: Added an option in `config.yml` to choose between `all`, `alpha`, `beta`, and `release` update channels.
+  - `all`: Notifies about ALL updates (alpha, beta, and stable).
+  - `release`: Only notifies about stable releases.
+  - `beta`: Notifies about beta releases.
+  - `alpha`: Notifies about alpha releases.
 
 ### Configuration
 
