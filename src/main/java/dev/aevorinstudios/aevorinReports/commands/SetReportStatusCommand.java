@@ -1,8 +1,9 @@
 package dev.aevorinstudios.aevorinReports.commands;
 
 import dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin;
-import dev.aevorinstudios.aevorinReports.gui.ReportManageGUI;
 import dev.aevorinstudios.aevorinReports.reports.Report;
+import dev.aevorinstudios.aevorinReports.config.LanguageManager;
+import dev.aevorinstudios.aevorinReports.utils.MessageUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -13,6 +14,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class SetReportStatusCommand implements CommandExecutor, TabCompleter {
@@ -24,18 +26,20 @@ public class SetReportStatusCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        LanguageManager lang = LanguageManager.get(plugin);
+        
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "Only players can use this command!");
+            MessageUtils.sendMessage(sender, "&cOnly players can use this command!");
             return true;
         }
 
         if (!player.hasPermission("aevorinreports.manage")) {
-            player.sendMessage(ChatColor.RED + "You don't have permission to use this command!");
+            MessageUtils.sendMessage(player, lang.getMessage("messages.error.no-permission"));
             return true;
         }
 
         if (args.length != 3 || !args[1].equalsIgnoreCase("to")) {
-            player.sendMessage(ChatColor.RED + "Usage: /setreportstatus <id> to <status>");
+            MessageUtils.sendMessage(player, "&cUsage: /setreportstatus <id> to <status>");
             return true;
         }
 
@@ -46,32 +50,38 @@ public class SetReportStatusCommand implements CommandExecutor, TabCompleter {
             Report report = plugin.getDatabaseManager().getReport(reportId);
             
             if (report == null) {
-                player.sendMessage(ChatColor.RED + "Report not found!");
+                MessageUtils.sendMessage(player, lang.getMessage("messages.error.report-not-found"));
                 return true;
             }
             
             if (report.getStatus() == newStatus) {
-                player.sendMessage(ChatColor.YELLOW + "Report is already in that status!");
+                MessageUtils.sendMessage(player, "&eReport is already in that status!");
                 return true;
             }
             
-            // Silently update without console messages
             report.setStatus(newStatus);
             plugin.getDatabaseManager().updateReport(report);
             
-            // Send a discreet message to the player
-            player.sendMessage(ChatColor.DARK_GRAY + "[Report System] " + ChatColor.GRAY + "ID: " + reportId + " → " + newStatus.name());
+            String statusColor = switch(newStatus) {
+            case PENDING -> "&6";
+            case RESOLVED -> "&a";
+            case REJECTED -> "&c";
+            };
             
-            // Log at FINE level (typically not shown in console unless debug is enabled)
+            MessageUtils.sendMessage(player, lang.getMessage("messages.report.status-change", Map.of(
+                "id", String.valueOf(reportId),
+                "status", newStatus.name(),
+                "color", statusColor
+            )));
+            
             plugin.getLogger().fine("Report " + reportId + " status changed to " + newStatus.name() + " by " + player.getName());
             
-            // Silently show updated details (avoid dispatching a visible command)
-            // Close the GUI instead of re-opening it
             player.closeInventory();
         } catch (NumberFormatException e) {
-            player.sendMessage(ChatColor.RED + "Invalid report ID!");
+            MessageUtils.sendMessage(player, "&cInvalid report ID!");
         } catch (IllegalArgumentException e) {
-            player.sendMessage(ChatColor.RED + "Invalid status! Valid: " + Arrays.toString(Report.ReportStatus.values()));
+            String statuses = Arrays.stream(Report.ReportStatus.values()).map(Enum::name).collect(Collectors.joining(", "));
+            MessageUtils.sendMessage(player, lang.getMessage("messages.error.status-invalid", Map.of("statuses", statuses)));
         }
         return true;
     }

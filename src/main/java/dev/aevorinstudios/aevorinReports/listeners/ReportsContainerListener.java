@@ -3,7 +3,10 @@ package dev.aevorinstudios.aevorinReports.listeners;
 import dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin;
 import dev.aevorinstudios.aevorinReports.gui.CategoryContainerGUI;
 import dev.aevorinstudios.aevorinReports.gui.ReportManageGUI;
+import dev.aevorinstudios.aevorinReports.gui.ReportReasonContainerGUI;
+import dev.aevorinstudios.aevorinReports.gui.holders.*;
 import dev.aevorinstudios.aevorinReports.reports.Report;
+import dev.aevorinstudios.aevorinReports.config.LanguageManager;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -17,6 +20,7 @@ import java.util.List;
 
 public class ReportsContainerListener implements Listener {
     private final BukkitPlugin plugin;
+
     public ReportsContainerListener(BukkitPlugin plugin) {
         this.plugin = plugin;
     }
@@ -24,147 +28,168 @@ public class ReportsContainerListener implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        Inventory inv = event.getInventory();
-        String title = event.getView().getTitle();
-        if (!(title.equals("Reports Menu") || title.endsWith("Reports") || title.startsWith("Manage Report "))) return;
-        event.setCancelled(true);
+        Inventory inv = event.getClickedInventory();
+        if (inv == null) return;
 
-        ItemStack clicked = event.getCurrentItem();
-        if (clicked == null || !clicked.hasItemMeta()) return;
-        ItemMeta meta = clicked.getItemMeta();
-        String display = meta.getDisplayName();
-        if (display == null) {
-            event.setCancelled(true);
-            return;
-        }
+        Object holder = event.getInventory().getHolder();
+        if (holder == null) return;
 
-        // Handle category selection
-        if (display.contains("Pending Reports")) {
-            event.setCancelled(true);
-            List<dev.aevorinstudios.aevorinReports.reports.Report> reports = plugin.getDatabaseManager().getReportsByStatus(dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.PENDING);
-            new CategoryContainerGUI(plugin).openCategoryGUI(player, dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.PENDING, reports);
-            return;
-        } else if (display.contains("Resolved Reports")) {
-            event.setCancelled(true);
-            List<dev.aevorinstudios.aevorinReports.reports.Report> reports = plugin.getDatabaseManager().getReportsByStatus(dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.RESOLVED);
-            new CategoryContainerGUI(plugin).openCategoryGUI(player, dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.RESOLVED, reports);
-            return;
-        } else if (display.contains("Rejected Reports")) {
-            event.setCancelled(true);
-            List<dev.aevorinstudios.aevorinReports.reports.Report> reports = plugin.getDatabaseManager().getReportsByStatus(dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.REJECTED);
-            new CategoryContainerGUI(plugin).openCategoryGUI(player, dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.REJECTED, reports);
-            return;
-        }
-
-        // If we're in a category GUI (Pending/Resolved/Rejected Reports)
-        if (title.endsWith("Reports")) {
+        // If the click is in our custom inventory, cancel it by default
+        if (holder instanceof ReportsMenuHolder || 
+            holder instanceof CategoryReportsHolder || 
+            holder instanceof ReportManageHolder || 
+            holder instanceof ReportReasonHolder ||
+            holder instanceof PlayerReportsHolder) {
+            
             event.setCancelled(true);
             
-            // Handle pagination arrows
-            if (event.getSlot() == 48 || event.getSlot() == 50) {
-                // Make sure we have an arrow and metadata
-                if (clicked.getType() != Material.ARROW) return;
-                List<String> arrowLore = meta.getLore();
-                if (arrowLore == null || arrowLore.isEmpty()) return;
-                
-                // Extract the status from the title
-                String statusStr = title.substring(0, title.indexOf(" ")).toUpperCase();
-                Report.ReportStatus status;
-                try {
-                    status = Report.ReportStatus.valueOf(statusStr);
-                } catch (IllegalArgumentException e) {
-                    return; // Invalid status
+            // If they clicked outside the top inventory (e.g. in their own inventory), just cancel and return
+            if (inv != event.getView().getTopInventory()) return;
+            ItemStack clicked = event.getCurrentItem();
+            if (clicked == null || clicked.getType() == Material.AIR) return;
+
+            if (holder instanceof ReportsMenuHolder) {
+                handleMainMenuClick(player, event.getSlot());
+            } else if (holder instanceof CategoryReportsHolder) {
+                handleCategoryClick(player, (CategoryReportsHolder) holder, event.getSlot(), clicked);
+            } else if (holder instanceof PlayerReportsHolder) {
+                handlePlayerReportsClick(player, (PlayerReportsHolder) holder, event.getSlot(), clicked);
+            } else if (holder instanceof ReportManageHolder) {
+                handleManageClick(player, (ReportManageHolder) holder, event.getSlot());
+            } else if (holder instanceof ReportReasonHolder) {
+                handleReasonSelectorClick(player, (ReportReasonHolder) holder, event.getSlot(), clicked);
+            }
+        }
+    }
+
+    private void handleMainMenuClick(Player player, int slot) {
+        Report.ReportStatus status = null;
+        if (slot == 10) status = Report.ReportStatus.PENDING;
+        else if (slot == 13) status = Report.ReportStatus.RESOLVED;
+        else if (slot == 16) status = Report.ReportStatus.REJECTED;
+
+        if (status != null) {
+            List<Report> reports = plugin.getDatabaseManager().getReportsByStatus(status);
+            new CategoryContainerGUI(plugin).openCategoryGUI(player, status, reports);
+        }
+    }
+
+    private void handleCategoryClick(Player player, CategoryReportsHolder holder, int slot, ItemStack clicked) {
+        // Handle pagination arrows
+        if (slot == 48 || slot == 50) {
+            if (clicked.getType() == Material.ARROW) {
+                int targetPage = holder.getPage() + (slot == 50 ? 1 : -1);
+                if (targetPage >= 0) {
+                    List<Report> reports = plugin.getDatabaseManager().getReportsByStatus(holder.getStatus());
+                    new CategoryContainerGUI(plugin).openCategoryGUI(player, holder.getStatus(), reports, targetPage);
                 }
-                
-                // Extract the page number
-                String pageInfo = arrowLore.get(0);
-                if (!pageInfo.startsWith("§7Go to page ")) return;
-                try {
-                    int targetPage = Integer.parseInt(pageInfo.replace("§7Go to page ", "").trim()) - 1; // Convert to 0-based
-                    if (targetPage < 0) return;
-                    
-                    // Get reports for this status and open the targeted page
-                    List<Report> reports = plugin.getDatabaseManager().getReportsByStatus(status);
-                    new CategoryContainerGUI(plugin).openCategoryGUI(player, status, reports, targetPage);
-                } catch (NumberFormatException ignored) {}
-                
+            }
+            return;
+        }
+
+        // Handle back button
+        if (slot == 45 && clicked.getType() == Material.DARK_OAK_DOOR) {
+            new CategoryContainerGUI(plugin).openMainMenu(player);
+            return;
+        }
+
+        // Handle report item clicks using PersistentDataContainer (robust)
+        ItemMeta meta = clicked.getItemMeta();
+        if (meta != null) {
+            org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(plugin, "report_id");
+            if (meta.getPersistentDataContainer().has(key, org.bukkit.persistence.PersistentDataType.LONG)) {
+                long id = meta.getPersistentDataContainer().get(key, org.bukkit.persistence.PersistentDataType.LONG);
+                Report report = plugin.getDatabaseManager().getReport(id);
+                if (report != null) {
+                    new ReportManageGUI(plugin).open(player, report);
+                }
                 return;
             }
+        }
+
+        // Fallback to lore parsing if PDC is missing (for legacy items if any)
+        if (meta != null && meta.hasLore()) {
+            for (String line : meta.getLore()) {
+                String plain = org.bukkit.ChatColor.stripColor(line);
+                if (plain.contains(": ")) { // Search for any ": <number>" pattern
+                    try {
+                        String[] parts = plain.split(": ");
+                        if (parts.length > 1) {
+                            long id = Long.parseLong(parts[parts.length-1].trim());
+                            Report report = plugin.getDatabaseManager().getReport(id);
+                            if (report != null) {
+                                new ReportManageGUI(plugin).open(player, report);
+                                break;
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+    }
+
+    private void handleManageClick(Player player, ReportManageHolder holder, int slot) {
+        Report report = holder.getReport();
+        
+        if (slot == 36) {
+            java.util.List<Report> reports = plugin.getDatabaseManager().getReportsByStatus(report.getStatus());
+            new CategoryContainerGUI(plugin).openCategoryGUI(player, report.getStatus(), reports, 0);
+            return;
+        }
+
+        Report.ReportStatus newStatus = null;
+
+        if (slot == 45) newStatus = Report.ReportStatus.PENDING;
+        else if (slot == 49) newStatus = Report.ReportStatus.RESOLVED;
+        else if (slot == 53) newStatus = Report.ReportStatus.REJECTED;
+
+        if (newStatus != null && newStatus != report.getStatus()) {
+            report.setStatus(newStatus);
+            plugin.getDatabaseManager().updateReport(report);
             
-            // Handle report item clicks
-            if (event.getSlot() < 0 || event.getSlot() >= inv.getSize()) return;
-            List<String> lore = meta.getLore();
-            if (lore != null) {
-                for (String line : lore) {
-                    if (line.startsWith("§7ID: ")) {
-                        try {
-                            long reportId = Long.parseLong(line.replace("§7ID: ", "").trim());
-                            Report report = plugin.getDatabaseManager().getReport(reportId);
-                            if (report != null) {
-                                player.sendMessage("§7Opening management for report ID: " + reportId);
-                                new ReportManageGUI(plugin).open(player, report);
-                            }
-                        } catch (NumberFormatException ignored) {}
-                        break;
-                    }
-                }
-            }
+            // Reopen category view
+            List<Report> reports = plugin.getDatabaseManager().getReportsByStatus(newStatus);
+            new CategoryContainerGUI(plugin).openCategoryGUI(player, newStatus, reports);
+            
+            LanguageManager lang = LanguageManager.get(plugin);
+            player.sendMessage(lang.getMessage("messages.success.status-update-success"));
+        }
+    }
+
+    private void handleReasonSelectorClick(Player player, ReportReasonHolder holder, int slot, ItemStack clicked) {
+        // Handle navigation
+        if (clicked.getType() == Material.ARROW) {
+            int targetPage = holder.getPage() + (slot == 53 ? 1 : -1);
+            new ReportReasonContainerGUI(plugin).showReasonContainerGUI(player, holder.getTargetPlayer(), targetPage);
             return;
         }
-        // If we're in the management GUI for a report
-        if (title.startsWith("Manage Report ")) {
-            event.setCancelled(true);
-            int slot = event.getSlot();
-            ItemStack clickedItem = event.getCurrentItem();
-            if (clickedItem == null || !clickedItem.hasItemMeta()) return;
-            ItemMeta clickedMeta = clickedItem.getItemMeta();
-            String clickedName = clickedMeta.getDisplayName();
-            // Only allow move actions on slots 45, 49, 53
-            if (slot != 45 && slot != 49 && slot != 53) return;
-            try {
-                long reportId = Long.parseLong(title.replace("Manage Report ", "").trim());
-                dev.aevorinstudios.aevorinReports.reports.Report report = plugin.getDatabaseManager().getReport(reportId);
-                if (report == null) return;
-                if (clickedName == null) return;
-                if (slot == 45 && clickedName.contains("Move to Pending")) {
-                    report.setStatus(dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.PENDING);
-                    plugin.getDatabaseManager().updateReport(report);
-                    player.sendMessage("§eReport moved to Pending.");
-                } else if (slot == 49 && clickedName.contains("Move to Resolved")) {
-                    report.setStatus(dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.RESOLVED);
-                    plugin.getDatabaseManager().updateReport(report);
-                    player.sendMessage("§aReport moved to Resolved.");
-                } else if (slot == 53 && clickedName.contains("Move to Rejected")) {
-                    report.setStatus(dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus.REJECTED);
-                    plugin.getDatabaseManager().updateReport(report);
-                    player.sendMessage("§cReport moved to Rejected.");
-                } else {
-                    return;
-                }
-                // After move, reopen the new category GUI
-                java.util.List<dev.aevorinstudios.aevorinReports.reports.Report> updatedReports = plugin.getDatabaseManager().getReportsByStatus(report.getStatus());
-                new CategoryContainerGUI(plugin).openCategoryGUI(player, report.getStatus(), updatedReports);
-            } catch (Exception ignored) {}
-            return;
+
+        // Handle reason selection
+        if (clicked.getType() == Material.PAPER) {
+            ItemMeta meta = clicked.getItemMeta();
+            if (meta != null) {
+                // The display name is the reason (with localized color/prefix)
+                // We should probably store the raw reason in the lore or PDC.
+                // For now, let's try to get it from the display name if it follows the pattern.
+                String displayName = org.bukkit.ChatColor.stripColor(meta.getDisplayName());
+                
+                player.closeInventory();
+                // Execute command as player for consistency
+                player.performCommand("report " + holder.getTargetPlayer() + " " + displayName);
+            }
         }
-        if (title.endsWith("Reports")) {
-            // Try to extract report id from lore
-            List<String> lore = meta.getLore();
-            if (lore != null) {
-                for (String line : lore) {
-                    if (line.startsWith("§7ID: ")) {
-                        try {
-                            long reportId = Long.parseLong(line.replace("§7ID: ", "").trim());
-                            Report report = plugin.getDatabaseManager().getReport(reportId);
-                            if (report != null) {
-                                new ReportManageGUI(plugin).open(player, report);
-                            }
-                        } catch (NumberFormatException ignored) {}
-                        break;
-                    }
+    }
+
+    private void handlePlayerReportsClick(Player player, PlayerReportsHolder holder, int slot, ItemStack clicked) {
+        // Handle pagination arrows
+        if (slot == 48 || slot == 50) {
+            if (clicked.getType() == Material.ARROW) {
+                int targetPage = holder.getPage() + (slot == 50 ? 1 : -1);
+                if (targetPage >= 0) {
+                    List<Report> reports = plugin.getDatabaseManager().getReportsByReporter(player.getUniqueId());
+                    new CategoryContainerGUI(plugin).openPlayerReportsGUI(player, reports, targetPage);
                 }
             }
-            event.setCancelled(true);
         }
     }
 }

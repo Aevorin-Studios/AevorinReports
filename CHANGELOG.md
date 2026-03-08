@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.7-Alpha-1] - 2026-03-07
+
+> [!WARNING]
+> This is an **Alpha** version and is **not stable**. It is **not** recommended to install this on your Minecraft server unless you are a developer or a tester.
+
+### New Features
+
+- **Full Localization Support**: Implemented a comprehensive language system.
+  - New `lang/` folder for storing language packs (e.g., `en_US.yml`).
+  - Active language selection via `language` setting in `config.yml`.
+  - Added default `en_US.yml` with all GUI and message strings.
+- **Localized GUIs**: Refactored all user interfaces to be fully translatable.
+  - `ReportManageGUI`: Localized all labels and status buttons.
+  - `CategoryContainerGUI`: Localized navigation and indicators.
+  - `ReportReasonContainerGUI`: Localized the entire reason selection flow.
+  - `BookGUI`: Localized the classic book-based reporting and management views.
+- **Localized Commands**: All command feedback and staff notifications are now localized via the language pack.
+
+### Improvements & Bug Fixes
+
+- **Enhanced GUI Stability**: Re-engineered the internal GUI identification system using `InventoryHolder`.
+  - Resolved an issue where users could take items out of the chest GUI if they changed the language settings.
+  - Eliminated a bug where multiple report messages were sent simultaneously due to duplicate event listener registrations.
+  - Improved compatibility with custom language packs by removing hardcoded title and lore requirements for GUI logic.
+
+---
+
 ## [1.0.6] - 2026-03-05
 
 > **Developer's Note**: While this is a relatively small update focused on stability and internal improvements, we are already hard at work on a major upcoming update centered around **localization and language support**. Stay tuned!

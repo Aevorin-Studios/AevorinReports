@@ -11,6 +11,7 @@ import dev.aevorinstudios.aevorinReports.discord.DiscordManager;
 import dev.aevorinstudios.aevorinReports.handlers.CustomReasonHandler;
 import dev.aevorinstudios.aevorinReports.utils.ExceptionHandler;
 import dev.aevorinstudios.aevorinReports.utils.ModrinthUpdateChecker;
+import dev.aevorinstudios.aevorinReports.config.LanguageManager;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -29,6 +30,7 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     private static BukkitPlugin instance;
     private ConfigManager configManager;
     private DatabaseManager databaseManager;
+    private LanguageManager languageManager;
     private ModrinthUpdateChecker updateChecker;
     @Getter
     private CustomReasonHandler customReasonHandler;
@@ -119,7 +121,7 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
         if ((command.getName().equalsIgnoreCase("ar") || command.getName().equalsIgnoreCase("aevorinreports"))
                 && args.length > 0 && args[0].equalsIgnoreCase("reload")) {
             if (!sender.hasPermission("aevorinreports.reload")) {
-                sender.sendMessage("§cYou don't have permission to reload the config!");
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender, "&cYou don't have permission to reload the config!");
                 return true;
             }
             try {
@@ -127,12 +129,13 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                 if (configManager != null) {
                     configManager.loadConfig();
                 }
+                LanguageManager.reloadAll(this);
                 if (customReasonHandler != null) {
                     // Refresh categories or other state if needed
                 }
-                sender.sendMessage("§aAevorinReports configuration reloaded successfully!");
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender, "&aAevorinReports configuration reloaded successfully!");
             } catch (Exception e) {
-                sender.sendMessage("§cFailed to reload configuration. Check the console for errors.");
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender, "&cFailed to reload configuration. Check the console for errors.");
                 getLogger().warning("Error reloading configuration: " + e.getMessage());
             }
             return true;
@@ -178,6 +181,7 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             // Validate critical configuration sections
             boolean valid = validateConfiguration();
 
+            LanguageManager.reloadAll(this);
             configInitialized = true;
             getLogger().info("Configuration loaded successfully" + (valid ? "." : " with warnings."));
             return valid;
@@ -345,13 +349,9 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     private void registerListeners() {
         getLogger().info("Registering event listeners...");
 
-        // Register ReportsContainerListener for container GUI
+        // Register central container GUI listener
         getServer().getPluginManager()
                 .registerEvents(new dev.aevorinstudios.aevorinReports.listeners.ReportsContainerListener(this), this);
-
-        // Register ReportReasonContainerListener for report container GUI
-        getServer().getPluginManager().registerEvents(
-                new dev.aevorinstudios.aevorinReports.listeners.ReportReasonContainerListener(this), this);
 
         getLogger().info("Event listeners registered successfully!");
     }

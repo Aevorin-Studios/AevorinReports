@@ -8,6 +8,10 @@ config-version: 3
 # If you have multiple servers connected to the same database, give each one a unique name.
 server-name: "survival"
 
+# Language Settings
+# The language file to use from the lang/ folder (excluding the .yml extension)
+language: "en_US"
+
 # Database Configuration
 database:
   type: "file" # Options: "mysql" (for multi-server) or "file" (local SQLite)
@@ -47,17 +51,6 @@ reports:
   custom-reason-max-length: 100
   custom-reason-min-length: 10
 
-  # Categories for reports - these will appear in the GUI
-  categories:
-    - "Hacking/Cheating"
-    - "Harassment/Bullying"
-    - "Spam/Advertisement"
-    - "Griefing/Vandalism"
-    - "Exploiting Bugs"
-    - "Inappropriate Skin/Name"
-    - "Inappropriate Language"
-    - "Other"
-
 # Notification Settings
 notifications:
   # Send notification to staff when a new report is created
@@ -87,33 +80,7 @@ debug:
   # Log database queries (spammy, use only if needed)
   log-queries: false
 
-# Message Customization
-messages:
-  reports-title: "&6Your Active Reports"
-  report-format: "&7• &e#%id% &7- &f%reason%"
-  no-reports: "&cYou have no active reports!"
-  report-details: "&7Status: &e%status%\n&7Date: &f%date%"
-  report-created: "&aYour report has been submitted successfully!"
-  report-cooldown: "&cYou must wait {time} before submitting another report."
-  report-limit-reached: "&cYou have reached the maximum number of active reports."
-  no-permission: "&cYou don't have permission to do that!"
-  invalid-player: "&cThat player does not exist!"
-  description-too-short: "&cYour report description is too short! Minimum length: {min}"
-  description-too-long: "&cYour report description is too long! Maximum length: {max}"
-  invalid-category: "&cInvalid report category! Available categories: {categories}"
-  report-notification: "<red>[Reports] <yellow>{reporter} <white>has reported <red>{reported} <white>for: <yellow>{category}"
-  report-status-change: "&7Report #{id} status has been changed to {color}{status}&7."
-  report-status-update-success: "&aReport status updated successfully!"
-  report-status-update-failed: "&cFailed to update report status!"
-  report-not-found: "&cReport not found!"
-  report-status-invalid: "&cInvalid report status! Available statuses: {statuses}"
-  invalid-status-transition: "&cCannot change report status from {current} to {status}. Invalid transition!"
-  custom-reason-prompt: "&eEnter your custom reason in chat. Your message will be private."
-  custom-reason-too-short: "&cYour custom reason is too short! Minimum length: {min} characters"
-  custom-reason-too-long: "&cYour custom reason is too long! Maximum length: {max} characters"
-  custom-reason-disabled: "&cCustom reasons are currently disabled."
-
-# Discord Integration Settings
+# Notification Settings
 discord:
   # Enable Discord bot integration
   enabled: false

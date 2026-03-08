@@ -1,10 +1,10 @@
 package dev.aevorinstudios.aevorinReports.commands;
 
 import dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin;
-import dev.aevorinstudios.aevorinReports.database.DatabaseManager;
 import dev.aevorinstudios.aevorinReports.gui.BookGUI;
 import dev.aevorinstudios.aevorinReports.reports.Report;
-import dev.aevorinstudios.aevorinReports.utils.PlayerNameResolver;
+import dev.aevorinstudios.aevorinReports.config.LanguageManager;
+import dev.aevorinstudios.aevorinReports.utils.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -12,9 +12,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.Material;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,14 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static dev.aevorinstudios.aevorinReports.config.ConfigManager.getInstance;
-
 public class BukkitReportsCommand implements CommandExecutor, TabCompleter {
     private final BukkitPlugin plugin;
     private final Map<UUID, Long> lastCommandTime = new HashMap<>();
     private final Map<Report.ReportStatus, List<Report>> reportCache = new HashMap<>();
-    private static final long COMMAND_COOLDOWN = 500; // 500 ms cooldown
-    private static final long CACHE_DURATION = 5000; // 5 seconds cache duration
+    private static final long COMMAND_COOLDOWN = 500;
+    private static final long CACHE_DURATION = 5000;
     private long lastCacheUpdate = 0;
 
     public BukkitReportsCommand(BukkitPlugin plugin) {
@@ -60,16 +58,25 @@ public class BukkitReportsCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        LanguageManager lang = LanguageManager.get(plugin);
+
         if (!(sender instanceof Player player)) {
-            dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender, getInstance().getMessage("messages.errors.player-only"));
+            MessageUtils.sendMessage(sender, lang.getMessage("messages.error.player-only"));
             return true;
         }
 
-        if (player.hasPermission("aevorinreports.manage")) {
-            // Admin/Mod view logic continues below
-        } else {
-            // Regular player view - show their own reports
-            new BookGUI(plugin).showPlayerReports(player);
+        if (!player.hasPermission("aevorinreports.manage")) {
+            String guiType = plugin.getConfig().getString("reports.gui.type", "book");
+            if (guiType.equalsIgnoreCase("container")) {
+                List<Report> reports = plugin.getDatabaseManager().getReportsByReporter(player.getUniqueId());
+                if (reports.isEmpty()) {
+                    player.sendMessage(lang.getMessage("messages.error.no-reports"));
+                    return true;
+                }
+                new dev.aevorinstudios.aevorinReports.gui.CategoryContainerGUI(plugin).openPlayerReportsGUI(player, reports, 0);
+            } else {
+                new BookGUI(plugin).showPlayerReports(player);
+            }
             return true;
         }
 
@@ -83,7 +90,7 @@ public class BukkitReportsCommand implements CommandExecutor, TabCompleter {
         try {
             status = Report.ReportStatus.valueOf(group);
         } catch (IllegalArgumentException e) {
-            dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, getInstance().getMessage("messages.errors.invalid-group"));
+            MessageUtils.sendMessage(player, lang.getMessage("messages.error.invalid-group"));
             return true;
         }
 
@@ -98,7 +105,6 @@ public class BukkitReportsCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Check command cooldown
         long currentTime = System.currentTimeMillis();
         long lastTime = lastCommandTime.getOrDefault(player.getUniqueId(), 0L);
         if (currentTime - lastTime < COMMAND_COOLDOWN) {
@@ -106,7 +112,6 @@ public class BukkitReportsCommand implements CommandExecutor, TabCompleter {
         }
         lastCommandTime.put(player.getUniqueId(), currentTime);
 
-        // Update cache if needed
         if (currentTime - lastCacheUpdate > CACHE_DURATION) {
             reportCache.clear();
             lastCacheUpdate = currentTime;
@@ -116,7 +121,6 @@ public class BukkitReportsCommand implements CommandExecutor, TabCompleter {
     }
 
     private void showReportsBookByStatus(Player player, Report.ReportStatus status) {
-        // Check command cooldown
         long currentTime = System.currentTimeMillis();
         long lastTime = lastCommandTime.getOrDefault(player.getUniqueId(), 0L);
         if (currentTime - lastTime < COMMAND_COOLDOWN) {
@@ -124,7 +128,6 @@ public class BukkitReportsCommand implements CommandExecutor, TabCompleter {
         }
         lastCommandTime.put(player.getUniqueId(), currentTime);
 
-        // Update cache if needed
         if (currentTime - lastCacheUpdate > CACHE_DURATION) {
             reportCache.clear();
             lastCacheUpdate = currentTime;
@@ -134,41 +137,6 @@ public class BukkitReportsCommand implements CommandExecutor, TabCompleter {
     }
 
     private void showReportsContainerGUI(Player player) {
-        Inventory gui = Bukkit.createInventory(null, 27, "Reports Menu");
-
-        // Pending Reports
-        ItemStack pending = new ItemStack(Material.PAPER);
-        org.bukkit.inventory.meta.ItemMeta pendingMeta = pending.getItemMeta();
-        pendingMeta.setDisplayName("§ePending Reports");
-        pendingMeta.setLore(java.util.List.of(
-            "§7View all pending reports.",
-            "§eClick to view!"
-        ));
-        pending.setItemMeta(pendingMeta);
-        gui.setItem(10, pending);
-
-        // Resolved Reports
-        ItemStack resolved = new ItemStack(Material.BOOK);
-        org.bukkit.inventory.meta.ItemMeta resolvedMeta = resolved.getItemMeta();
-        resolvedMeta.setDisplayName("§aResolved Reports");
-        resolvedMeta.setLore(java.util.List.of(
-            "§7View all resolved reports.",
-            "§eClick to view!"
-        ));
-        resolved.setItemMeta(resolvedMeta);
-        gui.setItem(13, resolved);
-
-        // Rejected Reports
-        ItemStack rejected = new ItemStack(Material.BARRIER);
-        org.bukkit.inventory.meta.ItemMeta rejectedMeta = rejected.getItemMeta();
-        rejectedMeta.setDisplayName("§cRejected Reports");
-        rejectedMeta.setLore(java.util.List.of(
-            "§7View all rejected reports.",
-            "§eClick to view!"
-        ));
-        rejected.setItemMeta(rejectedMeta);
-        gui.setItem(16, rejected);
-
-        player.openInventory(gui);
+        new dev.aevorinstudios.aevorinReports.gui.CategoryContainerGUI(plugin).openMainMenu(player);
     }
 }

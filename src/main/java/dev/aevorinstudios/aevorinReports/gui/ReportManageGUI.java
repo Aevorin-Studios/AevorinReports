@@ -2,12 +2,15 @@ package dev.aevorinstudios.aevorinReports.gui;
 
 import dev.aevorinstudios.aevorinReports.reports.Report;
 import dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin;
+import dev.aevorinstudios.aevorinReports.config.LanguageManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.Map;
 
 public class ReportManageGUI {
     private final BukkitPlugin plugin;
@@ -20,7 +23,10 @@ public class ReportManageGUI {
             openBookGUI(player, report);
             return;
         }
-        Inventory gui = Bukkit.createInventory(null, 54, "Manage Report " + report.getId());
+
+        LanguageManager lang = LanguageManager.get(plugin);
+        String title = lang.getMessage("gui.container.manage_report.title", Map.of("id", String.valueOf(report.getId())));
+        Inventory gui = Bukkit.createInventory(new dev.aevorinstudios.aevorinReports.gui.holders.ReportManageHolder(report), 54, title);
         
         // Fill a background with light-gray glass panes
         ItemStack background = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
@@ -35,33 +41,33 @@ public class ReportManageGUI {
         }
 
         // Convert UUIDs to player names
-        String reporterName = Bukkit.getOfflinePlayer(report.getReporter()).getName();
-        String reportedName = Bukkit.getOfflinePlayer(report.getReported()).getName();
+        String reporterName = dev.aevorinstudios.aevorinReports.utils.PlayerNameResolver.resolvePlayerName(report.getReporter());
+        String reportedName = dev.aevorinstudios.aevorinReports.utils.PlayerNameResolver.resolvePlayerName(report.getReported());
         
-        if (reporterName == null) reporterName = "Unknown";
-        if (reportedName == null) reportedName = "Unknown";
+        if (reporterName == null) reporterName = lang.getMessage("common.unknown");
+        if (reportedName == null) reportedName = lang.getMessage("common.unknown");
         
         // Info item
         ItemStack info = new ItemStack(Material.ENCHANTED_BOOK);
         ItemMeta infoMeta = info.getItemMeta();
-        infoMeta.setDisplayName("§b§lReport Details");
+        infoMeta.setDisplayName(lang.getMessage("gui.container.manage_report.details.title"));
         infoMeta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
         infoMeta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
         // Get server name with fallback
         String serverName = report.getServerName();
         if (serverName == null || serverName.isEmpty()) {
-            serverName = "Unknown";
+            serverName = lang.getMessage("common.unknown");
         }
         
         infoMeta.setLore(java.util.List.of(
-            "§8──────────────────",
-            "§7Reporter: §f" + reporterName,
-            "§7Reported: §f" + reportedName,
-            "§7Reason: §f" + report.getReason(),
-            "§7Status: §f" + report.getStatus(),
-            "§7ID: §f" + report.getId(),
-            "§7Server: §f" + serverName,
-            "§8──────────────────"
+            lang.getMessage("gui.container.shared.separator"),
+            lang.getMessage("gui.container.manage_report.details.lore.reporter", Map.of("reporter", reporterName)),
+            lang.getMessage("gui.container.manage_report.details.lore.reported", Map.of("reported", reportedName)),
+            lang.getMessage("gui.container.manage_report.details.lore.reason", Map.of("reason", lang.getLocalizedReason(report.getReason()))),
+            lang.getMessage("gui.container.manage_report.details.lore.status", Map.of("status", lang.getLocalizedStatus(report.getStatus()))),
+            lang.getMessage("gui.container.manage_report.details.lore.id", Map.of("id", String.valueOf(report.getId()))),
+            lang.getMessage("gui.container.manage_report.details.lore.server", Map.of("server", serverName)),
+            lang.getMessage("gui.container.shared.separator")
         ));
         info.addUnsafeEnchantment(org.bukkit.enchantments.Enchantment.DURABILITY, 1);
         info.setItemMeta(infoMeta);
@@ -82,59 +88,74 @@ public class ReportManageGUI {
             gui.setItem(slot, glass);
         }
         
-        // Move to Pending
-        if (report.getStatus() != Report.ReportStatus.PENDING) {
-            ItemStack pending = new ItemStack(Material.HOPPER);
-            ItemMeta pendingMeta = pending.getItemMeta();
-            pendingMeta.setDisplayName("§6§lMove to Pending"); // Changed from §e to §6
-            pendingMeta.setLore(java.util.List.of(
-                "§8──────────────────",
-                "§7Set this report as pending for review.",
-                "§7Current status: §f" + report.getStatus(),
-                "§8──────────────────",
-                "§6Click to change status" // Changed from §e to §6
-            ));
-            pending.setItemMeta(pendingMeta);
-            gui.setItem(45, pending);
+        // Only show management buttons if player has permission
+        if (player.hasPermission("aevorinreports.manage")) {
+            // Move to Pending
+            if (report.getStatus() != Report.ReportStatus.PENDING) {
+                ItemStack pending = new ItemStack(Material.HOPPER);
+                ItemMeta pendingMeta = pending.getItemMeta();
+                pendingMeta.setDisplayName(lang.getMessage("gui.container.manage_report.pending.title"));
+                pendingMeta.setLore(java.util.List.of(
+                    lang.getMessage("gui.container.shared.separator"),
+                    lang.getMessage("gui.container.manage_report.pending.lore.description"),
+                    lang.getMessage("gui.container.manage_report.pending.lore.current_status", Map.of("status", report.getStatus().toString())),
+                    lang.getMessage("gui.container.shared.separator"),
+                    lang.getMessage("gui.container.manage_report.pending.lore.action")
+                ));
+                pending.setItemMeta(pendingMeta);
+                gui.setItem(45, pending);
+            }
+            // Move to Resolved
+            if (report.getStatus() != Report.ReportStatus.RESOLVED) {
+                ItemStack resolved = new ItemStack(Material.EMERALD_BLOCK);
+                ItemMeta resolvedMeta = resolved.getItemMeta();
+                resolvedMeta.setDisplayName(lang.getMessage("gui.container.manage_report.resolved.title"));
+                resolvedMeta.setLore(java.util.List.of(
+                    lang.getMessage("gui.container.shared.separator"),
+                    lang.getMessage("gui.container.manage_report.resolved.lore.description"),
+                    lang.getMessage("gui.container.manage_report.resolved.lore.current_status", Map.of("status", report.getStatus().toString())),
+                    lang.getMessage("gui.container.shared.separator"),
+                    lang.getMessage("gui.container.manage_report.resolved.lore.action")
+                ));
+                resolved.setItemMeta(resolvedMeta);
+                gui.setItem(49, resolved);
+            }
+            // Move to Rejected
+            if (report.getStatus() != Report.ReportStatus.REJECTED) {
+                ItemStack rejected = new ItemStack(Material.BARRIER);
+                ItemMeta rejectedMeta = rejected.getItemMeta();
+                rejectedMeta.setDisplayName(lang.getMessage("gui.container.manage_report.rejected.title"));
+                rejectedMeta.setLore(java.util.List.of(
+                    lang.getMessage("gui.container.shared.separator"),
+                    lang.getMessage("gui.container.manage_report.rejected.lore.description"),
+                    lang.getMessage("gui.container.manage_report.rejected.lore.current_status", Map.of("status", lang.getLocalizedStatus(report.getStatus()))),
+                    lang.getMessage("gui.container.shared.separator"),
+                    lang.getMessage("gui.container.manage_report.rejected.lore.action")
+                ));
+                rejected.setItemMeta(rejectedMeta);
+                gui.setItem(53, rejected);
+            }
         }
-        // Move to Resolved
-        if (report.getStatus() != Report.ReportStatus.RESOLVED) {
-            ItemStack resolved = new ItemStack(Material.EMERALD_BLOCK);
-            ItemMeta resolvedMeta = resolved.getItemMeta();
-            resolvedMeta.setDisplayName("§a§lMove to Resolved");
-            resolvedMeta.setLore(java.util.List.of(
-                "§8──────────────────",
-                "§7Mark this report as resolved.",
-                "§7Current status: §f" + report.getStatus(),
-                "§8──────────────────",
-                "§aClick to change status"
-            ));
-            resolved.setItemMeta(resolvedMeta);
-            gui.setItem(49, resolved);
+        
+        // Add back button to go back to category reports
+        ItemStack backButton = new ItemStack(Material.DARK_OAK_DOOR);
+        ItemMeta backMeta = backButton.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(lang.getMessage("gui.container.manage_report.back_button.title", "&c&lBack"));
+            backMeta.setLore(java.util.List.of(lang.getMessage("gui.container.manage_report.back_button.lore", Map.of("status", lang.getLocalizedStatus(report.getStatus())))));
+            backButton.setItemMeta(backMeta);
         }
-        // Move to Rejected
-        if (report.getStatus() != Report.ReportStatus.REJECTED) {
-            ItemStack rejected = new ItemStack(Material.BARRIER);
-            ItemMeta rejectedMeta = rejected.getItemMeta();
-            rejectedMeta.setDisplayName("§c§lMove to Rejected");
-            rejectedMeta.setLore(java.util.List.of(
-                "§8──────────────────",
-                "§7Reject this report as invalid.",
-                "§7Current status: §f" + report.getStatus(),
-                "§8──────────────────",
-                "§cClick to change status"
-            ));
-            rejected.setItemMeta(rejectedMeta);
-            gui.setItem(53, rejected);
-        }
+        gui.setItem(36, backButton);
+
         player.openInventory(gui);
     }
 
     private void openBookGUI(Player player, Report report) {
+        LanguageManager lang = LanguageManager.get(plugin);
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         org.bukkit.inventory.meta.BookMeta meta = (org.bukkit.inventory.meta.BookMeta) book.getItemMeta();
         if (meta == null) {
-            player.sendMessage("§cError creating book interface.");
+            player.sendMessage(lang.getMessage("gui.book.error_creating"));
             return;
         }
 
@@ -143,87 +164,95 @@ public class ReportManageGUI {
 
         String reporterName = Bukkit.getOfflinePlayer(report.getReporter()).getName();
         String reportedName = Bukkit.getOfflinePlayer(report.getReported()).getName();
-        if (reporterName == null) reporterName = "Unknown";
-        if (reportedName == null) reportedName = "Unknown";
+        if (reporterName == null) reporterName = lang.getMessage("common.unknown");
+        if (reportedName == null) reportedName = lang.getMessage("common.unknown");
 
         // Create a status indicator based on current status
         String statusColor = switch(report.getStatus()) {
-            case PENDING -> "§6";
-            case RESOLVED -> "§a";
-            case REJECTED -> "§c";
+            case PENDING -> "&6";
+            case RESOLVED -> "&a";
+            case REJECTED -> "&c";
         };
 
-        net.md_5.bungee.api.chat.BaseComponent[] page = new net.md_5.bungee.api.chat.TextComponent[] {
-            new net.md_5.bungee.api.chat.TextComponent("§4Report Details \n\n"),
-            new net.md_5.bungee.api.chat.TextComponent("§7Reporter: §a" + reporterName + "\n"),
-            new net.md_5.bungee.api.chat.TextComponent("§7Reported: §c" + reportedName + "\n"),
-            new net.md_5.bungee.api.chat.TextComponent("§7Reason: §c" + report.getReason() + "\n"),
-            new net.md_5.bungee.api.chat.TextComponent("§7Status: " + statusColor + report.getStatus() + "\n"),
-            new net.md_5.bungee.api.chat.TextComponent("§7ID: §a" + report.getId() + "\n\n"),
-            new net.md_5.bungee.api.chat.TextComponent("§4Click to change status\n")
-        };
+        String statusName = lang.getLocalizedStatus(report.getStatus());
+        java.util.List<net.md_5.bungee.api.chat.BaseComponent> components = new java.util.ArrayList<>();
+        components.add(createLegacy(lang.getMessage("gui.book.page.title")));
+        components.add(createLegacy(lang.getMessage("gui.book.page.reporter", Map.of("reporter", reporterName != null ? reporterName : "Unknown"))));
+        components.add(createLegacy(lang.getMessage("gui.book.page.reported", Map.of("reported", reportedName != null ? reportedName : "Unknown"))));
+        components.add(createLegacy(lang.getMessage("gui.book.page.reason")));
+        components.add(createInteractiveLegacy(
+            lang.getMessage("gui.book.page.reason_hover"),
+            null,
+            lang.getMessage("gui.book.page.reason_hover_content", Map.of("reason", lang.getLocalizedReason(report.getReason())))
+        ));
+        components.add(createLegacy("\n"));
+        components.add(createLegacy(lang.getMessage("gui.book.page.status", Map.of("color", statusColor, "status", statusName))));
+        components.add(createLegacy(lang.getMessage("gui.book.page.id", Map.of("id", String.valueOf(report.getId())))));
+
+        if (plugin.getDatabaseManager().hasMultipleServers()) {
+            String serverName = report.getServerName();
+            if (serverName == null || serverName.isEmpty()) serverName = lang.getMessage("common.unknown");
+            components.add(createLegacy(lang.getMessage("gui.book.page.server", Map.of("server", serverName))));
+        } else {
+            components.add(createLegacy("\n"));
+        }
+
+        components.add(createLegacy("\n"));
+        components.add(createLegacy(lang.getMessage("gui.book.page.click_to_change")));
 
         // Add status change options with hover text
         if (report.getStatus() != Report.ReportStatus.PENDING) {
-            net.md_5.bungee.api.chat.TextComponent pending = new net.md_5.bungee.api.chat.TextComponent("§6⚠ Set as Pending\n");
-            pending.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
-                net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND,
-                "/setreportstatus " + report.getId() + " to PENDING"
+            components.add(createInteractiveLegacy(
+                lang.getMessage("gui.book.status_options.pending"),
+                "/setreportstatus " + report.getId() + " to PENDING",
+                lang.getMessage("gui.book.hover_text.pending", Map.of("status", report.getStatus().toString()))
             ));
-            pending.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
-                net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
-                new net.md_5.bungee.api.chat.ComponentBuilder("§7Set this report as pending for review\n§7Current status: §f" + report.getStatus()).create()
-            ));
-            page = appendComponent(page, pending);
         }
 
         if (report.getStatus() != Report.ReportStatus.RESOLVED) {
-            net.md_5.bungee.api.chat.TextComponent resolved = new net.md_5.bungee.api.chat.TextComponent("§a✔ Mark as Resolved\n");
-            resolved.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
-                net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND,
-                "/setreportstatus " + report.getId() + " to RESOLVED"
+            components.add(createInteractiveLegacy(
+                lang.getMessage("gui.book.status_options.resolved"),
+                "/setreportstatus " + report.getId() + " to RESOLVED",
+                lang.getMessage("gui.book.hover_text.resolved", Map.of("status", report.getStatus().toString()))
             ));
-            resolved.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
-                net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
-                new net.md_5.bungee.api.chat.ComponentBuilder("§7Mark this report as resolved\n§7Current status: §f" + report.getStatus()).create()
-            ));
-            page = appendComponent(page, resolved);
         }
 
         if (report.getStatus() != Report.ReportStatus.REJECTED) {
-            net.md_5.bungee.api.chat.TextComponent rejected = new net.md_5.bungee.api.chat.TextComponent("§c✘ Mark as Rejected\n");
-            rejected.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
-                net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND,
-                "/setreportstatus " + report.getId() + " to REJECTED"
+            components.add(createInteractiveLegacy(
+                lang.getMessage("gui.book.status_options.rejected"),
+                "/setreportstatus " + report.getId() + " to REJECTED",
+                lang.getMessage("gui.book.hover_text.rejected", Map.of("status", report.getStatus().toString()))
             ));
-            rejected.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
-                net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
-                new net.md_5.bungee.api.chat.ComponentBuilder("§7Reject this report as invalid\n§7Current status: §f" + report.getStatus()).create()
-            ));
-            page = appendComponent(page, rejected);
         }
 
         // Add Back to Categories button
-        net.md_5.bungee.api.chat.TextComponent backButton = new net.md_5.bungee.api.chat.TextComponent("\n§7« Back to Categories");
-        backButton.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
-            net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND,
-            "/reports"
+        components.add(createInteractiveLegacy(
+            lang.getMessage("gui.book.back_button"),
+            "/reports",
+            lang.getMessage("gui.book.hover_text.back")
         ));
-        backButton.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
-            net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
-            new net.md_5.bungee.api.chat.ComponentBuilder("§7Return to report categories").create()
-        ));
-        page = appendComponent(page, backButton);
 
-        meta.spigot().setPages(page);
+        meta.spigot().setPages(components.toArray(new net.md_5.bungee.api.chat.BaseComponent[0]));
         book.setItemMeta(meta);
         player.openBook(book);
     }
 
-    private net.md_5.bungee.api.chat.BaseComponent[] appendComponent(net.md_5.bungee.api.chat.BaseComponent[] components, net.md_5.bungee.api.chat.BaseComponent newComponent) {
-        net.md_5.bungee.api.chat.BaseComponent[] newArray = new net.md_5.bungee.api.chat.BaseComponent[components.length + 1];
-        System.arraycopy(components, 0, newArray, 0, components.length);
-        newArray[components.length] = newComponent;
-        return newArray;
+    private net.md_5.bungee.api.chat.TextComponent createLegacy(String text) {
+        net.md_5.bungee.api.chat.TextComponent parent = new net.md_5.bungee.api.chat.TextComponent("");
+        for (net.md_5.bungee.api.chat.BaseComponent c : net.md_5.bungee.api.chat.TextComponent.fromLegacyText(org.bukkit.ChatColor.translateAlternateColorCodes('&', text))) {
+            parent.addExtra(c);
+        }
+        return parent;
+    }
+
+    private net.md_5.bungee.api.chat.TextComponent createInteractiveLegacy(String text, String command, String hoverText) {
+        net.md_5.bungee.api.chat.TextComponent parent = createLegacy(text);
+        if (command != null) {
+            parent.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND, command));
+        }
+        if (hoverText != null) {
+            parent.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, net.md_5.bungee.api.chat.TextComponent.fromLegacyText(org.bukkit.ChatColor.translateAlternateColorCodes('&', hoverText))));
+        }
+        return parent;
     }
 }

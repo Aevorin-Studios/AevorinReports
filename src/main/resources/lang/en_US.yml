@@ -1,0 +1,225 @@
+# Available Placeholders (Not all placeholders work in every message):
+# {reporter} - The name of the player who created the report
+# {reported} - The name of the player being reported
+# {target}   - The target player (often the same as reported)
+# {reason}   - The reason given for the report
+# {status}   - The current status of the report (e.g., Pending, Resolved)
+# {color}    - The color code associated with the report's status
+# {id}       - The unique numeric ID of the report
+# {server}   - The server where the report was created
+# {index}    - The numbering index in lists
+# {total}    - Total number of reports, pages, or items
+# {page}     - Current page number in a GUI
+# {start}    - Starting item index on a page
+# {end}      - Ending item index on a page
+# {category} - The report category name
+# {time}     - Cooldown time remaining
+# {date}     - Date and time the report was created
+
+config-version: 1
+
+# GUI Interface Settings
+# Contains all text formatting for the Report Plugin's interactive GUIs.
+gui:
+  # Book GUI
+  # Used when gui.type is set to "book" in config.yml.
+  # Note: Use '\n' to create new lines inside books!
+  book:
+    error_creating: "&cError creating book interface."
+    reporting_header: "&4Reporting Player:\n&c{target}"
+    reasons_header: "&4Reasons:"
+    back_button: "\n&8« Back to Categories"
+    page:
+      title: "&cReport Details\n\n"
+      reporter: "&7Reporter: &a{reporter}\n"
+      reported: "&7Reported: &c{reported}\n"
+      reason: "&7Reason: "
+      reason_hover: "&cHover to See"
+      reason_hover_content: "&f{reason}"
+      status: "&7Status: {color}{status}\n"
+      id: "&7ID: &0{id}"
+      server: "&7Server: &c{server}\n"
+      click_to_change: "\n&8Click to change status\n"
+      reports_category_header: "&4Reports Category\n\n"
+      view_details: "&7Click to view details"
+    status_options:
+      pending: "&6⚠ Set as Pending\n"
+      resolved: "&a✔ Mark as Resolved\n"
+      rejected: "&c✘ Mark as Rejected\n"
+    hover_text:
+      report_for: "&7Click to report for: &f{category}"
+      pending: "&7Click to return to pending"
+      resolved: "&7Click to mark as resolved"
+      rejected: "&7Click to mark as rejected"
+      back: "&7Click to go back to report categories"
+    main_menu:
+      pending:
+        title: "&6• Pending Reports"
+        hover: "&7Click to view"
+      resolved:
+        title: "&a• Resolved Reports"
+        hover: "&7Click to view"
+      rejected:
+        title: "&c• Rejected Reports"
+        hover: "&7Click to view"
+    report_list:
+      title: "&4{status} Reports\n"
+      total: "&7Total: {total}\n\n"
+      entry: "&4{index}. &c{reported}"
+      user_title: "&4Your Reports\n"
+      user_entry: "&4{index}. &c{reported} {color}({status})"
+
+  # Container GUI (Chest Interface)
+  # Used when gui.type is set to "container" in config.yml.
+  container:
+    shared:
+      separator: "&8──────────────────"
+      navigation:
+        page_indicator:
+          title: "&f&lPage {page} of {total}"
+          lore: "&7Showing {start}-{end} of {total} reports"
+        previous_page:
+          title: "&e&lPrevious Page"
+          lore: "&7Go to page {page}"
+        next_page:
+          title: "&e&lNext Page"
+          lore: "&7Go to page {page}"
+        back_button:
+          title: "&e&lBack"
+          lore: "&7Go back to categories"
+
+    menus:
+      main_menu:
+        title: "Reports Menu"
+        pending:
+          title: "&ePending Reports"
+          lore:
+            description: "&7View all pending reports."
+            action: "&eClick to view!"
+        resolved:
+          title: "&aResolved Reports"
+          lore:
+            description: "&7View all resolved reports."
+            action: "&eClick to view!"
+        rejected:
+          title: "&cRejected Reports"
+          lore:
+            description: "&7View all rejected reports."
+            action: "&eClick to view!"
+
+      category_view:
+        title: "{status} Reports"
+        report_item:
+          title: "&b{reporter} → {reported}"
+          lore:
+            reason: "&7Reason: {reason}"
+            status: "&7Status: {status}"
+            id: "&7ID: {id}"
+            server: "&7Server: {server}"
+            action: "&eClick to manage"
+
+      player_reports:
+        title: "Your Reports"
+
+      reason_selector:
+        title: "Report: {target}"
+        info_icon:
+          title: "&4Reporting: &c{target}"
+          lore:
+            - ""
+            - "&fSelect a reason to report this player"
+            - "&fClick on any icon to submit your report"
+            - ""
+        reason_item:
+          title: "&c{reason}"
+          lore:
+            target: "&4Target: &c{target}"
+            action: "&aClick to submit report"
+
+    manage_report:
+      title: "Manage Report {id}"
+      back_button:
+        title: "&c&lBack"
+        lore: "&7Go back to {status} Reports"
+      details:
+        title: "&b&lReport Details"
+        lore:
+          reporter: "&7Reporter: &f{reporter}"
+          reported: "&7Reported: &f{reported}"
+          reason: "&7Reason: &f{reason}"
+          status: "&7Status: &f{status}"
+          id: "&7ID: &f{id}"
+          server: "&7Server: &f{server}"
+      pending:
+        title: "&6&lMove to Pending"
+        lore:
+          description: "&7Set this report as pending for review."
+          current_status: "&7Current status: &f{status}"
+          action: "&6Click to change status"
+      resolved:
+        title: "&a&lMove to Resolved"
+        lore:
+          description: "&7Mark this report as resolved."
+          current_status: "&7Current status: &f{status}"
+          action: "&aClick to change status"
+      rejected:
+        title: "&c&lMove to Rejected"
+        lore:
+          description: "&7Reject this report as invalid."
+          current_status: "&7Current status: &f{status}"
+          action: "&cClick to change status"
+
+# Common Strings
+# Shared text elements, statuses, and default report reasons.
+common:
+  unknown: "Unknown"
+  anonymous: "Anonymous"
+  status:
+    pending: "Pending"
+    resolved: "Resolved"
+    rejected: "Rejected"
+  reasons:
+    - "Hacking/Cheating"
+    - "Harassment/Bullying"
+    - "Spam/Advertisement"
+    - "Griefing/Vandalism"
+    - "Exploiting Bugs"
+    - "Inappropriate Skin/Name"
+    - "Inappropriate Language"
+    - "Other"
+
+# Chat Messages
+# Direct notifications, errors, and success messages sent to players
+# or staff members in standard Minecraft chat.
+messages:
+  error:
+    no-permission: "&cYou don't have permission to do that!"
+    player-only: "&cOnly players can use this command!"
+    invalid-player: "&cThat player does not exist!"
+    invalid-group: "&cInvalid report status group."
+    report-not-found: "&cReport not found!"
+    no-reports: "&cYou have no active reports!"
+    no-status-reports: "&cNo {status} reports found."
+    invalid-status-transition: "&cCannot change report status from {current} to {status}. Invalid transition!"
+    status-invalid: "&cInvalid report status! Available statuses: {statuses}"
+    description-too-short: "&cYour report description is too short! Minimum length: {min}"
+    description-too-long: "&cYour report description is too long! Maximum length: {max}"
+    category-invalid: "&cInvalid report category! Available categories: {categories}"
+    custom-reason-disabled: "&cCustom reasons are currently disabled."
+    custom-reason-too-short: "&cYour custom reason is too short! Minimum length: {min} characters"
+    custom-reason-too-long: "&cYour custom reason is too long! Maximum length: {max} characters"
+    book-meta-error: "&cError creating book interface."
+
+  success:
+    report-created: "&aYour report has been submitted successfully!"
+    status-update-success: "&aReport status updated successfully!"
+
+  report:
+    cooldown: "&cYou must wait {time} before submitting another report."
+    limit-reached: "&cYou have reached the maximum number of active reports."
+    notification: "&c[Reports] &e{reporter} &fhas reported &c{reported} &ffor: &e{category}"
+    status-change: "&7Report #{id} status has been changed to {color}{status}&7."
+    custom-reason-prompt: "&eEnter your custom reason in chat. Your message will be private."
+    title: "&6Your Active Reports"
+    format: "&7• &e#{id} &7- &f{reason}"
+    details: "&7Status: &e{status}\n&7Date: &f{date}"
