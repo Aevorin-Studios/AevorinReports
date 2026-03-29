@@ -1,0 +1,238 @@
+# Placeholder Disponibili (Non tutti funzionano in tutti i messaggi):
+# {reporter} - Nome del giocatore che ha generato la segnalazione
+# {reported} - Nome del giocatore segnalato
+# {target}   - Giocatore obiettivo (solitamente uguale al segnalato)
+# {reason}   - Motivo della segnalazione
+# {status}   - Stato della segnalazione (es. In sospeso, Risolto)
+# {color}    - Colore associato a quello della segnalazione
+# {id}       - ID unico della segnalazione
+# {server}   - Server in cui è stata generata la segnalazione
+# {index}    - Indice numerico usato nelle liste
+# {total}    - Numero totale di segnalazioni, pagine od oggetti
+# {page}     - Numero di pagina in una GUI
+# {start}    - Indice articolo iniziale di una pagina
+# {end}      - Indice articolo finale di una pagina
+# {category} - Categoria di segnalazione
+# {time}     - Tempo rimanente al cooldown
+# {date}     - Data e ora della creazione della segnalazione
+#
+# Supporta i tag MiniMessage (es. <rainbow>, <red>, <gradient:blue:aqua>)
+# Anche i codici legacy & sono supportati.
+
+config-version: 2
+
+# Impostazioni Interfaccia GUI
+# Contiene la formattazione del testo per le GUI del plugin Report.
+gui:
+  # GUI Libro
+  # Usata quando la gui.type è impostata a "book" nel config.yml.
+  # Nota: Usa '\n' per creare una nuova linea nei libri!
+  book:
+    error_creating: "&cErrore durante la creazione del libro."
+    reporting_header: "&4Segnala giocatore:\n&c{target}"
+    reasons_header: "&4Motivi:"
+    custom_reason: "&c• Motivo Personalizzato"
+    back_button: "\n&8« Torna alle Categorie"
+    page:
+      title: "&cDettagli Segnalazione\n\n"
+      reporter: "&7Segnalante: &a{reporter}\n"
+      reported: "&7Segnalato: &c{reported}\n"
+      reason: "&7Motivo: "
+      reason_hover: "&cPunta con il cursore per vedere"
+      reason_hover_content: "&f{reason}"
+      status: "&7Stato: {color}{status}\n"
+      id: "&7ID: &0{id}"
+      server: "&7Server: &c{server}\n"
+      click_to_change: "&8Fai click per cambiare stato\n"
+      reports_category_header: "&4Categoria Segnalazioni\n\n"
+      view_details: "&7Fai click per vedere i dettagli"
+    status_options:
+      pending: "&6⚠ Imposta come In Sospeso\n"
+      resolved: "&a✔ Imposta come Risolto\n"
+      rejected: "&c✘ Imposta come Rifiutato\n"
+    hover_text:
+      report_for: "&7Fai click per segnalare per: &f{category}"
+      custom_reason: "&7Fai click per fornire un motivo personalizzato"
+      pending: "&7Fai click impostare come In Sospeso"
+      resolved: "&7Fai click per impostare come Risolto"
+      rejected: "&7Fai click per impostare come Rifiutato"
+      back: "&7Fai click per tornare alle categorie"
+    main_menu:
+      pending:
+        title: "&6• Segnalazioni in Attesa"
+        hover: "&7Fai click per visualizzare"
+      resolved:
+        title: "&a• Segnalazioni Risolte"
+        hover: "&7Fai click per visualizzare"
+      rejected:
+        title: "&c• Segnalazioni Rifiutate"
+        hover: "&7Fai click per visualizzare"
+    report_list:
+      title: "&4Segnalazioni {status}\n"
+      total: "&7Totale: {total}\n\n"
+      entry: "&4{index}. &c{reported}"
+      user_title: "&4Le tue Segnalazioni\n"
+      user_entry: "&4{index}. &c{reported} {color}({status})"
+
+  # GUI Contenitore (Interfaccia stile Chest)
+  # Usato quando gui.type è impostato a "container" in config.yml.
+  container:
+    shared:
+      separator: "&8&m                                          &r"
+      navigation:
+        page_indicator:
+          title: "&fPagina {page} di {total}"
+          lore: "&7Visualizzando {start}-{end} di {total} segnalazioni"
+        previous_page:
+          title: "&ePag. Precedente"
+          lore: "&7Vai a Pag. {page}"
+        next_page:
+          title: "&ePag. Successiva"
+          lore: "&7Vai a Pag. {page}"
+        back_button:
+          title: "&eIndietro"
+          lore: "&7Torna a Pag. categories"
+
+    menus:
+      main_menu:
+        title: "Menu Segnalazioni"
+        pending:
+          title: "&eSegnalazioni in Attesa"
+          lore:
+            description: "&7Vedi tutte le segnalazioni in attesa."
+            action: "&eFai click per visualizzare!"
+        resolved:
+          title: "&aSegnalazioni Risolte"
+          lore:
+            description: "&7Visualizza tutte le segnalazioni risolte."
+            action: "&eFai click per visualizzare!"
+        rejected:
+          title: "&cSegnalazioni Rifiutate"
+          lore:
+            description: "&7Visualizza tutte le segnalazioni rifiutate."
+            action: "&eFai click per visualizzare!"
+
+      category_view:
+        title: "Segnalazioni {status}"
+        report_item:
+          title: "<gradient:#AFA3FF:#AFA3FF>{reporter}</gradient> <grey>→ <gradient:#FF0000:#FF0000>{reported}</gradient>"
+          lore:
+            reason: "<gradient:#AFA3FF:#AFA3FF>Motivo:</gradient> <white>{reason}</white>"
+            status: "<gradient:#AFA3FF:#AFA3FF>Stato:</gradient> <white>{status}</white>"
+            id: "<gradient:#AFA3FF:#AFA3FF>ID:</gradient> <white>{id}</white>"
+            server: "<gradient:#AFA3FF:#AFA3FF>Server:</gradient> <white>{server}</white>"
+            action: "<gradient:#FF0000:#FF0000>Fai click per gestire</gradient>"
+
+      player_reports:
+        title: "Le tue Segnalazioni"
+
+      reason_selector:
+        title: "Segnalazione: {target}"
+        info_icon:
+          title: "<gradient:#AFA3FF:#AFA3FF>Stai segnalando:</gradient> <white>{target}</white>"
+          lore:
+            - ""
+            - "&fSeleziona il motivo della segnalazione"
+            - "&fFai click su qualsiasi icona per inviare"
+            - ""
+        reason_item:
+          title: "<gradient:#AFA3FF:#AFA3FF>{reason}</gradient>"
+          lore:
+            target: " "
+            action: "&aFai click per inviare"
+        custom_reason_item:
+          title: "&cMotivo Personalizzato"
+          lore: "&7Fai click per inserire un motivo personalizzato"
+
+    manage_report:
+      title: "Gestione segnalazione {id}"
+      back_button:
+        title: "&cIndietro"
+        lore: "&7Torna alle Segnalazioni {status}"
+      details:
+        title: "<gradient:#AFA3FF:#AFA3FF>Dettagli Segnalazione</gradient>"
+        lore:
+          reporter: "<gradient:#AFA3FF:#AFA3FF>Segnalante:</gradient> <white>{reporter}</white>"
+          reported: "<gradient:#AFA3FF:#AFA3FF>Segnalato:</gradient> <white>{reported}"
+          reason: "<gradient:#AFA3FF:#AFA3FF>Motivo:</gradient> <white>{reason}</white>"
+          status: "<gradient:#AFA3FF:#AFA3FF>Stato:</gradient> <white>{status}</white>"
+          id: "<gradient:#AFA3FF:#AFA3FF>ID:</gradient> <white>{id}</white>"
+          server: "<gradient:#AFA3FF:#AFA3FF>Server:</gradient> <white>{server}</white>"
+      pending:
+        title: "&6Sposta ad In Attesa"
+        lore:
+          description: "&7Imposta la segnalazione como In Attesa."
+          current_status: "&7Stato: &f{status}"
+          action: "&6Fai click per cambiare stato"
+      resolved:
+        title: "&aSposta a Risolto"
+        lore:
+          description: "&7Imposta la segnalazione como Risolto."
+          current_status: "&7Stato: &f{status}"
+          action: "&aFai click per cambiare stato"
+      rejected:
+        title: "&cSposta a Rifiutato"
+        lore:
+          description: "&7Imposta la segnalazione como Rifiutato."
+          current_status: "&7Stato: &f{status}"
+          action: "&cFai click per cambiare stato"
+
+# Stringhe comuni
+# Elementi di testo condivisi, stati e motivi predefiniti dei rapporti.
+common:
+  unknown: "Sconosciuto"
+  anonymous: "Anonimo"
+  status:
+    pending: "In Attesa"
+    resolved: "Risolto"
+    rejected: "Rifiutato"
+  reasons:
+    - "Hacking/Cheating"
+    - "Molestie/Bullismo"
+    - "Spam/Pubblicità"
+    - "Grief/Vandalismo"
+    - "Bug Exploit"
+    - "Skin/Nome Inappropriato"
+    - "Linguaggio Inappropriato"
+    - "Altro"
+
+# Messaggi in Chat
+# Notifiche dirette, errori e messaggi di successo inviati ai giocatori
+# o membri dello Staff nella chat standard di Minecraft.
+messages:
+  # Il prefisso che appare prima della maggior parte dei messaggi del plugin
+  prefix: "<gradient:#AFA3FF:#AFA3FF>Reports</gradient> <grey>➡</grey>"
+
+  error:
+    no-permission: "{prefix} &cPermessi insufficienti!"
+    player-only: "{prefix} &cComando eseguibile solo da giocatori!"
+    invalid-player: "{prefix} &cGiocatore inesistente!"
+    invalid-group: "{prefix} &cGruppo di stati non validi."
+    report-not-found: "{prefix} &cSegnalazione non trovata!"
+    no-reports: "{prefix} &cNon hai segnalazioni attive!"
+    no-status-reports: "{prefix} &cNessuna segnalazione {status} trovata."
+    status-invalid: "{prefix} &cStato invalido! Stati disponibili: {statuses}"
+    category-invalid: "{prefix} &cCategoria di segnalazioni invalida! Categorie disponibili: {categories}"
+    custom-reason-disabled: "{prefix} &cI motivi personalizzati sono disabilitati."
+    custom-reason-too-short: "{prefix} &cDescrizione personalizzata troppo corta! Lunghezza minima: {min} caratteri"
+    custom-reason-too-long: "{prefix} &cDescrizione personalizzata troppo lunga! Lunghezza massima: {max} caratteri"
+    usage-report: "&cUtilizzo: /report <giocatore> [motivo]"
+    usage-viewreport: "&cUtilizzo: /viewreport <id>"
+    usage-setstatus: "&cUtilizzo: /setreportstatus <id> to <stato>"
+    invalid-report-id: "&cID segnalazione non valido!"
+    status-already-set: "&cLa segnalazione è già in questo stato!"
+    cannot-report-self: "&cNon puoi segnalare te stesso!"
+
+  success:
+    report-created: "{prefix} &aSegnalazione inviata!"
+
+  report:
+    cooldown: "{prefix} &cDevi aspettare {time} prima di inviare un'altra segnalazione."
+    limit-reached: "{prefix} &cHai raggiunto il limite massimo di segnalazioni attive."
+    notification: "{prefix} <gradient:#BEFF00:#D2FF00>{reporter}</gradient> &fha segnalato <gradient:#FF0000:#FF003E>{reported}</gradient> &fper: <gradient:#00B7FF:#0098FF>{category}</gradient>"
+    status-change: "{prefix} &7Stato della Segnalazione #{id} cambiato a {color}{status}&7."
+    custom-reason-prompt: "{prefix} &fScrivi in chat la motivazione personalizzata. Il messaggio sarà privato."
+
+  admin:
+    reload-success: "{prefix} &aConfigurazione ricaricata con successo!"
+    reload-failure: "{prefix} &cErrore nel ricaricare la configurazione. Controlla la console."

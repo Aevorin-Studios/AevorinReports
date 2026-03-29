@@ -1,0 +1,238 @@
+# Available Placeholders (Not all placeholders work in every message):
+# {reporter} - The name of the player who created the report
+# {reported} - The name of the player being reported
+# {target}   - The target player (often the same as reported)
+# {reason}   - The reason given for the report
+# {status}   - The current status of the report (e.g., Pending, Resolved)
+# {color}    - The color code associated with the report's status
+# {id}       - The unique numeric ID of the report
+# {server}   - The server where the report was created
+# {index}    - The numbering index in lists
+# {total}    - Total number of reports, pages, or items
+# {page}     - Current page number in a GUI
+# {start}    - Starting item index on a page
+# {end}      - Ending item index on a page
+# {category} - The report category name
+# {time}     - Cooldown time remaining
+# {date}     - Date and time the report was created
+#
+# Podporuje značky MiniMessage (napr. <rainbow>, <red>, <gradient:blue:aqua>)
+# Podporované sú aj staršie kódy &.
+
+config-version: 2
+
+# GUI Interface Settings
+# Contains all text formatting for the Report Plugin's interactive GUIs.
+gui:
+  # Book GUI
+  # Used when gui.type is set to "book" in config.yml.
+  # Note: Use '\n' to create new lines inside books!
+  book:
+    error_creating: "&cChyba pri vytváraní knižného rozhrania."
+    reporting_header: "&4Nahlasovanie hráča:\n&c{target}"
+    reasons_header: "&4Dôvody:"
+    custom_reason: "&c• Vlastný dôvod"
+    back_button: "\n&8« Späť na kategórie"
+    page:
+      title: "&cNahlasovacie detaily\n\n"
+      reporter: "&7Nahlasovateľ: &a{reporter}\n"
+      reported: "&7Nahlásený: &c{reported}\n"
+      reason: "&7Dôvod: "
+      reason_hover: "&cPoložte kurzor"
+      reason_hover_content: "&f{reason}"
+      status: "&7Stav: {color}{status}\n"
+      id: "&7ID: &0{id}"
+      server: "&7Server: &c{server}\n"
+      click_to_change: "&8Klikni na zmenenie stavu\n"
+      reports_category_header: "&4Kategória nahlásení\n\n"
+      view_details: "&7Klikni na zobrazenie detailov"
+    status_options:
+      pending: "&6⚠ Označiť ako čakajúce\n"
+      resolved: "&a✔ Označiť ako vyriéšené\n"
+      rejected: "&c✘ Označiť ako zamietnuté\n"
+    hover_text:
+      report_for: "&7Klikni pre nahlásenie za: &f{category}"
+      custom_reason: "&7Kliknutím zadáte vlastný dôvod"
+      pending: "&7Klikni pre návrat na čakajúce"
+      resolved: "&7Klikni pre návrat na vyriešené"
+      rejected: "&7Klikni pre návrat na zamietnuté"
+      back: "&7Klikni pre návrat na kategórie nahlásení"
+    main_menu:
+      pending:
+        title: "&6• Čakajúce Nahlásenia"
+        hover: "&7Click to view"
+      resolved:
+        title: "&a• Vyriéšené Nahlásenia"
+        hover: "&7Click to view"
+      rejected:
+        title: "&c• Odmietnuté Nahlásenia"
+        hover: "&7Click to view"
+    report_list:
+      title: "&4{status} Nahlásení\n"
+      total: "&7Celkom: {total}\n\n"
+      entry: "&4{index}. &c{reported}"
+      user_title: "&4Tvoje nahlásenia\n"
+      user_entry: "&4{index}. &c{reported} {color}({status})"
+
+  # Container GUI (Chest Interface)
+  # Used when gui.type is set to "container" in config.yml.
+  container:
+    shared:
+      separator: "&8&m                                          &r"
+      navigation:
+        page_indicator:
+          title: "&fStrana {page} z {total}"
+          lore: "&7Zobrazuje sa {start}-{end} z {total} nahlásení"
+        previous_page:
+          title: "&ePredchádzajúca strana"
+          lore: "&7Prejsť na stranu {page}"
+        next_page:
+          title: "&eĎalšia strana"
+          lore: "&7Prejsť na stranu {page}"
+        back_button:
+          title: "&eSpäť"
+          lore: "&7Go back to categories"
+
+    menus:
+      main_menu:
+        title: "Menu nahlásení"
+        pending:
+          title: "&eČakajúce nahlásenia"
+          lore:
+            description: "&7Zobraziť všetky čakajúce nahlásenia."
+            action: "&eKlikni pre zobrazenie!"
+        resolved:
+          title: "&aVyriešené nahlásenia"
+          lore:
+            description: "&7Zobraziť všekty vyriešené nahlásenia"
+            action: "&eKlikni na zobrazenie!"
+        rejected:
+          title: "&cZamietnuté nahlásenia."
+          lore:
+            description: "&7Zobraziť všetky zamietnuté nahlásenia."
+            action: "&eKlikni na zobrazenie!"
+
+      category_view:
+        title: "{status} Nahlásení"
+        report_item:
+          title: "<gradient:#AFA3FF:#AFA3FF>{reporter}</gradient> <grey>→ <gradient:#FF0000:#FF0000>{reported}</gradient>"
+          lore:
+            reason: "<gradient:#AFA3FF:#AFA3FF>Dôvod:</gradient> <white>{reason}</white>"
+            status: "<gradient:#AFA3FF:#AFA3FF>Stav:</gradient> <white>{status}</white>"
+            id: "<gradient:#AFA3FF:#AFA3FF>ID:</gradient> <white>{id}</white>"
+            server: "<gradient:#AFA3FF:#AFA3FF>Server:</gradient> <white>{server}</white>"
+            action: "<gradient:#FF0000:#FF0000>Klikni na spravovanie</gradient>"
+
+      player_reports:
+        title: "Tvoje nahlásenia"
+
+      reason_selector:
+        title: "Nahlásenie: {target}"
+        info_icon:
+          title: "<gradient:#AFA3FF:#AFA3FF>Nahlasovanie:</gradient> <white>{target}</white>"
+          lore:
+            - ""
+            - "&fVyber dôvod na nahlásenie tohto hráča"
+            - "&fKlikni na ľubovoľnú ikonu pre odoslanie hlásenia"
+            - ""
+        reason_item:
+          title: "<gradient:#AFA3FF:#AFA3FF>{reason}</gradient>"
+          lore:
+            target: " "
+            action: "&aKlikni na odoslanie nahlásenia"
+        custom_reason_item:
+          title: "&cVlastný dôvod"
+          lore: "&7Kliknutím zadáte vlastný dôvod"
+
+    manage_report:
+      title: "Spravovať nahlásenie {id}"
+      back_button:
+        title: "&cSpäť"
+        lore: "&7Návrat na {status} Nahlásení"
+      details:
+        title: "<gradient:#AFA3FF:#AFA3FF>Nahlasovacie detaily</gradient>"
+        lore:
+          reporter: "<gradient:#AFA3FF:#AFA3FF>Nahlasovateľ:</gradient> <white>{reporter}</white>"
+          reported: "<gradient:#AFA3FF:#AFA3FF>Nahlásený:</gradient> <white>{reported}"
+          reason: "<gradient:#AFA3FF:#AFA3FF>Dôvod:</gradient> <white>{reason}</white>"
+          status: "<gradient:#AFA3FF:#AFA3FF>Stav:</gradient> <white>{status}</white>"
+          id: "<gradient:#AFA3FF:#AFA3FF>ID:</gradient> <white>{id}</white>"
+          server: "<gradient:#AFA3FF:#AFA3FF>Server:</gradient> <white>{server}</white>"
+      pending:
+        title: "&6Presunuť do čakajúcich"
+        lore:
+          description: "&7Označiť toto hlásenie ako čakajúce na kontrolu."
+          current_status: "&7Aktuálny stav: &f{status}"
+          action: "&6Klikni na zmenenie stavu"
+      resolved:
+        title: "&aPresunuť do vyriešených"
+        lore:
+          description: "&7Označiť toto nahlásenie ako vyriešené."
+          current_status: "&7Aktuálny stav: &f{status}"
+          action: "&aKlikni na zmenenie stavu"
+      rejected:
+        title: "&cPresunuť do zamietnutých"
+        lore:
+          description: "&7Zamietnuť toto hlásenie ako neplatné."
+          current_status: "&7Aktuálny stav: &f{status}"
+          action: "&cKlikni na zmenenie stavu"
+
+# Common Strings
+# Shared text elements, statuses, and default report reasons.
+common:
+  unknown: "Neznámy"
+  anonymous: "Anonymný"
+  status:
+    pending: "Čakajúce"
+    resolved: "Vyriešené"
+    rejected: "Zamietnuté"
+reasons:
+  - "Hackovanie / Podvádzanie"
+  - "Obťažovanie / Šikana"
+  - "Spam / Reklama"
+  - "Ničenie / Vandalizmus"
+  - "Zneužívanie chýb"
+  - "Nevhodná skin / meno"
+  - "Nevhodný jazyk"
+  - "Iné"
+
+# Chat Messages
+# Direct notifications, errors, and success messages sent to players
+# or staff members in standard Minecraft chat.
+messages:
+  # Prefix, ktorý sa zobrazuje pred väčšinou správ pluginu
+  prefix: "<gradient:#AFA3FF:#AFA3FF>Reports</gradient> <grey>➡</grey>"
+
+  error:
+    no-permission: "{prefix} &cNemáš na to povolenie!"
+    player-only: "{prefix} &cTento príkaz môžu používať iba hráči!"
+    invalid-player: "{prefix} &cTento hráč neexistuje!"
+    invalid-group: "{prefix} &cNeplatná skupina statusu hlásenia."
+    report-not-found: "{prefix} &cHlásenie nenájdené!"
+    no-reports: "{prefix} &cNemáš žiadne aktívne hlásenia!"
+    no-status-reports: "{prefix} &cNenájdené žiadne {status} hlásenia."
+    status-invalid: "{prefix} &cNeplatný stav hlásenia! Dostupné stavy: {statuses}"
+    category-invalid: "{prefix} &cNeplatná kategória hlásenia! Dostupné kategórie: {categories}"
+    custom-reason-disabled: "{prefix} &cVlastné dôvody sú momentálne zakázané."
+    custom-reason-too-short: "{prefix} &cTvoj vlastný dôvod je príliš krátky! Minimálna dĺžka: {min} znakov"
+    custom-reason-too-long: "{prefix} &cTvoj vlastný dôvod je príliš dlhý! Maximálna dĺžka: {max} znakov"
+    usage-report: "&cPoužitie: /report <hráč> [dôvod]"
+    usage-viewreport: "&cPoužitie: /viewreport <id>"
+    usage-setstatus: "&cPoužitie: /setreportstatus <id> to <stav>"
+    invalid-report-id: "&cNeplatné ID hlásenia!"
+    status-already-set: "&cHlásenie už má tento stav!"
+    cannot-report-self: "&cNemôžeš nahlásiť sám seba!"
+
+  success:
+    report-created: "{prefix} &aTvoje nahlásenie bolo odoslané úspešne!"
+
+  report:
+    cooldown: "{prefix} &cMusíš počkať {time} pred odoslaním ďalšieho nahlasenia."
+    limit-reached: "{prefix} &cDosiahol si maximálny počet aktívnych hlásení."
+    notification: "{prefix} <gradient:#BEFF00:#D2FF00>{reporter}</gradient> &fnahlásil <gradient:#FF0000:#FF003E>{reported}</gradient> &fza: <gradient:#00B7FF:#0098FF>{category}</gradient>"
+    status-change: "{prefix} &7Hlas #{id} stav bol zmenení na {color}{status}&7."
+    custom-reason-prompt: "{prefix} &fZadaj tvoj vlastný dôvod do chatu. Tvoja správa bude súkromná."
+
+  admin:
+    reload-success: "{prefix} &aKonfigurácia bola úspešne načítaná!"
+    reload-failure: "{prefix} &cNepodarilo sa načítať konfiguráciu. Skontroluj konzolu."

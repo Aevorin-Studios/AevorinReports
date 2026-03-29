@@ -70,7 +70,7 @@ public class BukkitReportsCommand implements CommandExecutor, TabCompleter {
             if (guiType.equalsIgnoreCase("container")) {
                 List<Report> reports = plugin.getDatabaseManager().getReportsByReporter(player.getUniqueId());
                 if (reports.isEmpty()) {
-                    player.sendMessage(lang.getMessage("messages.error.no-reports"));
+                    MessageUtils.sendMessage(player, lang.getMessage("messages.error.no-reports"));
                     return true;
                 }
                 new dev.aevorinstudios.aevorinReports.gui.CategoryContainerGUI(plugin).openPlayerReportsGUI(player, reports, 0);

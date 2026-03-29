@@ -72,6 +72,9 @@ public class ExceptionHandler {
         if (isErrorSuppressed(errorSignature)) {
             return;
         }
+
+        // Capture exception in FastStats Error Tracker if initialized
+        dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin.FAST_STATS_ERROR_TRACKER.trackError(e);
         
         // Format the error message with context
         String formattedMessage = formatErrorMessage(e, source, context);

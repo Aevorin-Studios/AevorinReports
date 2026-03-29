@@ -175,64 +175,130 @@ public class ReportManageGUI {
         };
 
         String statusName = lang.getLocalizedStatus(report.getStatus());
-        java.util.List<net.md_5.bungee.api.chat.BaseComponent> components = new java.util.ArrayList<>();
-        components.add(createLegacy(lang.getMessage("gui.book.page.title")));
-        components.add(createLegacy(lang.getMessage("gui.book.page.reporter", Map.of("reporter", reporterName != null ? reporterName : "Unknown"))));
-        components.add(createLegacy(lang.getMessage("gui.book.page.reported", Map.of("reported", reportedName != null ? reportedName : "Unknown"))));
-        components.add(createLegacy(lang.getMessage("gui.book.page.reason")));
-        components.add(createInteractiveLegacy(
-            lang.getMessage("gui.book.page.reason_hover"),
+
+        class BookPaginator {
+            java.util.List<java.util.List<net.md_5.bungee.api.chat.BaseComponent>> pages = new java.util.ArrayList<>();
+            java.util.List<net.md_5.bungee.api.chat.BaseComponent> currentPage = new java.util.ArrayList<>();
+            int linesUsed = 0;
+
+            void add(net.md_5.bungee.api.chat.TextComponent component, String rawText) {
+                int estimatedLines = 0;
+                
+                // Only count actual visual breaks and long wrapping sentences
+                if (rawText.equals("\n")) {
+                    estimatedLines = 1;
+                } else {
+                    String stripped = org.bukkit.ChatColor.stripColor(org.bukkit.ChatColor.translateAlternateColorCodes('&', rawText));
+                    for (String line : stripped.split("\n", -1)) {
+                        // Very conservative line limit: Assume ~23 chars per line for normal text
+                        // Only add extra lines if the string forces a wrap
+                        estimatedLines += Math.max(1, (int) Math.ceil(line.length() / 23.0));
+                    }
+                }
+
+                // A Minecraft page comfortably fits 14 lines. Break if we exceed that.
+                if (linesUsed + estimatedLines > 14 && !currentPage.isEmpty()) {
+                    pages.add(new java.util.ArrayList<>(currentPage));
+                    currentPage.clear();
+                    linesUsed = 0;
+                }
+                
+                currentPage.add(component);
+                linesUsed += estimatedLines;
+            }
+
+            net.md_5.bungee.api.chat.BaseComponent[][] getPagesArray() {
+                if (!currentPage.isEmpty()) {
+                    pages.add(currentPage);
+                }
+                net.md_5.bungee.api.chat.BaseComponent[][] array = new net.md_5.bungee.api.chat.BaseComponent[pages.size()][];
+                for (int i = 0; i < pages.size(); i++) {
+                    array[i] = pages.get(i).toArray(new net.md_5.bungee.api.chat.BaseComponent[0]);
+                }
+                return array;
+            }
+        }
+
+        BookPaginator paginator = new BookPaginator();
+
+        String titleText = lang.getMessage("gui.book.page.title");
+        paginator.add(createLegacy(titleText), titleText);
+
+        String reporterText = lang.getMessage("gui.book.page.reporter", Map.of("reporter", reporterName != null ? reporterName : "Unknown"));
+        paginator.add(createLegacy(reporterText), reporterText);
+
+        String reportedText = lang.getMessage("gui.book.page.reported", Map.of("reported", reportedName != null ? reportedName : "Unknown"));
+        paginator.add(createLegacy(reportedText), reportedText);
+
+        String reasonPrefixText = lang.getMessage("gui.book.page.reason");
+        paginator.add(createLegacy(reasonPrefixText), reasonPrefixText);
+
+        String reasonHoverText = lang.getMessage("gui.book.page.reason_hover");
+        paginator.add(createInteractiveLegacy(
+            reasonHoverText,
             null,
             lang.getMessage("gui.book.page.reason_hover_content", Map.of("reason", lang.getLocalizedReason(report.getReason())))
-        ));
-        components.add(createLegacy("\n"));
-        components.add(createLegacy(lang.getMessage("gui.book.page.status", Map.of("color", statusColor, "status", statusName))));
-        components.add(createLegacy(lang.getMessage("gui.book.page.id", Map.of("id", String.valueOf(report.getId())))));
+        ), reasonHoverText);
+
+        paginator.add(createLegacy("\n"), "\n");
+
+        String statusText = lang.getMessage("gui.book.page.status", Map.of("color", statusColor, "status", statusName));
+        paginator.add(createLegacy(statusText), statusText);
+
+        String idText = lang.getMessage("gui.book.page.id", Map.of("id", String.valueOf(report.getId())));
+        paginator.add(createLegacy(idText), idText);
 
         if (plugin.getDatabaseManager().hasMultipleServers()) {
             String serverName = report.getServerName();
             if (serverName == null || serverName.isEmpty()) serverName = lang.getMessage("common.unknown");
-            components.add(createLegacy(lang.getMessage("gui.book.page.server", Map.of("server", serverName))));
-        } else {
-            components.add(createLegacy("\n"));
+            String serverText = lang.getMessage("gui.book.page.server", Map.of("server", serverName));
+            paginator.add(createLegacy(serverText), serverText);
         }
 
-        components.add(createLegacy("\n"));
-        components.add(createLegacy(lang.getMessage("gui.book.page.click_to_change")));
+        paginator.add(createLegacy("\n"), "\n");
 
-        // Add status change options with hover text
-        if (report.getStatus() != Report.ReportStatus.PENDING) {
-            components.add(createInteractiveLegacy(
-                lang.getMessage("gui.book.status_options.pending"),
-                "/setreportstatus " + report.getId() + " to PENDING",
-                lang.getMessage("gui.book.hover_text.pending", Map.of("status", report.getStatus().toString()))
-            ));
+        if (player.hasPermission("aevorinreports.manage")) {
+            String clickChangeText = lang.getMessage("gui.book.page.click_to_change");
+            paginator.add(createLegacy(clickChangeText), clickChangeText);
+
+            if (report.getStatus() != Report.ReportStatus.PENDING) {
+                String pendingText = lang.getMessage("gui.book.status_options.pending");
+                paginator.add(createInteractiveLegacy(
+                    pendingText,
+                    "/setreportstatus " + report.getId() + " to PENDING",
+                    lang.getMessage("gui.book.hover_text.pending", Map.of("status", report.getStatus().toString()))
+                ), pendingText);
+            }
+
+            if (report.getStatus() != Report.ReportStatus.RESOLVED) {
+                String resolvedText = lang.getMessage("gui.book.status_options.resolved");
+                paginator.add(createInteractiveLegacy(
+                    resolvedText,
+                    "/setreportstatus " + report.getId() + " to RESOLVED",
+                    lang.getMessage("gui.book.hover_text.resolved", Map.of("status", report.getStatus().toString()))
+                ), resolvedText);
+            }
+
+            if (report.getStatus() != Report.ReportStatus.REJECTED) {
+                String rejectedText = lang.getMessage("gui.book.status_options.rejected");
+                paginator.add(createInteractiveLegacy(
+                    rejectedText,
+                    "/setreportstatus " + report.getId() + " to REJECTED",
+                    lang.getMessage("gui.book.hover_text.rejected", Map.of("status", report.getStatus().toString()))
+                ), rejectedText);
+            }
         }
 
-        if (report.getStatus() != Report.ReportStatus.RESOLVED) {
-            components.add(createInteractiveLegacy(
-                lang.getMessage("gui.book.status_options.resolved"),
-                "/setreportstatus " + report.getId() + " to RESOLVED",
-                lang.getMessage("gui.book.hover_text.resolved", Map.of("status", report.getStatus().toString()))
-            ));
-        }
+        paginator.add(createLegacy("\n"), "\n");
 
-        if (report.getStatus() != Report.ReportStatus.REJECTED) {
-            components.add(createInteractiveLegacy(
-                lang.getMessage("gui.book.status_options.rejected"),
-                "/setreportstatus " + report.getId() + " to REJECTED",
-                lang.getMessage("gui.book.hover_text.rejected", Map.of("status", report.getStatus().toString()))
-            ));
-        }
-
-        // Add Back to Categories button
-        components.add(createInteractiveLegacy(
-            lang.getMessage("gui.book.back_button"),
+        String backButtonText = lang.getMessage("gui.book.back_button");
+        paginator.add(createInteractiveLegacy(
+            backButtonText,
             "/reports",
             lang.getMessage("gui.book.hover_text.back")
-        ));
+        ), backButtonText);
 
-        meta.spigot().setPages(components.toArray(new net.md_5.bungee.api.chat.BaseComponent[0]));
+        meta.spigot().setPages(paginator.getPagesArray());
         book.setItemMeta(meta);
         player.openBook(book);
     }

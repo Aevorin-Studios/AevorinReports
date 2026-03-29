@@ -76,6 +76,22 @@ public class BookGUI {
             itemsOnPage++;
         }
 
+        if (plugin.getConfig().getBoolean("reports.allow-custom-reasons", true)) {
+            if (itemsOnPage >= ITEMS_PER_PAGE) {
+                pages.add(currentPage.create());
+                currentPage = new ComponentBuilder("");
+                itemsOnPage = 0;
+            }
+
+            TextComponent customText = createInteractiveLegacy(
+                lang.getMessage("gui.book.custom_reason", "&c• Custom Reason"),
+                "/report " + targetPlayer + " custom",
+                lang.getMessage("gui.book.hover_text.custom_reason", "&7Click to provide a custom reason")
+            );
+            currentPage.append(customText);
+            itemsOnPage++;
+        }
+
         if (itemsOnPage > 0) {
             pages.add(currentPage.create());
         }

@@ -3,33 +3,80 @@ package dev.aevorinstudios.aevorinReports.utils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
 public class MessageUtils {
     private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
-    private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
+    private static final LegacyComponentSerializer LEGACY_SECTION_SERIALIZER = LegacyComponentSerializer.legacySection();
+    private static final LegacyComponentSerializer LEGACY_AMPERSAND_SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
 
     /**
-     * Parses a string into a Component, supporting both MiniMessage and legacy ampersand codes.
+     * Parses a string into a Component, supporting both MiniMessage and legacy codes.
      * @param message The message to parse
      * @return The parsed Component
      */
     public static Component parse(String message) {
-        if (message == null) return Component.empty();
+        if (message == null || message.isEmpty()) return Component.empty();
 
-        // Heuristic: If it looks like MiniMessage, try that first.
-        // MiniMessage tags look like <tag> or <tag:value>
-        if (message.contains("<") && message.contains(">")) {
-             // We can just use MiniMessage. explicit legacy handling inside MM keys is not default.
-             // If a user mixes formats, e.g. "&cHello <green>World", 
-             // MiniMessage.deserialize("&cHello <green>World") -> "&cHello " (white) + "World" (green).
-             // This effectively "breaks" legacy support in mixed strings but allows MM.
-             // This is usually acceptable when "adding support".
-             return MINI_MESSAGE.deserialize(message);
-        } else {
-             // Fallback to legacy
-             return LEGACY_SERIALIZER.deserialize(message);
+        // Standardize on '&' for internal checks, but we'll use the original message for final legacy parsing if needed
+        String work = message.replace('§', '&');
+        
+        boolean hasMiniMessage = work.contains("<") && (work.contains(">") || work.contains("</"));
+        boolean hasLegacy = work.matches(".*&[0-9a-fk-or].*");
+
+        if (hasMiniMessage) {
+            try {
+                // If it has BOTH format styles, convert legacy to MM to support the mix without crashing
+                String mmString = hasLegacy ? legacyToMiniMessage(work) : message;
+                return MINI_MESSAGE.deserialize(mmString);
+            } catch (Exception e) {
+                // If MiniMessage fails (malformed tags), we fall back to legacy handling below
+            }
         }
+        
+        // Otherwise, handle it as legacy (supporting both & and §)
+        return LEGACY_SECTION_SERIALIZER.deserialize(ChatColor.translateAlternateColorCodes('&', message));
+    }
+
+    /**
+     * Helper to convert legacy color codes (& and §) to MiniMessage tags.
+     */
+    private static String legacyToMiniMessage(String input) {
+        if (input == null) return null;
+        return input.replace("&0", "<black>")
+                    .replace("&1", "<dark_blue>")
+                    .replace("&2", "<dark_green>")
+                    .replace("&3", "<dark_aqua>")
+                    .replace("&4", "<dark_red>")
+                    .replace("&5", "<dark_purple>")
+                    .replace("&6", "<gold>")
+                    .replace("&7", "<gray>")
+                    .replace("&8", "<dark_gray>")
+                    .replace("&9", "<blue>")
+                    .replace("&a", "<green>")
+                    .replace("&b", "<aqua>")
+                    .replace("&c", "<red>")
+                    .replace("&d", "<light_purple>")
+                    .replace("&e", "<yellow>")
+                    .replace("&f", "<white>")
+                    .replace("&k", "<obfuscated>")
+                    .replace("&l", "<bold>")
+                    .replace("&m", "<strikethrough>")
+                    .replace("&n", "<underlined>")
+                    .replace("&o", "<italic>")
+                    .replace("&r", "<reset>");
+    }
+
+    /**
+     * Parses a string with MiniMessage or legacy support and returns a legacy formatted string (§).
+     * Useful for older APIs that don't support Components.
+     * @param message The message to parse
+     * @return The legacy colored string
+     */
+    public static String parseToLegacy(String message) {
+        if (message == null) return "";
+        return LEGACY_SECTION_SERIALIZER.serialize(parse(message));
     }
 
     /**

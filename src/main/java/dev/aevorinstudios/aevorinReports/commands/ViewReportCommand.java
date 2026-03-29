@@ -15,6 +15,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import dev.aevorinstudios.aevorinReports.config.LanguageManager;
+
 public class ViewReportCommand implements CommandExecutor {
     private final BukkitPlugin plugin;
 
@@ -24,8 +26,9 @@ public class ViewReportCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        LanguageManager lang = LanguageManager.get(plugin);
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "Only players can use this command!");
+            dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender, lang.getMessage("messages.error.player-only"));
             return true;
         }
 
@@ -33,7 +36,7 @@ public class ViewReportCommand implements CommandExecutor {
 
 
         if (args.length != 1) {
-            player.sendMessage(ChatColor.RED + "Usage: /viewreport <id>");
+            dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, lang.getMessage("messages.error.usage-viewreport"));
             return true;
         }
 
@@ -41,7 +44,7 @@ public class ViewReportCommand implements CommandExecutor {
             long reportId = Long.parseLong(args[0]);
             showReportDetails(player, reportId);
         } catch (NumberFormatException e) {
-            player.sendMessage(ChatColor.RED + "Invalid report ID!");
+            dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, lang.getMessage("messages.error.invalid-report-id"));
         }
 
         return true;
@@ -50,13 +53,13 @@ public class ViewReportCommand implements CommandExecutor {
     private void showReportDetails(Player player, long reportId) {
         Report report = plugin.getDatabaseManager().getReport(reportId);
         if (report == null) {
-            player.sendMessage(ChatColor.RED + "Report not found!");
+            dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, dev.aevorinstudios.aevorinReports.config.LanguageManager.get(plugin).getMessage("messages.error.report-not-found"));
             return;
         }
 
         // Permission check: Allow if has permission OR is the reporter
         if (!player.hasPermission("aevorinreports.manage") && !report.getReporterUuid().equals(player.getUniqueId())) {
-             player.sendMessage(ChatColor.RED + "You don't have permission to view this report!");
+             dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, dev.aevorinstudios.aevorinReports.config.LanguageManager.get(plugin).getMessage("messages.error.no-permission"));
              return;
         }
 

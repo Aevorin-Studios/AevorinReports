@@ -3,6 +3,7 @@
 </p>
 
 # Official Documentation
+
 ## Overview
 
 AevorinReports is a modern, robust reporting system designed for Minecraft servers that require structured moderation workflows. It enables players to submit reports easily while providing staff with powerful tools to review, manage, and resolve reports efficiently. The plugin is optimized for performance, supports multiple GUI styles, integrates with Discord, and scales seamlessly across single servers and networks.
@@ -19,17 +20,18 @@ AevorinReports is a modern, robust reporting system designed for Minecraft serve
 
 ## 1. Core Features
 
-* **Interactive Admin GUI** – Review, manage, and update reports using a clean, click-based interface
-* **Player Report History** – Players can view their submitted reports and statuses using `/reports`
-* **Multiple GUI Types** – Supports both **Book GUI** and **Container (Chest) GUI** styles
-* **Real-Time Staff Alerts** – Instantly notify staff members when a report is submitted
-* **Clear Status Workflow** – Reports transition through **Pending → Resolved / Rejected**
-* **Custom Report Reasons** – Allows players to provide custom reasons via chat input
-* **MiniMessage Support** – Fully customizable messages with gradients, hover events, and formatting
-* **Discord Integration** – Dedicated Discord bot with embeds and real-time notifications
-* **Database Support** – SQLite (local) and MySQL (network-wide synchronization)
-* **Optimized Performance** – Asynchronous processing and intelligent caching
-* **bStats Integration** – Anonymous usage statistics for development insights
+- **Interactive Admin GUI** – Review, manage, and update reports using a clean, click-based interface
+- **Player Report History** – Players can view their submitted reports and statuses using `/reports`
+- **Multiple GUI Types** – Supports both **Book GUI** and **Container (Chest) GUI** styles
+- **Real-Time Staff Alerts** – Instantly notify staff members when a report is submitted
+- **Clear Status Workflow** – Reports transition through **Pending → Resolved / Rejected**
+- **Custom Report Reasons** – Allows players to provide custom reasons via chat input
+- **MiniMessage Support** – Fully customizable messages with gradients, hover events, and formatting
+- **Discord Integration** – Dedicated Discord bot with embeds and real-time notifications
+- **Database Support** – SQLite (local) and MySQL (network-wide synchronization)
+- **Optimized Performance** – Asynchronous processing and intelligent caching
+- **Full Localization Support** – Built-in multi-language system with support for custom language packs
+- **bStats & FastStats Integration** – Anonymous usage statistics and advanced telemetry for development insights
 
 ---
 
@@ -44,8 +46,8 @@ AevorinReports is a modern, robust reporting system designed for Minecraft serve
 
 **Notes:**
 
-* If no reason is provided with `/report`, a GUI will open
-* Custom reasons can be entered via chat
+- If no reason is provided with `/report`, a GUI will open
+- Custom reasons can be entered via chat
 
 ### 2.2 Staff Commands
 
@@ -106,16 +108,61 @@ This section documents every available option in `config.yml`, explaining its pu
 
 ---
 
+### Config Version System
+
+```yaml
+# Please Do not change the config version
+config-version: 5
+```
+
+The `config-version` field is used by AevorinReports to **automatically manage and migrate your configuration** when the plugin is updated to a newer version that requires changes to `config.yml`.
+
+#### How It Works
+
+1. When the plugin loads, it reads the `config-version` value from your existing `config.yml`.
+2. It compares that value against the version bundled inside the current plugin `.jar`.
+3. **If they match**: No migration is needed. The plugin proceeds normally.
+4. **If the bundled version is higher**: The plugin automatically:
+   - Creates a backup of your existing file as `config.yml.old`.
+   - Migrates all your existing settings (server name, database credentials, Discord token, etc.) into the new structure.
+   - Writes a fresh `config.yml` with all new required fields, preserving your data.
+
+> [!CAUTION]
+> **Never manually edit the `config-version` field.** Changing it will cause the plugin to skip or repeat migrations, which can corrupt your configuration. If you need to reset the config, simply delete `config.yml` and restart the server.
+
+> [!TIP]
+> Your old config is always safely backed up as `config.yml.old` before any migration runs. If something goes wrong, you can restore your settings from that file.
+
+---
+
+### 5.0 Language Settings
+
+```yaml
+language: "en_US"
+```
+
+- Sets the active language file loaded from the `plugins/AevorinReports/lang/` folder.
+- The value must match a `.yml` filename inside that folder (without the extension).
+- **Built-in languages** (automatically extracted on first startup):
+  - `en_US` – English (default)
+  - `it_IT` – Italian
+  - `sk_SK` – Slovak
+- **Custom language files**: You can create your own `.yml` file inside the `lang/` folder.
+  - Custom files are **never overwritten** by plugin updates.
+  - Any keys missing in a custom file will automatically fall back to `en_US` values, so the plugin will never break due to untranslated strings.
+  - A console warning will list any missing keys to help you keep translations up to date.
+
+---
+
 ### 5.1 Server Configuration
 
 ```yaml
 server-name: "survival"
 ```
 
-* **server-name**: Identifies the server in multi-server setups.
-
-  * Must be unique when multiple servers share the same database.
-  * Displayed in Discord embeds and network-wide logs.
+- **server-name**: Identifies the server in multi-server setups.
+  - Must be unique when multiple servers share the same database.
+  - Displayed in Discord embeds and network-wide logs.
 
 ---
 
@@ -128,8 +175,8 @@ database:
 
 #### Database Types
 
-* **file**: Uses local SQLite storage (recommended for single servers).
-* **mysql**: Enables cross-server synchronization for networks.
+- **file**: Uses local SQLite storage (recommended for single servers).
+- **mysql**: Enables cross-server synchronization for networks.
 
 #### MySQL Settings
 
@@ -142,8 +189,8 @@ mysql:
   password: "password"
 ```
 
-* Used only when `type` is set to `mysql`.
-* All servers must share the same credentials for synchronization.
+- Used only when `type` is set to `mysql`.
+- All servers must share the same credentials for synchronization.
 
 #### File Storage
 
@@ -152,7 +199,7 @@ file:
   path: "database/reports.db"
 ```
 
-* Location of the SQLite database file.
+- Location of the SQLite database file.
 
 #### Connection Pool (Advanced)
 
@@ -163,8 +210,8 @@ pool:
   connection-timeout: 30000
 ```
 
-* Optimizes database performance.
-* Recommended to leave defaults unless tuning is required.
+- Optimizes database performance.
+- Recommended to leave defaults unless tuning is required.
 
 ---
 
@@ -175,7 +222,7 @@ reports:
   allow-self-reporting: false
 ```
 
-* Prevents players from reporting themselves when disabled.
+- Prevents players from reporting themselves when disabled.
 
 #### GUI Configuration
 
@@ -184,8 +231,8 @@ gui:
   type: "book" # book or container
 ```
 
-* **book**: Classic book-style interface.
-* **container**: Modern chest-style GUI.
+- **book**: Classic book-style interface.
+- **container**: Modern chest-style GUI.
 
 #### Limits & Cooldowns
 
@@ -194,8 +241,8 @@ cooldown: 300
 max-active-reports: 3
 ```
 
-* **cooldown**: Time (seconds) between report submissions.
-* **max-active-reports**: Maximum unresolved reports per player.
+- **cooldown**: Time (seconds) between report submissions.
+- **max-active-reports**: Maximum unresolved reports per player.
 
 #### Custom Reasons
 
@@ -205,8 +252,8 @@ custom-reason-min-length: 10
 custom-reason-max-length: 100
 ```
 
-* Allows players to submit custom reasons via chat.
-* Length limits prevent spam and abuse.
+- Allows players to submit custom reasons via chat.
+- Length limits prevent spam and abuse.
 
 #### Report Categories
 
@@ -217,8 +264,8 @@ categories:
   - "Spam/Advertisement"
 ```
 
-* Displayed in the report GUI.
-* Categories are fully customizable.
+- Displayed in the report GUI.
+- Categories are fully customizable.
 
 ---
 
@@ -229,13 +276,21 @@ notifications:
   new-report: true
   status-change: true
   sound: "BLOCK_NOTE_BLOCK_PLING"
-  prefix: "&8[&bAevorinReports&8]&r "
 ```
 
-* **new-report**: Notify staff when a report is created.
-* **status-change**: Notify staff when report status changes.
-* **sound**: Sound played for staff alerts (empty string disables).
-* **prefix**: Prefix used for all plugin messages.
+- **new-report**: Notify staff when a report is created.
+- **status-change**: Notify staff when report status changes.
+- **sound**: Sound played for staff alerts (empty string disables).
+
+#### Chat Prefix
+
+The chat prefix, which appears before most plugin messages, is configured within the **language files** to allow for localized branding.
+
+```yaml
+# Found in lang/en_US.yml
+messages:
+  prefix: "&8[&bAevorinReports&8]&r "
+```
 
 ---
 
@@ -247,8 +302,8 @@ update-checker:
   notify-on-join: true
 ```
 
-* Automatically checks for new plugin versions.
-* Notifies authorized players on join.
+- Automatically checks for new plugin versions.
+- Notifies authorized players on join.
 
 ---
 
@@ -260,8 +315,8 @@ debug:
   log-queries: false
 ```
 
-* **enabled**: Enables detailed debug logging.
-* **log-queries**: Logs database queries (not recommended for production).
+- **enabled**: Enables detailed debug logging.
+- **log-queries**: Logs database queries (not recommended for production).
 
 ---
 
@@ -272,9 +327,9 @@ messages:
   report-created: "&aYour report has been submitted successfully!"
 ```
 
-* Fully customizable messages.
-* Supports color codes (`&`) and placeholders.
-* MiniMessage is supported where applicable.
+- Fully customizable messages.
+- Supports color codes (`&`) and placeholders.
+- MiniMessage is supported where applicable.
 
 ---
 
@@ -293,8 +348,8 @@ network-mode:
   poll-interval: 10 # how often to sync reports from the database (seconds)
 ```
 
-* **enabled**: If `true`, this server will poll the database for reports from all servers.
-* **poll-interval**: The frequency of database checks. Recommended: 5-10.
+- **enabled**: If `true`, this server will poll the database for reports from all servers.
+- **poll-interval**: The frequency of database checks. Recommended: 5-10.
 
 #### Core Settings
 
@@ -304,7 +359,7 @@ channel-id: "YOUR_CHANNEL_ID_HERE"
 log-channel-id: "YOUR_LOG_CHANNEL_ID_HERE"
 ```
 
-* Sends reports and status updates directly to Discord.
+- Sends reports and status updates directly to Discord.
 
 #### Staff Permissions
 
@@ -312,7 +367,7 @@ log-channel-id: "YOUR_LOG_CHANNEL_ID_HERE"
 staff-role-id: ""
 ```
 
-* Optional role restriction for Discord moderation commands.
+- Optional role restriction for Discord moderation commands.
 
 #### Bot Appearance
 
@@ -333,16 +388,16 @@ notifications:
   footer: "AevorinReports • %date%"
 ```
 
-* Fully customizable embed formatting.
+- Fully customizable embed formatting.
 
 ---
 
 ## 6. Discord Features
 
-* Report submission notifications
-* Status update alerts
-* Embedded messages with player avatars
-* Server and report metadata displayed
+- Report submission notifications
+- Status update alerts
+- Embedded messages with player avatars
+- Server and report metadata displayed
 
 ---
 
@@ -356,11 +411,11 @@ notifications:
 
 ## 8. Technical Features
 
-* Async database operations
-* Thread-safe report handling
-* Efficient caching system
-* Modular and extendable architecture
-* Safe reload handling
+- Async database operations
+- Thread-safe report handling
+- Efficient caching system
+- Modular and extendable architecture
+- Safe reload handling
 
 ---
 
@@ -368,13 +423,13 @@ notifications:
 
 ### Optional
 
-* **MySQL** – Network-wide report synchronization
-* **Discord API (JDA)** – Discord bot integration
+- **MySQL** – Network-wide report synchronization
+- **Discord API (JDA)** – Discord bot integration
 
 **Notes:**
 
-* These optional dependencies are built in the plugin itself and can be enabled from config.yml
-  
+- These optional dependencies are built in the plugin itself and can be enabled from config.yml
+
 ---
 
 ## 10. Installation Guide
@@ -388,9 +443,26 @@ notifications:
 
 ---
 
-## 11. bStats
+## 11. Analytics & Telemetry
+
+### bStats
 
 [![AevorinReports usage graph](https://bstats.org/signatures/bukkit/AevorinReports.svg)](https://bstats.org/plugin/bukkit/AevorinReports/28310)
+
+### FastStats
+
+AevorinReports also uses **FastStats** for advanced, real-time plugin analytics. The following custom metrics are tracked to help guide future development:
+
+| Metric                  | Description                                            |
+| ----------------------- | ------------------------------------------------------ |
+| `pending_reports`       | Number of currently pending reports on the server      |
+| `total_reports`         | Total reports ever created on the server               |
+| `gui_provider`          | Which GUI type the server uses (`book` or `container`) |
+| `db_backend`            | Which database backend is in use (`file` or `mysql`)   |
+| `configured_categories` | How many report categories the server has set up       |
+| `discord_integration`   | Whether the Discord bot is enabled (`true`/`false`)    |
+
+All telemetry is anonymous — no player data, usernames, IPs, or personally identifiable information is ever collected.
 
 ---
 

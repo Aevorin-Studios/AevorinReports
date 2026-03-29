@@ -1,7 +1,7 @@
 # AevorinReports Configuration File
 
 # Please Do not change the config version
-config-version: 3
+config-version: 5
 
 # Server Configuration
 # The name of this server, used to identify where reports come from in a multi-server network.
@@ -60,8 +60,7 @@ notifications:
   # Sound to play for notifications (set to "" to disable)
   # Examples: BLOCK_NOTE_BLOCK_PLING, ENTITY_PLAYER_LEVELUP
   sound: "BLOCK_NOTE_BLOCK_PLING"
-  # Chat prefix for plugin messages
-  prefix: "&8[&bAevorinReports&8]&r "
+
 
 # Update Checker Settings
 update-checker:

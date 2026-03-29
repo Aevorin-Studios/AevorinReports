@@ -29,7 +29,7 @@ public class SetReportStatusCommand implements CommandExecutor, TabCompleter {
         LanguageManager lang = LanguageManager.get(plugin);
         
         if (!(sender instanceof Player player)) {
-            MessageUtils.sendMessage(sender, "&cOnly players can use this command!");
+            MessageUtils.sendMessage(sender, lang.getMessage("messages.error.player-only"));
             return true;
         }
 
@@ -39,7 +39,7 @@ public class SetReportStatusCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length != 3 || !args[1].equalsIgnoreCase("to")) {
-            MessageUtils.sendMessage(player, "&cUsage: /setreportstatus <id> to <status>");
+            MessageUtils.sendMessage(player, lang.getMessage("messages.error.usage-setstatus"));
             return true;
         }
 
@@ -55,7 +55,7 @@ public class SetReportStatusCommand implements CommandExecutor, TabCompleter {
             }
             
             if (report.getStatus() == newStatus) {
-                MessageUtils.sendMessage(player, "&eReport is already in that status!");
+                MessageUtils.sendMessage(player, lang.getMessage("messages.error.status-already-set"));
                 return true;
             }
             
@@ -78,7 +78,7 @@ public class SetReportStatusCommand implements CommandExecutor, TabCompleter {
             
             player.closeInventory();
         } catch (NumberFormatException e) {
-            MessageUtils.sendMessage(player, "&cInvalid report ID!");
+            MessageUtils.sendMessage(player, lang.getMessage("messages.error.invalid-report-id"));
         } catch (IllegalArgumentException e) {
             String statuses = Arrays.stream(Report.ReportStatus.values()).map(Enum::name).collect(Collectors.joining(", "));
             MessageUtils.sendMessage(player, lang.getMessage("messages.error.status-invalid", Map.of("statuses", statuses)));

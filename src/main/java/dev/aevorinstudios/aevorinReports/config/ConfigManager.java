@@ -131,6 +131,25 @@ public class ConfigManager {
                 config.getReports().setChatHistoryLines(asInt(reports.get("chat-history-lines"), 50));
                 config.getReports().setLogInventory(asBoolean(reports.get("logInventory"), true));
                 config.getReports().setLogLocation(asBoolean(reports.get("logLocation"), true));
+                config.getReports().setAllowSelfReporting(asBoolean(reports.get("allow-self-reporting"), false));
+
+                if (reports.containsKey("gui")) {
+                    Map<String, Object> gui = (Map<String, Object>) reports.get("gui");
+                    if (gui != null) {
+                        config.getReports().getGui().setType(asString(gui.get("type"), "book"));
+                    }
+                }
+
+                if (reports.containsKey("categories")) {
+                    List<?> categories = (List<?>) reports.get("categories");
+                    if (categories != null) {
+                        List<String> categoryStrings = new ArrayList<>();
+                        for (Object obj : categories) {
+                            categoryStrings.add(String.valueOf(obj));
+                        }
+                        config.getReports().setCategories(categoryStrings);
+                    }
+                }
             }
         }
 
@@ -300,6 +319,15 @@ public class ConfigManager {
                 updateChecker.put("notify-on-join", true);
                 updateChecker.put("update-channel", "release");
                 config.put("update-checker", updateChecker);
+            }
+        }
+        if (version < 5) {
+            // Version 5: Prefix moved to language files
+            if (config.containsKey("notifications")) {
+                Object rawNotifications = config.get("notifications");
+                if (rawNotifications instanceof Map) {
+                    ((Map<String, Object>) rawNotifications).remove("prefix");
+                }
             }
         }
     }
@@ -620,8 +648,10 @@ public class ConfigManager {
 
         result.put("discord", discord);
 
+
         return result;
     }
+
 
     public @Nullable String getMessage(String key) {
         // Return a proper message based on the key
@@ -716,7 +746,7 @@ public class ConfigManager {
     @Data
     public static class Config {
         private String serverName = "survival";
-        private int configVersion = 3;
+        private int configVersion = 5;
         private DatabaseConfig database = new DatabaseConfig();
         private ReportsConfig reports = new ReportsConfig();
         private NotificationsConfig notifications = new NotificationsConfig();
@@ -792,6 +822,14 @@ public class ConfigManager {
             private int chatHistoryLines = 50;
             private boolean logInventory = true;
             private boolean logLocation = true;
+            private boolean allowSelfReporting = false;
+            private GUIConfig gui = new GUIConfig();
+            private List<String> categories = new ArrayList<>(Arrays.asList("Hacking/Cheating", "Harassment/Bullying", "Spam/Advertisement", "Griefing/Vandalism", "Bug Exploit", "Other"));
+
+            @Data
+            public static class GUIConfig {
+                private String type = "book";
+            }
         }
 
         @Data

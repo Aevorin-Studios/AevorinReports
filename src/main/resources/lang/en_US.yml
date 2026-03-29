@@ -15,8 +15,11 @@
 # {category} - The report category name
 # {time}     - Cooldown time remaining
 # {date}     - Date and time the report was created
+#
+# Supports MiniMessage tags (e.g., <rainbow>, <red>, <gradient:blue:aqua>)
+# Legacy & codes are also supported.
 
-config-version: 1
+config-version: 2
 
 # GUI Interface Settings
 # Contains all text formatting for the Report Plugin's interactive GUIs.
@@ -28,6 +31,7 @@ gui:
     error_creating: "&cError creating book interface."
     reporting_header: "&4Reporting Player:\n&c{target}"
     reasons_header: "&4Reasons:"
+    custom_reason: "&c• Custom Reason"
     back_button: "\n&8« Back to Categories"
     page:
       title: "&cReport Details\n\n"
@@ -48,6 +52,7 @@ gui:
       rejected: "&c✘ Mark as Rejected\n"
     hover_text:
       report_for: "&7Click to report for: &f{category}"
+      custom_reason: "&7Click to provide a custom reason"
       pending: "&7Click to return to pending"
       resolved: "&7Click to mark as resolved"
       rejected: "&7Click to mark as rejected"
@@ -73,26 +78,26 @@ gui:
   # Used when gui.type is set to "container" in config.yml.
   container:
     shared:
-      separator: "&8──────────────────"
+      separator: "&8&m                                          &r"
       navigation:
         page_indicator:
-          title: "&f&lPage {page} of {total}"
+          title: "&fPage {page} of {total}"
           lore: "&7Showing {start}-{end} of {total} reports"
         previous_page:
-          title: "&e&lPrevious Page"
+          title: "&ePrevious Page"
           lore: "&7Go to page {page}"
         next_page:
-          title: "&e&lNext Page"
+          title: "&eNext Page"
           lore: "&7Go to page {page}"
         back_button:
-          title: "&e&lBack"
+          title: "&eBack"
           lore: "&7Go back to categories"
 
     menus:
       main_menu:
         title: "Reports Menu"
         pending:
-          title: "&ePending Reports"
+          title: "&6Pending Reports"
           lore:
             description: "&7View all pending reports."
             action: "&eClick to view!"
@@ -110,13 +115,13 @@ gui:
       category_view:
         title: "{status} Reports"
         report_item:
-          title: "&b{reporter} → {reported}"
+          title: "<gradient:#AFA3FF:#AFA3FF>{reporter}</gradient> <grey>→ <gradient:#FF0000:#FF0000>{reported}</gradient>"
           lore:
-            reason: "&7Reason: {reason}"
-            status: "&7Status: {status}"
-            id: "&7ID: {id}"
-            server: "&7Server: {server}"
-            action: "&eClick to manage"
+            reason: "<gradient:#AFA3FF:#AFA3FF>Reason:</gradient> <white>{reason}</white>"
+            status: "<gradient:#AFA3FF:#AFA3FF>Status:</gradient> <white>{status}</white>"
+            id: "<gradient:#AFA3FF:#AFA3FF>ID:</gradient> <white>{id}</white>"
+            server: "<gradient:#AFA3FF:#AFA3FF>Server:</gradient> <white>{server}</white>"
+            action: "<gradient:#FF0000:#FF0000>Click to Manage</gradient>"
 
       player_reports:
         title: "Your Reports"
@@ -124,46 +129,49 @@ gui:
       reason_selector:
         title: "Report: {target}"
         info_icon:
-          title: "&4Reporting: &c{target}"
+          title: "<gradient:#AFA3FF:#AFA3FF>Reporting:</gradient> <white>{target}</white>"
           lore:
             - ""
             - "&fSelect a reason to report this player"
             - "&fClick on any icon to submit your report"
             - ""
         reason_item:
-          title: "&c{reason}"
+          title: "<gradient:#AFA3FF:#AFA3FF>{reason}</gradient>"
           lore:
-            target: "&4Target: &c{target}"
+            target: " "
             action: "&aClick to submit report"
+        custom_reason_item:
+          title: "&cCustom Reason"
+          lore: "&7Click to enter a custom reason"
 
     manage_report:
       title: "Manage Report {id}"
       back_button:
-        title: "&c&lBack"
+        title: "&cBack"
         lore: "&7Go back to {status} Reports"
       details:
-        title: "&b&lReport Details"
+        title: "<gradient:#AFA3FF:#AFA3FF>Report Details</gradient>"
         lore:
-          reporter: "&7Reporter: &f{reporter}"
-          reported: "&7Reported: &f{reported}"
-          reason: "&7Reason: &f{reason}"
-          status: "&7Status: &f{status}"
-          id: "&7ID: &f{id}"
-          server: "&7Server: &f{server}"
+          reporter: "<gradient:#AFA3FF:#AFA3FF>Reporter:</gradient> <white>{reporter}</white>"
+          reported: "<gradient:#AFA3FF:#AFA3FF>Reported:</gradient> <white>{reported}"
+          reason: "<gradient:#AFA3FF:#AFA3FF>Reason:</gradient> <white>{reason}</white>"
+          status: "<gradient:#AFA3FF:#AFA3FF>Status:</gradient> <white>{status}</white>"
+          id: "<gradient:#AFA3FF:#AFA3FF>ID:</gradient> <white>{id}</white>"
+          server: "<gradient:#AFA3FF:#AFA3FF>Server:</gradient> <white>{server}</white>"
       pending:
-        title: "&6&lMove to Pending"
+        title: "&6Move to Pending"
         lore:
           description: "&7Set this report as pending for review."
           current_status: "&7Current status: &f{status}"
           action: "&6Click to change status"
       resolved:
-        title: "&a&lMove to Resolved"
+        title: "&aMove to Resolved"
         lore:
           description: "&7Mark this report as resolved."
           current_status: "&7Current status: &f{status}"
           action: "&aClick to change status"
       rejected:
-        title: "&c&lMove to Rejected"
+        title: "&cMove to Rejected"
         lore:
           description: "&7Reject this report as invalid."
           current_status: "&7Current status: &f{status}"
@@ -192,34 +200,39 @@ common:
 # Direct notifications, errors, and success messages sent to players
 # or staff members in standard Minecraft chat.
 messages:
+  # The prefix that appears before most plugin messages
+  prefix: "<gradient:#AFA3FF:#AFA3FF>Reports</gradient> <grey>➡</grey>"
+
   error:
-    no-permission: "&cYou don't have permission to do that!"
-    player-only: "&cOnly players can use this command!"
-    invalid-player: "&cThat player does not exist!"
-    invalid-group: "&cInvalid report status group."
-    report-not-found: "&cReport not found!"
-    no-reports: "&cYou have no active reports!"
-    no-status-reports: "&cNo {status} reports found."
-    invalid-status-transition: "&cCannot change report status from {current} to {status}. Invalid transition!"
-    status-invalid: "&cInvalid report status! Available statuses: {statuses}"
-    description-too-short: "&cYour report description is too short! Minimum length: {min}"
-    description-too-long: "&cYour report description is too long! Maximum length: {max}"
-    category-invalid: "&cInvalid report category! Available categories: {categories}"
-    custom-reason-disabled: "&cCustom reasons are currently disabled."
-    custom-reason-too-short: "&cYour custom reason is too short! Minimum length: {min} characters"
-    custom-reason-too-long: "&cYour custom reason is too long! Maximum length: {max} characters"
-    book-meta-error: "&cError creating book interface."
+    no-permission: "{prefix} &cYou don't have permission to do that!"
+    player-only: "{prefix} &cOnly players can use this command!"
+    invalid-player: "{prefix} &cThat player does not exist!"
+    invalid-group: "{prefix} &cInvalid report status group."
+    report-not-found: "{prefix} &cReport not found!"
+    no-reports: "{prefix} &cYou have no active reports!"
+    no-status-reports: "{prefix} &cNo {status} reports found."
+    status-invalid: "{prefix} &cInvalid report status! Available statuses: {statuses}"
+    category-invalid: "{prefix} &cInvalid report category! Available categories: {categories}"
+    custom-reason-disabled: "{prefix} &cCustom reasons are currently disabled."
+    custom-reason-too-short: "{prefix} &cYour custom reason is too short! Minimum length: {min} characters"
+    custom-reason-too-long: "{prefix} &cYour custom reason is too long! Maximum length: {max} characters"
+    usage-report: "&cUsage: /report <player> [reason]"
+    usage-viewreport: "&cUsage: /viewreport <id>"
+    usage-setstatus: "&cUsage: /setreportstatus <id> to <status>"
+    invalid-report-id: "&cInvalid report ID!"
+    status-already-set: "&cReport is already in that status!"
+    cannot-report-self: "&cYou cannot report yourself."
 
   success:
-    report-created: "&aYour report has been submitted successfully!"
-    status-update-success: "&aReport status updated successfully!"
+    report-created: "{prefix} &aYour report has been submitted successfully!"
 
   report:
-    cooldown: "&cYou must wait {time} before submitting another report."
-    limit-reached: "&cYou have reached the maximum number of active reports."
-    notification: "&c[Reports] &e{reporter} &fhas reported &c{reported} &ffor: &e{category}"
-    status-change: "&7Report #{id} status has been changed to {color}{status}&7."
-    custom-reason-prompt: "&eEnter your custom reason in chat. Your message will be private."
-    title: "&6Your Active Reports"
-    format: "&7• &e#{id} &7- &f{reason}"
-    details: "&7Status: &e{status}\n&7Date: &f{date}"
+    cooldown: "{prefix} &cYou must wait {time} before submitting another report."
+    limit-reached: "{prefix} &cYou have reached the maximum number of active reports."
+    notification: "{prefix} <gradient:#BEFF00:#D2FF00>{reporter}</gradient> &fhas reported <gradient:#FF0000:#FF003E>{reported}</gradient> &ffor: <gradient:#00B7FF:#0098FF>{category}</gradient>"
+    status-change: "{prefix} &7Report #{id} status has been changed to {color}{status}&7."
+    custom-reason-prompt: "{prefix} &fEnter your custom reason in chat. Your message will be private."
+
+  admin:
+    reload-success: "{prefix} &aConfiguration reloaded successfully!"
+    reload-failure: "{prefix} &cFailed to reload configuration. Check console."

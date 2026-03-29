@@ -208,6 +208,32 @@ public class DatabaseManager {
         return getReportsByStatus(Report.ReportStatus.PENDING);
     }
 
+    public int getReportCountByStatus(Report.ReportStatus status) {
+        String sql = "SELECT COUNT(*) FROM reports WHERE status = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, status.name());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            logger.error("Failed to get report count for status {}: {}", status, e.getMessage());
+        }
+        return 0;
+    }
+
+    public int getTotalReportsCount() {
+        String sql = "SELECT COUNT(*) FROM reports";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) {
+            logger.error("Failed to get total reports count: {}", e.getMessage());
+        }
+        return 0;
+    }
+
     /**
      * Get the highest report ID currently in the database.
      * 

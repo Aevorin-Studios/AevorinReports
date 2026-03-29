@@ -22,7 +22,7 @@ public class LanguageManager {
     private static final Map<String, LanguageManager> instances = new HashMap<>();
 
     // List of officially supported languages bundled within the plugin jar
-    private static final java.util.List<String> SUPPORTED_LANGUAGES = java.util.Arrays.asList("en_US");
+    private static final java.util.List<String> SUPPORTED_LANGUAGES = java.util.Arrays.asList("en_US", "it_IT", "sk_SK");
 
     private LanguageManager(Plugin plugin, String langName) {
         this.plugin = plugin;
@@ -50,9 +50,19 @@ public class LanguageManager {
         langFile = new File(langDir, langName + ".yml");
         boolean isSupported = SUPPORTED_LANGUAGES.contains(langName);
 
-        if (!langFile.exists() && isSupported) {
-            plugin.saveResource("lang/" + langName + ".yml", false);
-        } else if (!langFile.exists()) {
+        // Extract all bundled language files so users see their options
+        for (String supported : SUPPORTED_LANGUAGES) {
+            File file = new File(langDir, supported + ".yml");
+            if (!file.exists()) {
+                try {
+                    plugin.saveResource("lang/" + supported + ".yml", false);
+                } catch (IllegalArgumentException ignored) {
+                    // Resource might not exist in jar, safely ignore
+                }
+            }
+        }
+
+        if (!langFile.exists()) {
             logger.warning(
                     "Language file " + langName + ".yml not found and is not a default language. Using missing keys.");
         }
@@ -111,16 +121,25 @@ public class LanguageManager {
     }
 
     public String getRawMessage(String path) {
-        return langConfig.getString(path, "Missing lang: " + path);
+        String msg = langConfig.getString(path, "Missing lang: " + path);
+        if (!path.equals("messages.prefix") && msg.contains("{prefix}")) {
+            String prefix = langConfig.getString("messages.prefix", "&8[&bAevorinReports&8]&r ");
+            msg = msg.replace("{prefix}", prefix);
+        }
+        return msg;
     }
 
     public String getMessage(String path) {
-        return ChatColor.translateAlternateColorCodes('&', getRawMessage(path));
+        return dev.aevorinstudios.aevorinReports.utils.MessageUtils.parseToLegacy(getRawMessage(path));
     }
 
     public String getMessage(String path, String defaultValue) {
-        String message = langConfig.getString(path, defaultValue);
-        return ChatColor.translateAlternateColorCodes('&', message);
+        String msg = langConfig.getString(path, defaultValue);
+        if (!path.equals("messages.prefix") && msg.contains("{prefix}")) {
+            String prefix = langConfig.getString("messages.prefix", "&8[&bAevorinReports&8]&r ");
+            msg = msg.replace("{prefix}", prefix);
+        }
+        return dev.aevorinstudios.aevorinReports.utils.MessageUtils.parseToLegacy(msg);
     }
 
     public String getMessage(String path, Map<String, String> placeholders) {
@@ -128,7 +147,7 @@ public class LanguageManager {
         for (Map.Entry<String, String> entry : placeholders.entrySet()) {
             message = message.replace("{" + entry.getKey() + "}", entry.getValue());
         }
-        return ChatColor.translateAlternateColorCodes('&', message);
+        return dev.aevorinstudios.aevorinReports.utils.MessageUtils.parseToLegacy(message);
     }
 
     public java.util.List<String> getMessageList(String path) {
@@ -136,22 +155,31 @@ public class LanguageManager {
         if (list.isEmpty()) {
             return java.util.Collections.singletonList("Missing lang list: " + path);
         }
-        java.util.List<String> coloredList = new java.util.ArrayList<>();
+        String prefix = langConfig.getString("messages.prefix", "&8[&bAevorinReports&8]&r ");
+        java.util.List<String> parsedList = new java.util.ArrayList<>();
         for (String s : list) {
-            coloredList.add(ChatColor.translateAlternateColorCodes('&', s));
+            String msg = s;
+            if (!path.equals("messages.prefix") && msg.contains("{prefix}")) {
+                msg = msg.replace("{prefix}", prefix);
+            }
+            parsedList.add(dev.aevorinstudios.aevorinReports.utils.MessageUtils.parseToLegacy(msg));
         }
-        return coloredList;
+        return parsedList;
     }
 
     public java.util.List<String> getMessageList(String path, Map<String, String> placeholders) {
         java.util.List<String> list = langConfig.getStringList(path);
+        String prefix = langConfig.getString("messages.prefix", "&8[&bAevorinReports&8]&r ");
         java.util.List<String> replacedList = new java.util.ArrayList<>();
         for (String s : list) {
             String replaced = s;
+            if (!path.equals("messages.prefix") && replaced.contains("{prefix}")) {
+                replaced = replaced.replace("{prefix}", prefix);
+            }
             for (Map.Entry<String, String> entry : placeholders.entrySet()) {
                 replaced = replaced.replace("{" + entry.getKey() + "}", entry.getValue());
             }
-            replacedList.add(ChatColor.translateAlternateColorCodes('&', replaced));
+            replacedList.add(dev.aevorinstudios.aevorinReports.utils.MessageUtils.parseToLegacy(replaced));
         }
         return replacedList;
     }
@@ -164,7 +192,12 @@ public class LanguageManager {
         return reason;
     }
 
+    public String getPrefix() {
+        return getMessage("messages.prefix", "&8[&bAevorinReports&8]&r ");
+    }
+
     public java.util.List<String> getReasonList() {
+
         return getMessageList("common.reasons");
     }
 }

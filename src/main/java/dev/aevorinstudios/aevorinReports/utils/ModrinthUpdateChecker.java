@@ -151,12 +151,13 @@ public class ModrinthUpdateChecker implements Listener {
         if (updateAvailable && player.hasPermission("aevorinreports.update") &&
                 plugin.getConfigManager().getConfig().getUpdateChecker().isNotifyOnJoin()) {
             dev.aevorinstudios.aevorinReports.utils.SchedulerUtils.runTaskLater(plugin, player, () -> {
-                String prefix = plugin.getConfig().getString("notifications.prefix", "&8[&bAevorinReports&8]&r ");
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                String prefix = "&8[&bAevorinReports&8]&r ";
+                player.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                         prefix + "&eA new version is available: &b" + latestVersion));
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                player.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                         prefix + "&eDownload it from: &b" + downloadUrl));
             }, 40L); // Delay notification by 2 seconds after join
+
         }
     }
 

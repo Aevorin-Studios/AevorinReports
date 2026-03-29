@@ -152,7 +152,16 @@ public class ReportsContainerListener implements Listener {
             new CategoryContainerGUI(plugin).openCategoryGUI(player, newStatus, reports);
             
             LanguageManager lang = LanguageManager.get(plugin);
-            player.sendMessage(lang.getMessage("messages.success.status-update-success"));
+            String statusColor = switch(newStatus) {
+                case PENDING -> "&6";
+                case RESOLVED -> "&a";
+                case REJECTED -> "&c";
+            };
+            dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, lang.getMessage("messages.report.status-change", java.util.Map.of(
+                "id", String.valueOf(report.getId()),
+                "status", newStatus.name(),
+                "color", statusColor
+            )));
         }
     }
 
@@ -164,18 +173,34 @@ public class ReportsContainerListener implements Listener {
             return;
         }
 
+        // Handle custom reason selection
+        if (clicked.getType() == Material.WRITABLE_BOOK) {
+            ItemMeta meta = clicked.getItemMeta();
+            if (meta != null && meta.getPersistentDataContainer().has(new org.bukkit.NamespacedKey(plugin, "custom_reason"), org.bukkit.persistence.PersistentDataType.BYTE)) {
+                player.closeInventory();
+                // Execute command as player for consistency
+                player.performCommand("report " + holder.getTargetPlayer() + " custom");
+                return;
+            }
+        }
+
         // Handle reason selection
         if (clicked.getType() == Material.PAPER) {
             ItemMeta meta = clicked.getItemMeta();
             if (meta != null) {
-                // The display name is the reason (with localized color/prefix)
-                // We should probably store the raw reason in the lore or PDC.
-                // For now, let's try to get it from the display name if it follows the pattern.
-                String displayName = org.bukkit.ChatColor.stripColor(meta.getDisplayName());
+                String reasonName = meta.getPersistentDataContainer().get(
+                    new org.bukkit.NamespacedKey(plugin, "reason_name"), 
+                    org.bukkit.persistence.PersistentDataType.STRING
+                );
+                
+                if (reasonName == null) {
+                    // Fallback to display name if PDC is missing for some reason
+                    reasonName = org.bukkit.ChatColor.stripColor(meta.getDisplayName());
+                }
                 
                 player.closeInventory();
                 // Execute command as player for consistency
-                player.performCommand("report " + holder.getTargetPlayer() + " " + displayName);
+                player.performCommand("report " + holder.getTargetPlayer() + " " + reasonName);
             }
         }
     }

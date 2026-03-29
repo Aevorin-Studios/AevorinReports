@@ -77,7 +77,7 @@ public class ReportReasonContainerGUI {
             };
         }
 
-        int itemsPerPage = slots.length;
+        int itemsPerPage = 10;
         int totalPages = (int) Math.ceil((double) reasons.size() / itemsPerPage);
         int startIndex = (page - 1) * itemsPerPage;
         int endIndex = Math.min(reasons.size(), startIndex + itemsPerPage);
@@ -99,6 +99,8 @@ public class ReportReasonContainerGUI {
                     lang.getMessage("gui.container.menus.reason_selector.reason_item.lore.target", Map.of("target", targetPlayer)),
                     lang.getMessage("gui.container.menus.reason_selector.reason_item.lore.action")
                 ));
+                item.setItemMeta(meta);
+                meta.getPersistentDataContainer().set(new org.bukkit.NamespacedKey(plugin, "reason_name"), org.bukkit.persistence.PersistentDataType.STRING, reason);
                 item.setItemMeta(meta);
                 item.addUnsafeEnchantment(org.bukkit.enchantments.Enchantment.DURABILITY, 1);
             }
@@ -134,6 +136,20 @@ public class ReportReasonContainerGUI {
                 gui.setItem(45, prevButton);
             }
         }
+        if (plugin.getConfig().getBoolean("reports.allow-custom-reasons", true)) {
+            ItemStack customItem = new ItemStack(Material.WRITABLE_BOOK);
+            ItemMeta customMeta = customItem.getItemMeta();
+            if (customMeta != null) {
+                customMeta.setDisplayName(lang.getMessage("gui.container.menus.reason_selector.custom_reason_item.title", "&cCustom Reason"));
+                customMeta.setLore(List.of(
+                    lang.getMessage("gui.container.menus.reason_selector.custom_reason_item.lore", "&7Click to enter a custom reason")
+                ));
+                customMeta.getPersistentDataContainer().set(new org.bukkit.NamespacedKey(plugin, "custom_reason"), org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
+                customItem.setItemMeta(customMeta);
+            }
+            gui.setItem(49, customItem);
+        }
+
         player.openInventory(gui);
     }
 }

@@ -34,7 +34,7 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
         LanguageManager lang = LanguageManager.get(plugin);
         
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "Only players can use this command!");
+            dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender, lang.getMessage("messages.error.player-only"));
             return true;
         }
 
@@ -44,7 +44,7 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 0) {
-            player.sendMessage(ChatColor.RED + "Usage: /report <player> [reason]");
+            dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, lang.getMessage("messages.error.usage-report"));
             return true;
         }
 
@@ -59,7 +59,7 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
         // Self-reporting check
         boolean allowSelfReporting = plugin.getConfig().getBoolean("reports.allow-self-reporting", false);
         if (!allowSelfReporting && player.getName().equalsIgnoreCase(targetPlayer)) {
-            player.sendMessage(ChatColor.RED + "You cannot report yourself.");
+            dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, lang.getMessage("messages.error.cannot-report-self"));
             return true;
         }
 
@@ -104,6 +104,37 @@ public class BukkitReportCommand implements CommandExecutor, TabCompleter {
                 plugin.getCustomReasonHandler().startCustomReason(player, targetPlayer);
                 MessageUtils.sendMessage(player, lang.getMessage("messages.report.custom-reason-prompt"));
                 return true;
+            }
+
+            // Check if reason is a valid category
+            java.util.List<String> validCategories = lang.getReasonList();
+            boolean isValidCategory = false;
+            for (String cat : validCategories) {
+                if (cat.equalsIgnoreCase(reason)) {
+                    isValidCategory = true;
+                    reason = cat; // Use exact case
+                    break;
+                }
+            }
+
+            if (!isValidCategory) {
+                if (!plugin.getConfig().getBoolean("reports.allow-custom-reasons", true)) {
+                    dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, lang.getMessage("messages.error.category-invalid", java.util.Map.of("categories", String.join(", ", validCategories))));
+                    return true;
+                }
+
+                int minLength = plugin.getConfig().getInt("reports.custom-reason-min-length", 10);
+                int maxLength = plugin.getConfig().getInt("reports.custom-reason-max-length", 100);
+
+                if (reason.length() < minLength) {
+                    dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, lang.getMessage("messages.error.custom-reason-too-short", java.util.Map.of("min", String.valueOf(minLength))));
+                    return true;
+                }
+
+                if (reason.length() > maxLength) {
+                    dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, lang.getMessage("messages.error.custom-reason-too-long", java.util.Map.of("max", String.valueOf(maxLength))));
+                    return true;
+                }
             }
 
             createReport(player, targetPlayer, reason);

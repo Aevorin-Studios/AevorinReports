@@ -2,6 +2,144 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.8] - Hasn't been Released yet
+
+### New Features
+
+- **Standardized Messaging System**:
+  - Replaced hardcoded messages with localized strings via `LanguageManager`.
+  - Fully localized command usage strings (`/report`, `/viewreport`, `/setreportstatus`) for all supported languages.
+  - Added localized feedback for the `/ar reload` command.
+- **Custom Reason Support in GUIs**:
+  - Added "Custom Reason" option to the **Book GUI**.
+  - Added "Custom Reason" (Writable Book) icon to the **Container GUI** for players to submit their own reasons in chat.
+- **Enhanced Visual Aesthetics**:
+  - Implemented high-fidelity **MiniMessage gradients** for report titles, details, and notifications.
+  - Simplified GUI design by removing bold text for a cleaner, modern look.
+  - Redesigned the container separator for better visual structure.
+- **Improved Global Prefix**: The plugin prefix now supports MiniMessage gradients and is consistently applied across all messages using the `{prefix}` placeholder.
+
+### Improvements & Bug Fixes
+
+- **Hybrid Message Parsing**: Implemented a robust "Hybrid Parser" for messages that contain both MiniMessage tags and legacy color codes (e.g., gradients combined with `&f`). This resolves a critical `ParsingException` where MiniMessage would crash when encountering legacy formatting symbols like `§`.
+- **FastStats Reliability**: Fixed a `NullPointerException` (NPE) that occurred during FastStats initialization if the database connection failed or was slow to respond.
+- **Streamlined Initialization**: Simplified console output during startup by removing verbose database connection logs and retry spam. Initialization failures are now reported as a single, clear sentence before the plugin disables itself.
+- **GUI Pagination Fix**: Resolved a critical indexing error in the `Reason Selector` GUI that prevented "Next Page" from working when reasons spanned multiple pages.
+- **Robust Reason Selection**: Implemented `PersistentDataContainer` (PDC) to identify report reasons in the GUI. This makes reason selection immune to translation changes and fixes a bug where non-English reasons would fail to submit.
+- **Smart Message Parsing**: Enhanced `MessageUtils` with a heuristic to detect legacy color codes versus MiniMessage tags. This fixes a rendering bug where command usage strings like `<player>` were being incorrectly parsed as broken MiniMessage.
+- **Dynamic Prefix Replacement**: Re-engineered the `LanguageManager` to replace `{prefix}` _before_ MiniMessage parsing, preventing crashes when the prefix contains non-legacy characters.
+- **Robust Category Handling**: Switched to `PersistentDataContainer` for identifying report categories in GUIs, ensuring stability across all localized versions.
+- **Unified Feedback**: Standardized status update notifications so that using the `/setreportstatus` command and the GUI management buttons provide the same detailed feedback.
+- **Improved Input Validation**:
+  - Validated report categories and custom reasons directly in the `/report` command.
+  - Fixed length validation for custom reasons to correctly use localized error messages.
+- **Language Cleanup**: Removed redundant and unused keys from language files (`status-update-success`, `description-too-short`, etc.) to reduce clutter and improve maintainability.
+
+## [1.0.7] - 2026-03-11
+
+### New Features
+
+- **Full Localization Support**: Implemented a comprehensive language system.
+  - New `lang/` folder for storing language packs (e.g., `en_US.yml`).
+  - Active language selection via `language` setting in `config.yml`.
+  - Added default `en_US.yml` with all GUI and message strings.
+- **Localized GUIs**: Refactored all user interfaces to be fully translatable.
+  - `ReportManageGUI`: Localized all labels and status buttons.
+  - `CategoryContainerGUI`: Localized navigation and indicators.
+  - `ReportReasonContainerGUI`: Localized the entire reason selection flow.
+  - `BookGUI`: Localized the classic book-based reporting and management views.
+- **Localized Commands**: All command feedback and staff notifications are now localized via the language pack.
+- **Dynamic Navigation**: Added "Back" buttons to all container-based GUIs.
+  - New "Back to Categories" button in the category view for easier navigation between report groups.
+  - New "Back to Category" button in the individual report management view, allowing staff to return quickly to the filtered list.
+  - Back buttons use localized display names and lore, including dynamic status placeholders.
+- **Official Language Support**: Expanded the built-in language library.
+  - Added official support for **Italian (it_IT)** and **Slovak (sk_SK)**.
+- **Integrated FastStats Telemetry**: Added advanced server metrics and automated error tracking via FastStats.
+  - **Live Metrics**: We now track pending reports, preferred GUI types, and database backends to help improve future updates.
+  - **Automated Error Tracking**: Plugin exceptions are now automatically transmitted with context to our developers, allowing us to fix bugs before you even report them.
+- **Improved Telemetry Coexistence**: FastStats now runs alongside bStats, providing a more comprehensive overview of plugin usage and health.
+
+### Improvements & Bug Fixes
+
+- **Book GUI Smart Pagination**: Fixed a bug where the text in the Book GUI would overflow and get cut off at the bottom of the page. The plugin now intelligently flows content onto a new page only when necessary.
+- **Language Extraction Fix**: Fixed an issue where bundled language files (`it_IT.yml`, `sk_SK.yml`) would not extract to the `lang/` folder unless explicitly set as the active language. Now all supported languages extract automatically on startup.
+- **Improved Language Management**:
+  - **Custom Language Support**: Custom language files will never be overwritten during plugin updates.
+  - **Smart Fallback System**: Missing keys in custom language files automatically fall back to `en_US` defaults.
+  - **Missing Key Warnings**: Console warnings are displayed when custom language files have missing fields.
+  - **Automatic Internal Updates**: Supported languages are auto-updated when the plugin jar is updated.
+- **GUI Interaction Fix**: Fixed a bug where both admins and players could accidentally take items out of the container-based GUIs.
+- **Security & Privacy**:
+  - Fixed a missing permission check in the Book GUI that allowed non-admin players to see "Click to change status" options.
+  - Management buttons are now context-aware and only shown to players with the correct permissions.
+- **Build Process Optimization**: Fixed a critical issue where the Gradle build process was corrupting `\n` newline characters in language files.
+- **Enhanced GUI Stability**: Re-engineered the internal GUI identification system using `InventoryHolder`.
+- **Refined Config Logic**: Updated internal configuration handling to support advanced telemetry metrics.
+- **Enhanced Error Handling**: Improved the `ExceptionHandler` to provide better context for remote debugging.
+- **Code Refactoring**: Centralized GUI opening logic and standardized the use of `DARK_OAK_DOOR` as the universal "Back" icon.
+
+### Contributors
+
+Special thanks to **clessidra** for the **Italian** translation and **FarmCraft** for the **Slovak** translation!
+
+We are looking for translators to add even more language support to AevorinReports! Join our [Discord server](https://discord.gg/SV2dXt5SwF) and open a ticket if you'd like to help!
+
+## [1.0.7-Beta-2] - 2026-03-10
+
+### New Features
+
+- **Integrated FastStats Telemetry**: Added advanced server metrics and automated error tracking via FastStats.
+  - **Live Metrics**: We now track pending reports, preferred GUI types, and database backends to help improve future updates.
+  - **Automated Error Tracking**: Plugin exceptions are now automatically transmitted with context to our developers, allowing us to fix bugs before you even report them.
+- **Improved Telemetry Coexistence**: FastStats now runs alongside bStats, providing a more comprehensive overview of plugin usage and health.
+
+### Improvements & Bug Fixes
+
+- **Refined Config Logic**: Updated internal configuration handling to support advanced telemetry metrics.
+- **Enhanced Error Handling**: Improved the `ExceptionHandler` to provide better context for remote debugging.
+
+## [1.0.7-Beta-1] - 2026-03-08
+
+> [!NOTE]
+> This is a **Beta** version. While it is more stable than previous Alpha releases, the entire codebase has been extensively revised to support localization. As a result, **unexpected bugs may still appear**. It is recommended to test this version before deploying to critical production environments.
+
+### New Features
+
+- **Dynamic Navigation**: Added "Back" buttons to all container-based GUIs.
+  - New "Back to Categories" button in the category view for easier navigation between report groups.
+  - New "Back to Category" button in the individual report management view, allowing staff to return quickly to the filtered list.
+  - Back buttons use localized display names and lore, including dynamic status placeholders (e.g., "Go back to PENDING Reports").
+- **Official Language Support**: Expanded the built-in language library.
+  - Added official support for **Italian (it_IT)** and **Slovak (sk_SK)**.
+- **Improved Language Management**:
+  - **Custom Language Support**: The plugin now intelligently handles user-created language files.
+    - If you create a custom language configuration (any `.yml` file in the `lang/` folder not named after a supported internal language), the plugin will **not** modify or overwrite it during updates.
+    - **Smart Fallback System**: If a custom language file is missing specific keys required for the GUIs or messages, the plugin will now automatically use the default `en_US` values as a fallback.
+    - **Missing Key Warnings**: A warning will be displayed in the console if your custom configuration is missing fields, helping you identify what needs to be added.
+  - **Automatic Internal Updates**: Supported languages (`en_US`, `it_IT`, `sk_SK`) are automatically updated when the plugin jar is updated, while preserving your `config.yml` settings.
+
+### Improvements & Bug Fixes
+
+- **GUI Interaction Fix**: Fixed a bug where both admins and players could accidentally take items (like report books or action icons) out of the container-based GUIs and place them in their own inventory.
+- **Build Process Optimization**: Fixed a critical issue where the Gradle build process was corrupting `\n` newline characters in language files, which previously broke book-based GUIs.
+- **Security & Privacy**:
+  - Fixed a missing permission check in the Book GUI that allowed non-admin players to see "Click to change status" options when viewing their own reports.
+  - Improved management button visibility: Navigation and management buttons are now context-aware and only show up for players with the correct permissions.
+- **Code Refactoring**:
+  - Centralized GUI opening logic in `CategoryContainerGUI` for better maintainability.
+  - Standardized the use of `DARK_OAK_DOOR` as the universal "Back" icon across all menu systems.
+
+### Contributors
+
+Special thanks to **clessidra** for the **Italian** translation and **FarmCraft** for the **Slovak** translation!
+
+We are looking for translators to add even more language support to AevorinReports in the future! If you are interested in contributing, the only requirement is that the language must be natively supported by Minecraft.
+
+Join our [Discord server](https://discord.gg/SV2dXt5SwF) and open a ticket if you'd like to help with translations!
+
+---
+
 ## [1.0.7-Alpha-1] - 2026-03-07
 
 > [!WARNING]

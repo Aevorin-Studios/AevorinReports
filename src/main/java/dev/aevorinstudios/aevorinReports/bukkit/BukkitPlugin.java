@@ -12,6 +12,10 @@ import dev.aevorinstudios.aevorinReports.handlers.CustomReasonHandler;
 import dev.aevorinstudios.aevorinReports.utils.ExceptionHandler;
 import dev.aevorinstudios.aevorinReports.utils.ModrinthUpdateChecker;
 import dev.aevorinstudios.aevorinReports.config.LanguageManager;
+import dev.faststats.bukkit.BukkitMetrics;
+import dev.faststats.core.ErrorTracker;
+import dev.faststats.core.data.Metric;
+import dev.aevorinstudios.aevorinReports.reports.Report;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -38,6 +42,10 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     private BukkitReportCommand bukkitReportCommand;
     @Getter
     private DiscordManager discordManager;
+
+    // FastStats Metrics
+    public static final ErrorTracker FAST_STATS_ERROR_TRACKER = ErrorTracker.contextAware();
+    private BukkitMetrics fastStats;
 
     // Plugin state tracking
     private boolean databaseInitialized = false;
@@ -69,8 +77,11 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                 return;
             }
 
-            // Initialize database connection with a retry mechanism
-            initializeDatabase();
+            // Initialize database connection
+            if (!initializeDatabase()) {
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
 
             // Initialize CustomReasonHandler
             customReasonHandler = new CustomReasonHandler(this);
@@ -100,6 +111,9 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             new org.bstats.bukkit.Metrics(this, pluginId);
             getLogger().info("bStats Metrics initialized properly.");
 
+            // Initialize FastStats Metrics
+            initializeFastStats();
+
             getLogger().info("AevorinReports has been enabled!");
         } catch (Exception e) {
             // Use our custom exception handler for startup errors with detailed context
@@ -120,8 +134,10 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             String[] args) {
         if ((command.getName().equalsIgnoreCase("ar") || command.getName().equalsIgnoreCase("aevorinreports"))
                 && args.length > 0 && args[0].equalsIgnoreCase("reload")) {
+            LanguageManager lang = LanguageManager.get(this);
             if (!sender.hasPermission("aevorinreports.reload")) {
-                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender, "&cYou don't have permission to reload the config!");
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender,
+                        lang.getMessage("messages.error.no-permission"));
                 return true;
             }
             try {
@@ -133,9 +149,11 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                 if (customReasonHandler != null) {
                     // Refresh categories or other state if needed
                 }
-                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender, "&aAevorinReports configuration reloaded successfully!");
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender,
+                        lang.getMessage("messages.admin.reload-success"));
             } catch (Exception e) {
-                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender, "&cFailed to reload configuration. Check the console for errors.");
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender,
+                        lang.getMessage("messages.admin.reload-failure"));
                 getLogger().warning("Error reloading configuration: " + e.getMessage());
             }
             return true;
@@ -162,6 +180,11 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
         // Stop Discord bot
         if (discordManager != null) {
             discordManager.stop();
+        }
+
+        // Shutdown FastStats
+        if (fastStats != null) {
+            fastStats.shutdown();
         }
 
         getLogger().info("AevorinReports has been disabled!");
@@ -231,7 +254,6 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
      * @return true if a database was successfully initialized, false otherwise
      */
     private boolean initializeDatabase() {
-        getLogger().info("Initializing database connection...");
         int maxRetries = 3;
         int retryCount = 0;
 
@@ -239,14 +261,7 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             try {
                 ConfigManager.Config.DatabaseConfig dbConfig = configManager.getConfig().getDatabase();
                 if ("mysql".equalsIgnoreCase(dbConfig.getType())) {
-                    getLogger().info("Using MySQL database connection");
                     ConfigManager.Config.DatabaseConfig.MySQLConfig mysqlConfig = dbConfig.getMysql();
-
-                    // Log connection attempt (without password)
-                    getLogger().info(String.format("Connecting to MySQL database: %s@%s:%d/%s",
-                            mysqlConfig.getUsername(), mysqlConfig.getHost(),
-                            mysqlConfig.getPort(), mysqlConfig.getDatabase()));
-
                     databaseManager = new DatabaseManager(
                             mysqlConfig.getHost(),
                             mysqlConfig.getPort(),
@@ -254,50 +269,29 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                             mysqlConfig.getUsername(),
                             mysqlConfig.getPassword());
                 } else {
-                    // Handle SQLite storage
-                    getLogger().info("Using SQLite database connection");
                     ConfigManager.Config.DatabaseConfig.FileStorageConfig fileConfig = dbConfig.getFile();
-                    getLogger().info("SQLite database path: " + fileConfig.getPath());
                     databaseManager = new DatabaseManager(fileConfig.getPath());
                 }
 
-                // Test the connection
                 if (databaseManager.testConnection()) {
                     databaseInitialized = true;
-                    getLogger().info("Database connection established successfully!");
-
-                    // Initialize or retrieve persistent server token
                     dev.aevorinstudios.aevorinReports.utils.ServerIdentity identity = new dev.aevorinstudios.aevorinReports.utils.ServerIdentity(
                             getLogger(), getDataFolder());
-                    String serverToken = identity.getIdentityToken();
-
-                    // Sync this server's identity (Name <-> Token) with the database
-                    String serverName = configManager.getConfig().getServerName();
-                    databaseManager.syncServerIdentity(serverToken, serverName);
-
+                    databaseManager.syncServerIdentity(identity.getIdentityToken(), configManager.getConfig().getServerName());
                     return true;
                 } else {
-                    throw new Exception("Database connection test failed");
+                    throw new Exception("Connection test failed");
                 }
             } catch (Exception e) {
                 retryCount++;
                 if (retryCount >= maxRetries) {
-                    getLogger().severe("Database connection failed! Please check your credentials in config.yml.");
-                    getLogger().severe("Error: " + e.getMessage());
+                    getLogger().severe("AevorinReports: Database connection failed. Please check your credentials in config.yml. Error: " + e.getMessage());
                     return false;
                 } else {
-                    getLogger().warning(
-                            "Database connection attempt failed. Retrying... (" + retryCount + "/" + maxRetries + ")");
-                    try {
-                        // Wait before retrying
-                        Thread.sleep(2000 * retryCount);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                    }
+                    try { Thread.sleep(2000 * retryCount); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
                 }
             }
         }
-
         return false;
     }
 
@@ -398,5 +392,56 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
         // Configure with enhanced settings
         handler.configure(maxRepetitions, suppressionMinutes, detailedLogging, logStackTraces);
         handler.setGroupSimilarErrors(groupSimilarErrors);
+    }
+
+    /**
+     * Initializes FastStats Metrics with custom metrics and error tracking
+     */
+    private void initializeFastStats() {
+        try {
+            // Note: The token should ideally be provided by the developer
+            // Replace "YOUR_FASTSTATS_TOKEN" with your actual project token from
+            // faststats.dev
+            fastStats = BukkitMetrics.factory()
+                    .token("cdaa0f2024f6fc7c8e32992f30799c43")
+                    .errorTracker(FAST_STATS_ERROR_TRACKER)
+                    .addMetric(Metric.number("pending_reports",
+                            () -> {
+                                DatabaseManager db = getDatabaseManager();
+                                return db != null ? db.getReportCountByStatus(Report.ReportStatus.PENDING) : 0;
+                            }))
+                    .addMetric(Metric.number("total_reports", () -> {
+                        DatabaseManager db = getDatabaseManager();
+                        return db != null ? db.getTotalReportsCount() : 0;
+                    }))
+                    .addMetric(Metric.string("gui_provider",
+                            () -> configManager != null && configManager.getConfig() != null
+                                    && configManager.getConfig().getReports() != null
+                                    && configManager.getConfig().getReports().getGui() != null
+                                            ? configManager.getConfig().getReports().getGui().getType()
+                                            : "unknown"))
+                    .addMetric(Metric.string("db_backend",
+                            () -> configManager != null && configManager.getConfig() != null
+                                    && configManager.getConfig().getDatabase() != null
+                                            ? configManager.getConfig().getDatabase().getType()
+                                            : "unknown"))
+                    .addMetric(Metric.number("configured_categories",
+                            () -> configManager != null && configManager.getConfig() != null
+                                    && configManager.getConfig().getReports() != null
+                                    && configManager.getConfig().getReports().getCategories() != null
+                                            ? configManager.getConfig().getReports().getCategories().size()
+                                            : 0))
+                    .addMetric(Metric.string("discord_integration",
+                            () -> configManager != null && configManager.getConfig() != null
+                                    && configManager.getConfig().getDiscord() != null
+                                            ? String.valueOf(configManager.getConfig().getDiscord().isEnabled())
+                                            : "false"))
+                    .create(this);
+
+            fastStats.ready();
+            getLogger().info("FastStats Metrics initialized and ready.");
+        } catch (Exception e) {
+            getLogger().warning("Could not initialize FastStats Metrics: " + e.getMessage());
+        }
     }
 }

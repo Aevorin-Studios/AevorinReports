@@ -39,19 +39,14 @@ public class CustomReasonHandler implements Listener {
             int minLength = plugin.getConfig().getInt("reports.custom-reason-min-length", 10);
             int maxLength = plugin.getConfig().getInt("reports.custom-reason-max-length", 100);
             
+            dev.aevorinstudios.aevorinReports.config.LanguageManager lang = dev.aevorinstudios.aevorinReports.config.LanguageManager.get(plugin);
             if (reason.length() < minLength) {
-                String msg = plugin.getConfig().getString("messages.custom-reason-too-short", 
-                    "Your reason is too short. Minimum length is " + minLength + " characters.")
-                    .replace("{min}", String.valueOf(minLength));
-                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, msg);
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, lang.getMessage("messages.error.custom-reason-too-short", Map.of("min", String.valueOf(minLength))));
                 return;
             }
             
             if (reason.length() > maxLength) {
-                String msg = plugin.getConfig().getString("messages.custom-reason-too-long", 
-                    "Your reason is too long. Maximum length is " + maxLength + " characters.")
-                    .replace("{max}", String.valueOf(maxLength));
-                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, msg);
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(player, lang.getMessage("messages.error.custom-reason-too-long", Map.of("max", String.valueOf(maxLength))));
                 return;
             }
             
