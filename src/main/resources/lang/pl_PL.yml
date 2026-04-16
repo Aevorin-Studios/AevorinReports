@@ -1,238 +1,238 @@
-# Available Placeholders (Not all placeholders work in every message):
-# {reporter} - The name of the player who created the report
-# {reported} - The name of the player being reported
-# {target}   - The target player (often the same as reported)
-# {reason}   - The reason given for the report
-# {status}   - The current status of the report (e.g., Pending, Resolved)
-# {color}    - The color code associated with the report's status
-# {id}       - The unique numeric ID of the report
-# {server}   - The server where the report was created
-# {index}    - The numbering index in lists
-# {total}    - Total number of reports, pages, or items
-# {page}     - Current page number in a GUI
-# {start}    - Starting item index on a page
-# {end}      - Ending item index on a page
-# {category} - The report category name
-# {time}     - Cooldown time remaining
-# {date}     - Date and time the report was created
+# Dostępne Placeholdery (Nie wszystkie działają w każdej wiadomości):
+# {reporter} - Nazwa gracza, który stworzył zgłoszenie
+# {reported} - Nazwa zgłaszanego gracza
+# {target}   - Gracz docelowy (często ten sam co zgłaszany)
+# {reason}   - Powód podany w zgłoszeniu
+# {status}   - Aktualny status zgłoszenia (np. Oczekujące, Rozwiązane)
+# {color}    - Kod koloru przypisany do statusu zgłoszenia
+# {id}       - Unikalny numer ID zgłoszenia
+# {server}   - Serwer, na którym utworzono zgłoszenie
+# {index}    - Numeracja na listach
+# {total}    - Całkowita liczba zgłoszeń, stron lub przedmiotów
+# {page}     - Aktualny numer strony w GUI
+# {start}    - Indeks pierwszego przedmiotu na stronie
+# {end}      - Indeks ostatniego przedmiotu na stronie
+# {category} - Nazwa kategorii zgłoszenia
+# {time}     - Pozostały czas odnowienia (cooldown)
+# {date}     - Data i godzina utworzenia zgłoszenia
 #
-# Supports MiniMessage tags (e.g., <rainbow>, <red>, <gradient:blue:aqua>)
-# Legacy & codes are also supported.
+# Obsługuje tagi MiniMessage (np. <rainbow>, <red>, <gradient:blue:aqua>)
+# Obsługiwane są również stare kody kolorów &.
 
-config-version: 5
+config-version: 2
 
-# GUI Interface Settings
-# Contains all text formatting for the Report Plugin's interactive GUIs.
+# Ustawienia Interfejsu GUI
+# Zawiera formatowanie tekstu dla interaktywnych menu pluginu.
 gui:
-  # Book GUI
-  # Used when gui.type is set to "book" in config.yml.
-  # Note: Use '\n' to create new lines inside books!
+  # GUI w formie Książki
+  # Używane, gdy gui.type jest ustawione na "book" w config.yml.
+  # Uwaga: Używaj '\n', aby utworzyć nową linię w książce!
   book:
-    error_creating: "&cError creating book interface."
-    reporting_header: "&4Reporting Player:\n&c{target}"
-    reasons_header: "&4Reasons:"
-    custom_reason: "&c• Custom Reason"
-    back_button: "\n&8« Back to Categories"
+    error_creating: "&cBłąd podczas tworzenia interfejsu książki."
+    reporting_header: "&4Zgłaszanie gracza:\n&c{target}"
+    reasons_header: "&4Powody:"
+    custom_reason: "&c• Własny powód"
+    back_button: "\n&8« Powrót do kategorii"
     page:
-      title: "&cReport Details\n\n"
-      reporter: "&7Reporter: &a{reporter}\n"
-      reported: "&7Reported: &c{reported}\n"
-      reason: "&7Reason: "
-      reason_hover: "&cHover to See"
+      title: "&cSzczegóły zgłoszenia\n\n"
+      reporter: "&7Zgłaszający: &a{reporter}\n"
+      reported: "&7Zgłoszony: &c{reported}\n"
+      reason: "&7Powód: "
+      reason_hover: "&cNajedź, aby zobaczyć"
       reason_hover_content: "&f{reason}"
       status: "&7Status: {color}{status}\n"
       id: "&7ID: &0{id}"
-      server: "&7Server: &c{server}\n"
-      click_to_change: "\n&8Click to change status\n"
-      reports_category_header: "&4Reports Category\n\n"
-      view_details: "&7Click to view details"
+      server: "&7Serwer: &c{server}\n"
+      click_to_change: "\n&8Kliknij, aby zmienić status\n"
+      reports_category_header: "&4Kategoria zgłoszeń\n\n"
+      view_details: "&7Kliknij, aby zobaczyć szczegóły"
     status_options:
-      pending: "&6⚠ Set as Pending\n"
-      resolved: "&a✔ Mark as Resolved\n"
-      rejected: "&c✘ Mark as Rejected\n"
+      pending: "&6⚠ Ustaw jako oczekujące\n"
+      resolved: "&a✔ Oznacz jako rozwiązane\n"
+      rejected: "&c✘ Oznacz jako odrzucone\n"
     hover_text:
-      report_for: "&7Click to report for: &f{category}"
-      custom_reason: "&7Click to provide a custom reason"
-      pending: "&7Click to return to pending"
-      resolved: "&7Click to mark as resolved"
-      rejected: "&7Click to mark as rejected"
-      back: "&7Click to go back to report categories"
+      report_for: "&7Kliknij, aby zgłosić za: &f{category}"
+      custom_reason: "&7Kliknij, aby podać własny powód"
+      pending: "&7Kliknij, aby przywrócić do oczekujących"
+      resolved: "&7Kliknij, aby oznaczyć jako rozwiązane"
+      rejected: "&7Kliknij, aby oznaczyć jako odrzucone"
+      back: "&7Kliknij, aby wrócić do kategorii zgłoszeń"
     main_menu:
       pending:
-        title: "&6• Pending Reports"
-        hover: "&7Click to view"
+        title: "&6• Oczekujące zgłoszenia"
+        hover: "&7Kliknij, aby zobaczyć"
       resolved:
-        title: "&a• Resolved Reports"
-        hover: "&7Click to view"
+        title: "&a• Rozwiązane zgłoszenia"
+        hover: "&7Kliknij, aby zobaczyć"
       rejected:
-        title: "&c• Rejected Reports"
-        hover: "&7Click to view"
+        title: "&c• Odrzucone zgłoszenia"
+        hover: "&7Kliknij, aby zobaczyć"
     report_list:
-      title: "&4{status} Reports\n"
-      total: "&7Total: {total}\n\n"
+      title: "&4Zgłoszenia: {status}\n"
+      total: "&7Suma: {total}\n\n"
       entry: "&4{index}. &c{reported}"
-      user_title: "&4Your Reports\n"
+      user_title: "&4Twoje zgłoszenia\n"
       user_entry: "&4{index}. &c{reported} {color}({status})"
 
-  # Container GUI (Chest Interface)
-  # Used when gui.type is set to "container" in config.yml.
+  # GUI w formie Kontenera (Interfejs skrzyni)
+  # Używane, gdy gui.type jest ustawione na "container" w config.yml.
   container:
     shared:
       separator: "&8&m                                          &r"
       navigation:
         page_indicator:
-          title: "&fPage {page} of {total}"
-          lore: "&7Showing {start}-{end} of {total} reports"
+          title: "&fStrona {page} z {total}"
+          lore: "&7Pokazuje {start}-{end} z {total} zgłoszeń"
         previous_page:
-          title: "&ePrevious Page"
-          lore: "&7Go to page {page}"
+          title: "&ePoprzednia strona"
+          lore: "&7Idź do strony {page}"
         next_page:
-          title: "&eNext Page"
-          lore: "&7Go to page {page}"
+          title: "&eNastępna strona"
+          lore: "&7Idź do strony {page}"
         back_button:
-          title: "&eBack"
-          lore: "&7Go back to categories"
+          title: "&eWstecz"
+          lore: "&7Powrót do kategorii"
 
     menus:
       main_menu:
-        title: "Reports Menu"
+        title: "Menu Zgłoszeń"
         pending:
-          title: "&6Pending Reports"
+          title: "&6Oczekujące zgłoszenia"
           lore:
-            description: "&7View all pending reports."
-            action: "&eClick to view!"
+            description: "&7Zobacz wszystkie oczekujące zgłoszenia."
+            action: "&eKliknij, aby zobaczyć!"
         resolved:
-          title: "&aResolved Reports"
+          title: "&aRozwiązane zgłoszenia"
           lore:
-            description: "&7View all resolved reports."
-            action: "&eClick to view!"
+            description: "&7Zobacz wszystkie rozwiązane zgłoszenia."
+            action: "&eKliknij, aby zobaczyć!"
         rejected:
-          title: "&cRejected Reports"
+          title: "&cOdrzucone zgłoszenia"
           lore:
-            description: "&7View all rejected reports."
-            action: "&eClick to view!"
+            description: "&7Zobacz wszystkie odrzucone zgłoszenia."
+            action: "&eKliknij, aby zobaczyć!"
 
       category_view:
-        title: "{status} Reports"
+        title: "Zgłoszenia: {status}"
         report_item:
           title: "<gradient:#AFA3FF:#AFA3FF>{reporter}</gradient> <grey>→ <gradient:#FF0000:#FF0000>{reported}</gradient>"
           lore:
-            reason: "<gradient:#AFA3FF:#AFA3FF>Reason:</gradient> <white>{reason}</white>"
+            reason: "<gradient:#AFA3FF:#AFA3FF>Powód:</gradient> <white>{reason}</white>"
             status: "<gradient:#AFA3FF:#AFA3FF>Status:</gradient> <white>{status}</white>"
             id: "<gradient:#AFA3FF:#AFA3FF>ID:</gradient> <white>{id}</white>"
-            server: "<gradient:#AFA3FF:#AFA3FF>Server:</gradient> <white>{server}</white>"
-            action: "<gradient:#FF0000:#FF0000>Click to Manage</gradient>"
+            server: "<gradient:#AFA3FF:#AFA3FF>Serwer:</gradient> <white>{server}</white>"
+            action: "<gradient:#FF0000:#FF0000>Kliknij, aby zarządzać</gradient>"
 
       player_reports:
-        title: "Your Reports"
+        title: "Twoje zgłoszenia"
 
       reason_selector:
-        title: "Report: {target}"
+        title: "Zgłoś: {target}"
         info_icon:
-          title: "<gradient:#AFA3FF:#AFA3FF>Reporting:</gradient> <white>{target}</white>"
+          title: "<gradient:#AFA3FF:#AFA3FF>Zgłaszanie:</gradient> <white>{target}</white>"
           lore:
             - ""
-            - "&fSelect a reason to report this player"
-            - "&fClick on any icon to submit your report"
+            - "&fWybierz powód, aby zgłosić tego gracza"
+            - "&fKliknij dowolną ikonę, aby wysłać zgłoszenie"
             - ""
         reason_item:
           title: "<gradient:#AFA3FF:#AFA3FF>{reason}</gradient>"
           lore:
             target: " "
-            action: "&aClick to submit report"
+            action: "&aKliknij, aby wysłać zgłoszenie"
         custom_reason_item:
-          title: "&cCustom Reason"
-          lore: "&7Click to enter a custom reason"
+          title: "&cWłasny powód"
+          lore: "&7Kliknij, aby wpisać własny powód"
 
     manage_report:
-      title: "Manage Report {id}"
+      title: "Zarządzaj zgłoszeniem {id}"
       back_button:
-        title: "&cBack"
-        lore: "&7Go back to {status} Reports"
+        title: "&cWstecz"
+        lore: "&7Wróć do zgłoszeń: {status}"
       details:
-        title: "<gradient:#AFA3FF:#AFA3FF>Report Details</gradient>"
+        title: "<gradient:#AFA3FF:#AFA3FF>Szczegóły zgłoszenia</gradient>"
         lore:
-          reporter: "<gradient:#AFA3FF:#AFA3FF>Reporter:</gradient> <white>{reporter}</white>"
-          reported: "<gradient:#AFA3FF:#AFA3FF>Reported:</gradient> <white>{reported}"
-          reason: "<gradient:#AFA3FF:#AFA3FF>Reason:</gradient> <white>{reason}</white>"
+          reporter: "<gradient:#AFA3FF:#AFA3FF>Zgłaszający:</gradient> <white>{reporter}</white>"
+          reported: "<gradient:#AFA3FF:#AFA3FF>Zgłoszony:</gradient> <white>{reported}"
+          reason: "<gradient:#AFA3FF:#AFA3FF>Powód:</gradient> <white>{reason}</white>"
           status: "<gradient:#AFA3FF:#AFA3FF>Status:</gradient> <white>{status}</white>"
           id: "<gradient:#AFA3FF:#AFA3FF>ID:</gradient> <white>{id}</white>"
-          server: "<gradient:#AFA3FF:#AFA3FF>Server:</gradient> <white>{server}</white>"
+          server: "<gradient:#AFA3FF:#AFA3FF>Serwer:</gradient> <white>{server}</white>"
       pending:
-        title: "&6Move to Pending"
+        title: "&6Przenieś do oczekujących"
         lore:
-          description: "&7Set this report as pending for review."
-          current_status: "&7Current status: &f{status}"
-          action: "&6Click to change status"
+          description: "&7Ustaw to zgłoszenie jako oczekujące na przegląd."
+          current_status: "&7Aktualny status: &f{status}"
+          action: "&6Kliknij, aby zmienić status"
       resolved:
-        title: "&aMove to Resolved"
+        title: "&aPrzenieś do rozwiązanych"
         lore:
-          description: "&7Mark this report as resolved."
-          current_status: "&7Current status: &f{status}"
-          action: "&aClick to change status"
+          description: "&7Oznacz to zgłoszenie jako rozwiązane."
+          current_status: "&7Aktualny status: &f{status}"
+          action: "&aKliknij, aby zmienić status"
       rejected:
-        title: "&cMove to Rejected"
+        title: "&cPrzenieś do odrzuconych"
         lore:
-          description: "&7Reject this report as invalid."
-          current_status: "&7Current status: &f{status}"
-          action: "&cClick to change status"
+          description: "&7Odrzuć to zgłoszenie jako nieprawidłowe."
+          current_status: "&7Aktualny status: &f{status}"
+          action: "&cKliknij, aby zmienić status"
 
-# Common Strings
-# Shared text elements, statuses, and default report reasons.
+# Wspólne ciągi znaków
+# Współdzielone elementy tekstu, statusy i domyślne powody zgłoszeń.
 common:
-  unknown: "Unknown"
-  anonymous: "Anonymous"
+  unknown: "Nieznany"
+  anonymous: "Anonim"
   status:
-    pending: "Pending"
-    resolved: "Resolved"
-    rejected: "Rejected"
+    pending: "Oczekujące"
+    resolved: "Rozwiązane"
+    rejected: "Odrzucone"
   reasons:
-    - "Hacking/Cheating"
-    - "Harassment/Bullying"
-    - "Spam/Advertisement"
-    - "Griefing/Vandalism"
-    - "Exploiting Bugs"
-    - "Inappropriate Skin/Name"
-    - "Inappropriate Language"
-    - "Other"
+    - "Cheatowanie/Haxowanie"
+    - "Nękanie/Dręczenie"
+    - "Spam/Reklama"
+    - "Griefowanie/Wandalizm"
+    - "Wykorzystywanie błędów"
+    - "Nieodpowiedni skin/nick"
+    - "Nieodpowiedni język"
+    - "Inne"
 
-# Chat Messages
-# Direct notifications, errors, and success messages sent to players
-# or staff members in standard Minecraft chat.
+# Wiadomości na czacie
+# Bezpośrednie powiadomienia, błędy i sukcesy wysyłane do graczy
+# lub członków administracji na czacie Minecraft.
 messages:
-  # The prefix that appears before most plugin messages
-  prefix: "<gradient:#AFA3FF:#AFA3FF>Reports</gradient> <grey>➡</grey>"
+  # Prefiks pojawiający się przed większością wiadomości pluginu
+  prefix: "<gradient:#AFA3FF:#AFA3FF>Zgłoszenia</gradient> <grey>➡</grey>"
 
   error:
-    no-permission: "{prefix} &cYou don't have permission to do that!"
-    player-only: "{prefix} &cOnly players can use this command!"
-    invalid-player: "{prefix} &cThat player does not exist!"
-    invalid-group: "{prefix} &cInvalid report status group."
-    report-not-found: "{prefix} &cReport not found!"
-    no-reports: "{prefix} &cYou have no active reports!"
-    no-status-reports: "{prefix} &cNo {status} reports found."
-    status-invalid: "{prefix} &cInvalid report status! Available statuses: {statuses}"
-    category-invalid: "{prefix} &cInvalid report category! Available categories: {categories}"
-    custom-reason-disabled: "{prefix} &cCustom reasons are currently disabled."
-    custom-reason-too-short: "{prefix} &cYour custom reason is too short! Minimum length: {min} characters"
-    custom-reason-too-long: "{prefix} &cYour custom reason is too long! Maximum length: {max} characters"
-    usage-report: "&cUsage: /report <player> [reason]"
-    usage-viewreport: "&cUsage: /viewreport <id>"
-    usage-setstatus: "&cUsage: /setreportstatus <id> to <status>"
-    invalid-report-id: "&cInvalid report ID!"
-    status-already-set: "&cReport is already in that status!"
-    cannot-report-self: "&cYou cannot report yourself."
+    no-permission: "{prefix} &cNie masz uprawnień, aby to zrobić!"
+    player-only: "{prefix} &cTylko gracze mogą używać tej komendy!"
+    invalid-player: "{prefix} &cTen gracz nie istnieje!"
+    invalid-group: "{prefix} &cNieprawidłowa grupa statusu zgłoszenia."
+    report-not-found: "{prefix} &cNie znaleziono zgłoszenia!"
+    no-reports: "{prefix} &cNie masz żadnych aktywnych zgłoszeń!"
+    no-status-reports: "{prefix} &cBrak zgłoszeń o statusie: {status}."
+    status-invalid: "{prefix} &cNieprawidłowy status! Dostępne statusy: {statuses}"
+    category-invalid: "{prefix} &cNieprawidłowa kategoria! Dostępne kategorie: {categories}"
+    custom-reason-disabled: "{prefix} &cWłasne powody są obecnie wyłączone."
+    custom-reason-too-short: "{prefix} &cTwój powód jest za krótki! Minimalna długość: {min} znaków"
+    custom-reason-too-long: "{prefix} &cTwój powód jest za długi! Maksymalna długość: {max} znaków"
+    usage-report: "&cUżycie: /report <gracz> [powód]"
+    usage-viewreport: "&cUżycie: /viewreport <id>"
+    usage-setstatus: "&cUżycie: /setreportstatus <id> to <status>"
+    invalid-report-id: "&cNieprawidłowe ID zgłoszenia!"
+    status-already-set: "&cZgłoszenie ma już przypisany ten status!"
+    cannot-report-self: "&cNie możesz zgłosić samego siebie."
 
   success:
-    report-created: "{prefix} &aYour report has been submitted successfully!"
+    report-created: "{prefix} &aTwoje zgłoszenie zostało wysłane pomyślnie!"
 
   report:
-    cooldown: "{prefix} &cYou must wait {time} before submitting another report."
-    limit-reached: "{prefix} &cYou have reached the maximum number of active reports."
-    notification: "{prefix} <gradient:#BEFF00:#D2FF00>{reporter}</gradient> &fhas reported <gradient:#FF0000:#FF003E>{reported}</gradient> &ffor: <gradient:#00B7FF:#0098FF>{category}</gradient>"
-    status-change: "{prefix} &7Report #{id} status has been changed to {color}{status}&7."
-    custom-reason-prompt: "{prefix} &fEnter your custom reason in chat. Your message will be private."
+    cooldown: "{prefix} &cMusisz odczekać {time}, zanim wyślesz kolejne zgłoszenie."
+    limit-reached: "{prefix} &cOsiągnąłeś maksymalną liczbę aktywnych zgłoszeń."
+    notification: "{prefix} <gradient:#BEFF00:#D2FF00>{reporter}</gradient> &fzgłosił gracza <gradient:#FF0000:#FF003E>{reported}</gradient> &fza: <gradient:#00B7FF:#0098FF>{category}</gradient>"
+    status-change: "{prefix} &7Status zgłoszenia #{id} został zmieniony na {color}{status}&7."
+    custom-reason-prompt: "{prefix} &fWpisz własny powód na czacie. Twoja wiadomość będzie prywatna."
 
   admin:
-    reload-success: "{prefix} &aConfiguration reloaded successfully!"
-    reload-failure: "{prefix} &cFailed to reload configuration. Check console."
+    reload-success: "{prefix} &aKonfiguracja została przeładowana pomyślnie!"
+    reload-failure: "{prefix} &cBłąd podczas przeładowywania konfiguracji. Sprawdź konsolę."
