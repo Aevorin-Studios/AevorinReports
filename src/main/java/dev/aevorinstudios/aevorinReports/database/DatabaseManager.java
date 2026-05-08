@@ -776,4 +776,88 @@ public class DatabaseManager {
         }
         return false;
     }
+
+    /**
+     * Get the total number of reports submitted by a player
+     *
+     * @param reporterUuid The UUID of the reporter
+     * @return The number of reports submitted
+     */
+    public int getReportsCountByReporter(UUID reporterUuid) {
+        String sql = "SELECT COUNT(*) FROM reports WHERE reporter_uuid = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, reporterUuid.toString());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            logger.error("Failed to get report count for reporter {}: {}", reporterUuid, e.getMessage());
+        }
+        return 0;
+    }
+
+    /**
+     * Get the number of reports submitted by a player with a specific status
+     *
+     * @param reporterUuid The UUID of the reporter
+     * @param status The report status to count
+     * @return The number of reports with the specified status
+     */
+    public int getReportsCountByReporterAndStatus(UUID reporterUuid, Report.ReportStatus status) {
+        String sql = "SELECT COUNT(*) FROM reports WHERE reporter_uuid = ? AND status = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, reporterUuid.toString());
+            stmt.setString(2, status.name());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            logger.error("Failed to get report count for reporter {} with status {}: {}", reporterUuid, status, e.getMessage());
+        }
+        return 0;
+    }
+
+    /**
+     * Get the total number of reports against a player
+     *
+     * @param reportedUuid The UUID of the reported player
+     * @return The number of reports against the player
+     */
+    public int getReportsCountByReported(UUID reportedUuid) {
+        String sql = "SELECT COUNT(*) FROM reports WHERE reported_uuid = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, reportedUuid.toString());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            logger.error("Failed to get report count for reported player {}: {}", reportedUuid, e.getMessage());
+        }
+        return 0;
+    }
+
+    /**
+     * Get the number of reports against a player with a specific status
+     *
+     * @param reportedUuid The UUID of the reported player
+     * @param status The report status to count
+     * @return The number of reports with the specified status
+     */
+    public int getReportsCountByReportedAndStatus(UUID reportedUuid, Report.ReportStatus status) {
+        String sql = "SELECT COUNT(*) FROM reports WHERE reported_uuid = ? AND status = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, reportedUuid.toString());
+            stmt.setString(2, status.name());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            logger.error("Failed to get report count for reported player {} with status {}: {}", reportedUuid, status, e.getMessage());
+        }
+        return 0;
+    }
 }

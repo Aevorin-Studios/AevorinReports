@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.9-Beta-1] - 2026-05-09
+
+> [!NOTE]
+> This is a **Beta** version. While it has been tested, this release introduces new external integrations (PlaceholderAPI) that may behave differently across various server setups. Please test thoroughly before deploying to production environments.
+
+### New Features
+
+- **PlaceholderAPI Integration**: Added full PlaceholderAPI support for player report statistics.
+  - **Player Submitted Reports**:
+    - `%aevorinreports_reports_submitted%` / `%aevorinreports_submitted%` - Total reports submitted by the player.
+    - `%aevorinreports_reports_submitted_pending%` / `%aevorinreports_submitted_pending%` - Pending reports submitted by the player.
+    - `%aevorinreports_reports_submitted_resolved%` / `%aevorinreports_submitted_resolved%` - Resolved reports submitted by the player.
+    - `%aevorinreports_reports_submitted_valid%` / `%aevorinreports_submitted_valid%` - Valid (resolved) reports submitted by the player.
+    - `%aevorinreports_reports_submitted_rejected%` / `%aevorinreports_submitted_rejected%` - Rejected reports submitted by the player.
+  - **Reports Against Player**:
+    - `%aevorinreports_reports_received%` / `%aevorinreports_received%` - Total reports received against the player.
+    - `%aevorinreports_reports_received_pending%` / `%aevorinreports_received_pending%` - Pending reports against the player.
+    - `%aevorinreports_reports_received_resolved%` / `%aevorinreports_received_resolved%` - Resolved reports against the player.
+    - `%aevorinreports_reports_received_rejected%` / `%aevorinreports_received_rejected%` - Rejected reports against the player.
+  - **Server-Wide Statistics**:
+    - `%aevorinreports_total_reports%` - Total number of reports in the system.
+    - `%aevorinreports_pending_reports%` / `%aevorinreports_total_pending%` - Total pending reports on the server.
+    - `%aevorinreports_resolved_reports%` / `%aevorinreports_total_resolved%` - Total resolved reports on the server.
+    - `%aevorinreports_rejected_reports%` / `%aevorinreports_total_rejected%` - Total rejected reports on the server.
+- **Official Language Support**: Added official support for **Polish (pl_PL)**.
+
+### Contributors
+
+Special thanks to **GraviTrace** for the **Polish** translation!
+
+We are looking for translators to add even more language support to AevorinReports! Join our [Discord server](https://discord.gg/SV2dXt5SwF) and open a ticket if you'd like to help!
+
 ## [1.0.8] - 2026-03-31
 
 ### New Features

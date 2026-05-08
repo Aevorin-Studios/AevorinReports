@@ -4,6 +4,7 @@ import dev.aevorinstudios.aevorinReports.commands.BukkitReportCommand;
 import dev.aevorinstudios.aevorinReports.commands.BukkitReportsCommand;
 import dev.aevorinstudios.aevorinReports.commands.ViewReportCommand;
 import dev.aevorinstudios.aevorinReports.commands.SetReportStatusCommand;
+import dev.aevorinstudios.aevorinReports.placeholders.AevorinReportsExpansion;
 
 import dev.aevorinstudios.aevorinReports.config.ConfigManager;
 import dev.aevorinstudios.aevorinReports.database.DatabaseManager;
@@ -95,6 +96,9 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
 
             // Register listeners with validation
             registerListeners();
+
+            // Register PlaceholderAPI expansion
+            registerPlaceholderExpansion();
 
             // Register reload commands
             getCommand("ar").setExecutor(this);
@@ -348,6 +352,28 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                 .registerEvents(new dev.aevorinstudios.aevorinReports.listeners.ReportsContainerListener(this), this);
 
         getLogger().info("Event listeners registered successfully!");
+    }
+
+    /**
+     * Registers PlaceholderAPI expansion if PlaceholderAPI is available
+     */
+    private void registerPlaceholderExpansion() {
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            getLogger().info("PlaceholderAPI found! Registering placeholders...");
+            try {
+                AevorinReportsExpansion expansion = new AevorinReportsExpansion(this);
+                if (expansion.register()) {
+                    getLogger().info("PlaceholderAPI expansion registered successfully!");
+                } else {
+                    getLogger().warning("Failed to register PlaceholderAPI expansion.");
+                }
+            } catch (Exception e) {
+                ExceptionHandler.getInstance().handleException(e, "PlaceholderAPI Registration");
+                getLogger().warning("Could not register PlaceholderAPI expansion: " + e.getMessage());
+            }
+        } else {
+            getLogger().info("PlaceholderAPI not found. Skipping placeholder registration.");
+        }
     }
 
     /**
