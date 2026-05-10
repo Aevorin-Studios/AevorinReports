@@ -477,3 +477,4 @@ You are free to use, modify, distribute, and sublicense this software, provided 
 ## Credits
 
 Developed by **[Aevorin Studios](https://discord.gg/8Tqa8kPa4T)**
+
