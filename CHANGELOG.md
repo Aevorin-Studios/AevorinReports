@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.2] - 2026-09-05
+
+### New Features & Improvements
+
+- **Reload Sub-Commands:** `/ar reload` and `/aevorinreports reload` now require a sub-argument specifying what to reload: `<all|config|lang>`.
+  - `all` — reloads both configuration and language files.
+  - `config` — reloads configuration only.
+  - `lang` — reloads language files only.
+  - Invalid or missing arguments display a usage hint. Tab completion suggests `reload`, then `all`, `config`, and `lang`.
+- **Russian (ru_RU) Language Support:** Added full Russian translation across all GUI, chat, and Discord sections.
+- **Persist `lastUpdatedBy` Field:** Added `last_updated_by` column to SQLite/MySQL DDL, `ensureTableSchema` migration, `updateReport` SQL, and all SELECT mappings.
+- **MySQL Schema Completeness:** `CREATE TABLE` now includes all columns (`created_at`, `updated_at`, `evidence_data`, `coordinates`, `world`, `last_updated_by`), previously relying entirely on ALTER TABLE fallback.
+- **Timestamps in GUI:** `createdAt`, `updatedAt`, and `lastUpdatedBy` are now displayed in `ReportManageGUI` chest lore and book pages.
+- **Discord Embed Footer:** `sendLogUpdate` embed now includes a footer with timestamp and a `createdAt` field.
+- **Report History Tracking:** `report_history` table is now actively used — status changes are recorded via `insertHistory()`.
+- **New PAPI Placeholders:** Added `%reports_last_submitted_date%` and `%reports_last_against_date%`.
+- **Updated Placeholders.md:** Added documentation for the new date placeholders.
+
+### Bug Fixes
+
+- **SetReportStatusCommand Timestamp:** Fixed stale `updatedAt` timestamp — `updatedAt` is now set to `now()` before saving.
+
+### Localization
+
+- Added new keys `created_at`, `updated_at`, `last_updated_by` (book + container lore) and Discord `status-update` footer to all 9 language files: `en_US`, `ru_RU`, `de_DE`, `it_IT`, `nl_NL`, `pl_PL`, `sk_SK`, `vi_VN`, `zh_CN`.
+- Added `usage-reload`, `reload-all-success`, `reload-config-success`, and `reload-lang-success` to all language files.
+- Bumped `config-version` to 4 in all language files.
+
+### Database
+
+- Added `getLastReportDateByReporter`, `getLastReportDateAgainst`, and `insertHistory` database methods.
+
+### Special Thanks
+- A huge thanks to [1wairesd](https://github.com/1wairesd) for contributing to this release!
+
+---
+
 ## [1.1.1] - 2026-08-27
 
 ### New Features & Improvements

@@ -225,6 +225,7 @@ messages:
     usage-report: "&cPoužitie: /report <hráč> [dôvod]"
     usage-viewreport: "&cPoužitie: /viewreport <id>"
     usage-setstatus: "&cPoužitie: /setreportstatus <id> to <stav>"
+    usage-reload: "&cPoužitie: /{command} reload <all|config|lang>"
     invalid-report-id: "&cNeplatné ID hlásenia!"
     status-already-set: "&cHlásenie už má tento stav!"
     cannot-report-self: "&cNemôžeš nahlásiť sám seba!"
@@ -241,6 +242,9 @@ messages:
 
   admin:
     reload-success: "{prefix} &aKonfigurácia bola úspešne načítaná!"
+    reload-all-success: "{prefix} &aVšetky konfiguračné a jazykové súbory boli úspešne načítané!"
+    reload-config-success: "{prefix} &aKonfigurácia bola úspešne načítaná!"
+    reload-lang-success: "{prefix} &aJazykové súbory boli úspešne načítané!"
     reload-failure: "{prefix} &cNepodarilo sa načítať konfiguráciu. Skontroluj konzolu."
 # Discord Messages
 # Text used by Discord slash commands, replies, and embeds.

@@ -36,7 +36,8 @@ public class LanguageManager {
         "zh_CN",
         "de_DE",
         "nl_NL",
-        "vi_VN"
+        "vi_VN",
+        "ru_RU"
     );
 
     private LanguageManager(Plugin plugin, String langName) {

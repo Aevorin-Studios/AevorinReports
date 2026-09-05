@@ -225,6 +225,7 @@ messages:
     usage-report: "&cVerwendung: /report <Spieler> [Grund]"
     usage-viewreport: "&cVerwendung: /viewreport <id>"
     usage-setstatus: "&cVerwendung: /setreportstatus <id> zu <status>"
+    usage-reload: "&cVerwendung: /{command} reload <all|config|lang>"
     invalid-report-id: "&cUngültige Meldungs-ID!"
     status-already-set: "&cDie Meldung ist bereits in diesem Status!"
     cannot-report-self: "&cDu kannst dich nicht selbst melden."
@@ -241,6 +242,9 @@ messages:
 
   admin:
     reload-success: "{prefix} &aKonfiguration erfolgreich neu geladen!"
+    reload-all-success: "{prefix} &aGesamte Konfiguration und Sprachdateien erfolgreich neu geladen!"
+    reload-config-success: "{prefix} &aKonfiguration erfolgreich neu geladen!"
+    reload-lang-success: "{prefix} &aSprachdateien erfolgreich neu geladen!"
     reload-failure: "{prefix} &cDie Konfiguration konnte nicht neu geladen werden. Prüfe die Konsole."
  
 # Discord Messages

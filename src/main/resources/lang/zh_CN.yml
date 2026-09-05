@@ -224,6 +224,7 @@ messages:
     usage-report: "&c用法：/report <玩家> [理由]"
     usage-viewreport: "&c用法：/viewreport <编号>"
     usage-setstatus: "&c用法：/setreportstatus <编号> to <状态>"
+    usage-reload: "&c用法: /{command} reload <all|config|lang>"
     invalid-report-id: "&c无效的举报编号！"
     status-already-set: "&c该举报已处于此状态！"
     cannot-report-self: "&c你不能举报自己！"
@@ -244,6 +245,9 @@ messages:
 
   admin:
     reload-success: "{prefix} &a配置重载成功！"
+    reload-all-success: "{prefix} &a所有配置文件和语言文件已成功重载！"
+    reload-config-success: "{prefix} &a配置文件已成功重载！"
+    reload-lang-success: "{prefix} &a语言文件已成功重载！"
     reload-failure: "{prefix} &c配置重载失败，请检查控制台。"
 # Discord Messages
 # Text used by Discord slash commands, replies, and embeds.

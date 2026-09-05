@@ -1,5 +1,5 @@
 name: AevorinReports
-version: "1.1.1"
+version: "1.1.2"
 main: dev.aevorinstudios.aevorinReports.bukkit.BukkitPlugin
 api-version: "1.18"
 folia-supported: true
@@ -10,13 +10,13 @@ softdepend: [PlaceholderAPI]
 commands:
   ar:
     description: Reload the AevorinReports configuration
-    usage: /ar reload
+    usage: /ar reload <all|config|lang>
     permission: aevorinreports.reload
     permission-message: You don't have permission to reload the config!
     aliases: [aevorinreports]
   aevorinreports:
     description: Reload the AevorinReports configuration
-    usage: /aevorinreports reload
+    usage: /aevorinreports reload <all|config|lang>
     permission: aevorinreports.reload
     permission-message: You don't have permission to reload the config!
     aliases: [ar]

@@ -225,6 +225,7 @@ messages:
     usage-report: "&cSử dụng: /report <người chơi> [lí do]"
     usage-viewreport: "&cSử dụng: /viewreport <id>"
     usage-setstatus: "&cSử dụng: /setreportstatus <id> to <trạng thái mới>"
+    usage-reload: "&cSử dụng: /{command} reload <all|config|lang>"
     invalid-report-id: "&cID không hợp lệ!"
     status-already-set: "&cTrạng thái không đổi!"
     cannot-report-self: "&cBạn không thể tố cáo bản thân."
@@ -241,6 +242,9 @@ messages:
 
   admin:
     reload-success: "{prefix} &aReload thành công!"
+    reload-all-success: "{prefix} &aTất cả cấu hình và tệp ngôn ngữ đã được tải lại thành công!"
+    reload-config-success: "{prefix} &aCấu hình đã được tải lại thành công!"
+    reload-lang-success: "{prefix} &aTệp ngôn ngữ đã được tải lại thành công!"
     reload-failure: "{prefix} &cReload không thành công. Xem console."
 # Discord Messages
 # Text used by Discord slash commands, replies, and embeds.

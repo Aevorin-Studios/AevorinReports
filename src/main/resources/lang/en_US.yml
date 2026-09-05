@@ -225,6 +225,7 @@ messages:
     usage-report: "&cUsage: /report <player> [reason]"
     usage-viewreport: "&cUsage: /viewreport <id>"
     usage-setstatus: "&cUsage: /setreportstatus <id> to <status>"
+    usage-reload: "&cUsage: /{command} reload <all|config|lang>"
     invalid-report-id: "&cInvalid report ID!"
     status-already-set: "&cReport is already in that status!"
     cannot-report-self: "&cYou cannot report yourself."
@@ -241,6 +242,9 @@ messages:
 
   admin:
     reload-success: "{prefix} &aConfiguration reloaded successfully!"
+    reload-all-success: "{prefix} &aAll configuration and language files reloaded successfully!"
+    reload-config-success: "{prefix} &aConfiguration reloaded successfully!"
+    reload-lang-success: "{prefix} &aLanguage files reloaded successfully!"
     reload-failure: "{prefix} &cFailed to reload configuration. Check console."
 
 # Discord Messages

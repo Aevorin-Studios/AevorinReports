@@ -225,6 +225,7 @@ messages:
     usage-report: "&cUżycie: /report <gracz> [powód]"
     usage-viewreport: "&cUżycie: /viewreport <id>"
     usage-setstatus: "&cUżycie: /setreportstatus <id> to <status>"
+    usage-reload: "&cUżycie: /{command} reload <all|config|lang>"
     invalid-report-id: "&cNieprawidłowe ID zgłoszenia!"
     status-already-set: "&cZgłoszenie ma już przypisany ten status!"
     cannot-report-self: "&cNie możesz zgłosić samego siebie."
@@ -241,6 +242,9 @@ messages:
 
   admin:
     reload-success: "{prefix} &aKonfiguracja została przeładowana pomyślnie!"
+    reload-all-success: "{prefix} &aWszystkie konfiguracje i pliki językowe zostały przeładowane pomyślnie!"
+    reload-config-success: "{prefix} &aKonfiguracja została przeładowana pomyślnie!"
+    reload-lang-success: "{prefix} &aPliki językowe zostały przeładowane pomyślnie!"
     reload-failure: "{prefix} &cBłąd podczas przeładowywania konfiguracji. Sprawdź konsolę."
 # Discord Messages
 # Text used by Discord slash commands, replies, and embeds.

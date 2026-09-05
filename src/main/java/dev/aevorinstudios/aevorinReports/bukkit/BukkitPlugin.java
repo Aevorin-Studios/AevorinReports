@@ -19,17 +19,24 @@ import dev.faststats.data.Metric;
 import dev.aevorinstudios.aevorinReports.reports.Report;
 import lombok.Getter;
 import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * The Main Bukkit plugin class for AevorinReports
  * Handles initialization, configuration, and lifecycle management
  */
-public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.CommandExecutor {
+public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.CommandExecutor, TabCompleter {
 
     @Getter
     private static BukkitPlugin instance;
@@ -108,8 +115,14 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
             registerPlaceholderExpansion();
 
             // Register reload commands
-            getCommand("ar").setExecutor(this);
-            getCommand("aevorinreports").setExecutor(this);
+            if (getCommand("ar") != null) {
+                getCommand("ar").setExecutor(this);
+                getCommand("ar").setTabCompleter(this);
+            }
+            if (getCommand("aevorinreports") != null) {
+                getCommand("aevorinreports").setExecutor(this);
+                getCommand("aevorinreports").setTabCompleter(this);
+            }
 
             // Initialize and start the Modrinth update checker
             String modrinthProjectId = "OwqSnlXx"; // Hardcoded Project ID
@@ -141,35 +154,93 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     }
 
     @Override
-    public boolean onCommand(org.bukkit.command.CommandSender sender, org.bukkit.command.Command command, String label,
-            String[] args) {
-        if ((command.getName().equalsIgnoreCase("ar") || command.getName().equalsIgnoreCase("aevorinreports"))
-                && args.length > 0 && args[0].equalsIgnoreCase("reload")) {
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (command.getName().equalsIgnoreCase("ar") || command.getName().equalsIgnoreCase("aevorinreports")) {
             LanguageManager lang = LanguageManager.get(this);
             if (!sender.hasPermission("aevorinreports.reload")) {
                 dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender,
                         lang.getMessage("messages.error.no-permission"));
                 return true;
             }
+
+            if (args.length < 2 || !args[0].equalsIgnoreCase("reload")) {
+                String usage = lang.getMessage("messages.error.usage-reload", "&cUsage: /{command} reload <all|config|lang>");
+                usage = usage.replace("{command}", label).replace("{label}", label);
+                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender, usage);
+                return true;
+            }
+
+            String target = args[1].toLowerCase();
             try {
-                this.reloadConfig();
-                if (configManager != null) {
-                    configManager.loadConfig();
+                switch (target) {
+                    case "all":
+                        this.reloadConfig();
+                        if (configManager != null) {
+                            configManager.loadConfig();
+                        }
+                        LanguageManager.reloadAll(this);
+                        if (customReasonHandler != null) {
+                            // Refresh categories or other state if needed
+                        }
+                        dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender,
+                                lang.getMessage("messages.admin.reload-all-success",
+                                        lang.getMessage("messages.admin.reload-success")));
+                        break;
+                    case "config":
+                        this.reloadConfig();
+                        if (configManager != null) {
+                            configManager.loadConfig();
+                        }
+                        dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender,
+                                lang.getMessage("messages.admin.reload-config-success",
+                                        lang.getMessage("messages.admin.reload-success")));
+                        break;
+                    case "lang":
+                        LanguageManager.reloadAll(this);
+                        dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender,
+                                lang.getMessage("messages.admin.reload-lang-success",
+                                        "{prefix} &aLanguage files reloaded successfully!"));
+                        break;
+                    default:
+                        String usage = lang.getMessage("messages.error.usage-reload", "&cUsage: /{command} reload <all|config|lang>");
+                        usage = usage.replace("{command}", label).replace("{label}", label);
+                        dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender, usage);
+                        return true;
                 }
-                LanguageManager.reloadAll(this);
-                if (customReasonHandler != null) {
-                    // Refresh categories or other state if needed
-                }
-                dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender,
-                        lang.getMessage("messages.admin.reload-success"));
             } catch (Exception e) {
                 dev.aevorinstudios.aevorinReports.utils.MessageUtils.sendMessage(sender,
                         lang.getMessage("messages.admin.reload-failure"));
-                getLogger().warning("Error reloading configuration: " + e.getMessage());
+                getLogger().warning("Error reloading " + target + ": " + e.getMessage());
             }
             return true;
         }
         return false;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (command.getName().equalsIgnoreCase("ar") || command.getName().equalsIgnoreCase("aevorinreports")) {
+            if (!sender.hasPermission("aevorinreports.reload")) {
+                return Collections.emptyList();
+            }
+
+            if (args.length == 1) {
+                if ("reload".startsWith(args[0].toLowerCase())) {
+                    return Collections.singletonList("reload");
+                }
+                return Collections.emptyList();
+            } else if (args.length == 2 && args[0].equalsIgnoreCase("reload")) {
+                List<String> options = Arrays.asList("all", "config", "lang");
+                List<String> result = new ArrayList<>();
+                for (String opt : options) {
+                    if (opt.startsWith(args[1].toLowerCase())) {
+                        result.add(opt);
+                    }
+                }
+                return result;
+            }
+        }
+        return Collections.emptyList();
     }
 
     @Override

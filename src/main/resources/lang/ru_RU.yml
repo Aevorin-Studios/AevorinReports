@@ -1,160 +1,190 @@
+# Доступные плейсхолдеры (не все плейсхолдеры работают в каждом сообщении):
+# {reporter} - Имя игрока, создавшего репорт
+# {reported} - Имя игрока, на которого отправлен репорт
+# {target}   - Целевой игрок (зачастую совпадает с reported)
+# {reason}   - Указанная причина репорта
+# {status}   - Текущий статус репорта (например: Ожидает, Решён)
+# {color}    - Цветовой код, соответствующий статусу репорта
+# {id}       - Уникальный числовой ID репорта
+# {server}   - Сервер, на котором был создан репорт
+# {index}    - Порядковый номер в списках
+# {total}    - Общее количество репортов, страниц или элементов
+# {page}     - Текущий номер страницы в GUI
+# {start}    - Начальный индекс элемента на странице
+# {end}      - Конечный индекс элемента на странице
+# {category} - Название категории репорта
+# {time}     - Оставшееся время задержки (cooldown)
+# {date}     - Дата и время создания репорта
+#
+# Поддерживает теги MiniMessage (например, <rainbow>, <red>, <gradient:blue:aqua>)
+# Также поддерживаются классические цветовые коды &.
+
 config-version: 4
 
+# Настройки интерфейса GUI
+# Содержит форматирование текста для интерактивных меню плагина.
 gui:
+  # Книжный интерфейс (Book GUI)
+  # Используется, когда параметр gui.type установлен на "book" в config.yml.
+  # Примечание: Используйте '\n' для переноса строки в книгах!
   book:
-    error_creating: "&cОшибка при создании интерфейса."
-    reporting_header: "&4&lРепорт на игрока:\n&c{target}"
-    reasons_header: "&4&lПричины:"
+    error_creating: "&cОшибка при создании интерфейса книги."
+    reporting_header: "&4Репорт на игрока:\n&c{target}"
+    reasons_header: "&4Причины:"
     custom_reason: "&c• Своя причина"
     back_button: "\n&8« Назад к категориям"
     page:
-      title: "&4&lДетали репорта\n\n"
-      reporter: "&0Репортер: &c{reporter}\n"
-      reported: "&0Нарушитель: &c{reported}\n"
-      reason: "&0Причина: &f"
-      reason_hover: "&0Наведите для просмотра"
+      title: "&cДетали репорта\n\n"
+      reporter: "&7Репортёр: &a{reporter}\n"
+      reported: "&7Нарушитель: &c{reported}\n"
+      reason: "&7Причина: "
+      reason_hover: "&cНаведите для просмотра"
       reason_hover_content: "&f{reason}"
-      status: "&cСтатус: {color}{status}\n"
-      id: "&0ID: &4{id}"
-      server: "&0Сервер: &4{server}\n"
-      created_at: "&0Создан: &4{date}\n"
-      updated_at: "&0Обновлён: &4{date}\n"
-      last_updated_by: "&0Изменил: &4{name}\n"
+      status: "&7Статус: {color}{status}\n"
+      id: "&7ID: &0{id}"
+      server: "&7Сервер: &c{server}\n"
+      created_at: "&7Создан: &0{date}\n"
+      updated_at: "&7Обновлён: &0{date}\n"
+      last_updated_by: "&7Изменил: &0{name}\n"
       click_to_change: "\n&8Нажмите для смены статуса\n"
-      reports_category_header: "&4&lКатегория репортов\n\n"
-      view_details: "&fНажмите для просмотра"
+      reports_category_header: "&4Категории репортов\n\n"
+      view_details: "&7Нажмите для просмотра"
     status_options:
       pending: "&6⚠ Отметить как ожидающий\n"
-      resolved: "&2✔ Отметить как решённый\n"
-      rejected: "&4✘ Отклонить репорт\n"
+      resolved: "&a✔ Отметить как решённый\n"
+      rejected: "&c✘ Отклонить репорт\n"
     hover_text:
-      report_for: "&0Нажмите, чтобы репортнуть за: &4{category}"
-      custom_reason: "&0Нажмите, чтобы указать свою причину"
-      pending: "&fНажмите, чтобы вернуть в ожидание"
-      resolved: "&fНажмите, чтобы отметить как решённый"
-      rejected: "&fНажмите, чтобы отклонить"
-      back: "&fНажмите, чтобы вернуться к категориям"
+      report_for: "&7Нажмите, чтобы отправить репорт за: &f{category}"
+      custom_reason: "&7Нажмите, чтобы указать свою причину"
+      pending: "&7Нажмите, чтобы вернуть в ожидание"
+      resolved: "&7Нажмите, чтобы отметить как решённый"
+      rejected: "&7Нажмите, чтобы отклонить"
+      back: "&7Нажмите, чтобы вернуться к категориям репортов"
     main_menu:
       pending:
         title: "&6• Ожидающие репорты"
-        hover: "&fНажмите для просмотра"
+        hover: "&7Нажмите для просмотра"
       resolved:
-        title: "&2• Решённые репорты"
-        hover: "&fНажмите для просмотра"
+        title: "&a• Решённые репорты"
+        hover: "&7Нажмите для просмотра"
       rejected:
-        title: "&4• Отклонённые репорты"
-        hover: "&fНажмите для просмотра"
+        title: "&c• Отклонённые репорты"
+        hover: "&7Нажмите для просмотра"
     report_list:
-      title: "&4&lРепорты: {status}\n"
-      total: "&0Всего: &4{total}\n\n"
-      entry: "&8{index}. &4{reported}"
-      user_title: "&4&lВаши репорты\n"
-      user_entry: "&8{index}. &4{reported} {color}({status})"
+      title: "&4Репорты: {status}\n"
+      total: "&7Всего: {total}\n\n"
+      entry: "&4{index}. &c{reported}"
+      user_title: "&4Ваши репорты\n"
+      user_entry: "&4{index}. &c{reported} {color}({status})"
 
+  # Контейнерный GUI (Интерфейс сундука)
+  # Используется, когда параметр gui.type установлен на "container" в config.yml.
   container:
     shared:
       separator: "&8&m                                          &r"
       navigation:
         page_indicator:
-          title: "&fСтраница &c{page} &fиз &c{total}"
-          lore: "&fПоказано &c{start}-{end} &fиз &c{total} &fрепортов"
+          title: "&fСтраница {page} из {total}"
+          lore: "&7Показано {start}-{end} из {total} репортов"
         previous_page:
-          title: "&c&lПредыдущая страница"
-          lore: "&fПерейти на страницу &c{page}"
+          title: "&eПредыдущая страница"
+          lore: "&7Перейти на страницу {page}"
         next_page:
-          title: "&c&lСледующая страница"
-          lore: "&fПерейти на страницу &c{page}"
+          title: "&eСледующая страница"
+          lore: "&7Перейти на страницу {page}"
         back_button:
-          title: "&c&lНазад"
-          lore: "&fВернуться к категориям"
+          title: "&eНазад"
+          lore: "&7Вернуться к категориям"
 
     menus:
       main_menu:
-        title: "&8[&cРепорты&8]"
+        title: "Меню репортов"
         pending:
-          title: "&6&lОжидающие репорты"
+          title: "&6Ожидающие репорты"
           lore:
-            description: "&fПросмотр всех ожидающих репортов."
-            action: "&cНажмите для просмотра!"
+            description: "&7Просмотр всех ожидающих репортов."
+            action: "&eНажмите для просмотра!"
         resolved:
-          title: "&a&lРешённые репорты"
+          title: "&aРешённые репорты"
           lore:
-            description: "&fПросмотр всех решённых репортов."
-            action: "&cНажмите для просмотра!"
+            description: "&7Просмотр всех решённых репортов."
+            action: "&eНажмите для просмотра!"
         rejected:
-          title: "&c&lОтклонённые репорты"
+          title: "&cОтклонённые репорты"
           lore:
-            description: "&fПросмотр всех отклонённых репортов."
-            action: "&cНажмите для просмотра!"
+            description: "&7Просмотр всех отклонённых репортов."
+            action: "&eНажмите для просмотра!"
 
       category_view:
-        title: "&8[&cРепорты&8] {status}"
+        title: "Репорты: {status}"
         report_item:
-          title: "&f{reporter} &8→ &c{reported}"
+          title: "<gradient:#AFA3FF:#AFA3FF>{reporter}</gradient> <grey>→ <gradient:#FF0000:#FF0000>{reported}</gradient>"
           lore:
-            reason: "&fПричина: &c{reason}"
-            status: "&fСтатус: &c{status}"
-            id: "&fID: &c{id}"
-            server: "&fСервер: &c{server}"
-            action: "&c&lНажмите для управления"
+            reason: "<gradient:#AFA3FF:#AFA3FF>Причина:</gradient> <white>{reason}</white>"
+            status: "<gradient:#AFA3FF:#AFA3FF>Статус:</gradient> <white>{status}</white>"
+            id: "<gradient:#AFA3FF:#AFA3FF>ID:</gradient> <white>{id}</white>"
+            server: "<gradient:#AFA3FF:#AFA3FF>Сервер:</gradient> <white>{server}</white>"
+            action: "<gradient:#FF0000:#FF0000>Нажмите для управления</gradient>"
 
       player_reports:
-        title: "&8[&cРепорты&8] Мои репорты"
+        title: "Ваши репорты"
 
       reason_selector:
-        title: "&8[&cРепорт&8] {target}"
+        title: "Репорт: {target}"
         info_icon:
-          title: "&c&lРепорт на: &f{target}"
+          title: "<gradient:#AFA3FF:#AFA3FF>Репорт на:</gradient> <white>{target}</white>"
           lore:
             - ""
             - "&fВыберите причину репорта"
-            - "&fНажмите на значок для отправки"
+            - "&fНажмите на любой значок для отправки"
             - ""
         reason_item:
-          title: "&c&l{reason}"
+          title: "<gradient:#AFA3FF:#AFA3FF>{reason}</gradient>"
           lore:
             target: " "
-            action: "&fНажмите для отправки репорта"
+            action: "&aНажмите для отправки репорта"
         custom_reason_item:
-          title: "&c&lСвоя причина"
-          lore: "&fНажмите, чтобы ввести свою причину"
+          title: "&cСвоя причина"
+          lore: "&7Нажмите, чтобы ввести свою причину"
 
     manage_report:
-      title: "&8[&cРепорт&8] #{id}"
+      title: "Управление репортом {id}"
       back_button:
-        title: "&c&lНазад"
-        lore: "&fВернуться к репортам: &c{status}"
+        title: "&cНазад"
+        lore: "&7Вернуться к репортам: {status}"
       details:
-        title: "&c&lДетали репорта"
+        title: "<gradient:#AFA3FF:#AFA3FF>Детали репорта</gradient>"
         lore:
-          reporter: "&fРепортер: &c{reporter}"
-          reported: "&fНарушитель: &c{reported}"
-          reason: "&fПричина: &c{reason}"
-          status: "&fСтатус: &c{status}"
-          id: "&fID: &c{id}"
-          server: "&fСервер: &c{server}"
-          created_at: "&fСоздан: &c{date}"
-          updated_at: "&fОбновлён: &c{date}"
-          last_updated_by: "&fИзменил: &c{name}"
+          reporter: "<gradient:#AFA3FF:#AFA3FF>Репортёр:</gradient> <white>{reporter}</white>"
+          reported: "<gradient:#AFA3FF:#AFA3FF>Нарушитель:</gradient> <white>{reported}"
+          reason: "<gradient:#AFA3FF:#AFA3FF>Причина:</gradient> <white>{reason}</white>"
+          status: "<gradient:#AFA3FF:#AFA3FF>Статус:</gradient> <white>{status}</white>"
+          id: "<gradient:#AFA3FF:#AFA3FF>ID:</gradient> <white>{id}</white>"
+          server: "<gradient:#AFA3FF:#AFA3FF>Сервер:</gradient> <white>{server}</white>"
+          created_at: "<gradient:#AFA3FF:#AFA3FF>Создан:</gradient> <white>{date}</white>"
+          updated_at: "<gradient:#AFA3FF:#AFA3FF>Последнее обновление:</gradient> <white>{date}</white>"
+          last_updated_by: "<gradient:#AFA3FF:#AFA3FF>Изменил:</gradient> <white>{name}</white>"
       pending:
-        title: "&6&lПеревести в ожидание"
+        title: "&6Перевести в ожидание"
         lore:
-          description: "&fОтметить репорт как ожидающий рассмотрения."
-          current_status: "&fТекущий статус: &c{status}"
+          description: "&7Отметить этот репорт как ожидающий рассмотрения."
+          current_status: "&7Текущий статус: &f{status}"
           action: "&6Нажмите для смены статуса"
       resolved:
-        title: "&a&lОтметить как решённый"
+        title: "&aПеревести в решённые"
         lore:
-          description: "&fОтметить репорт как решённый."
-          current_status: "&fТекущий статус: &c{status}"
+          description: "&7Отметить этот репорт как решённый."
+          current_status: "&7Текущий статус: &f{status}"
           action: "&aНажмите для смены статуса"
       rejected:
-        title: "&c&lОтклонить репорт"
+        title: "&cПеревести в отклонённые"
         lore:
-          description: "&fОтклонить репорт как недействительный."
-          current_status: "&fТекущий статус: &c{status}"
+          description: "&7Отклонить этот репорт как недействительный."
+          current_status: "&7Текущий статус: &f{status}"
           action: "&cНажмите для смены статуса"
 
+# Общие строки
+# Общие элементы текста, статусы и стандартные причины репортов.
 common:
   unknown: "Неизвестно"
   anonymous: "Аноним"
@@ -172,8 +202,12 @@ common:
     - "Неприемлемые высказывания"
     - "Другое"
 
+# Сообщения чата
+# Прямые уведомления, ошибки и успешные сообщения, отправляемые игрокам
+# или сотрудникам в стандартный чат Minecraft.
 messages:
-  prefix: "&8[&cРепорты&8]"
+  # Префикс, отображаемый перед большинством сообщений плагина
+  prefix: "<gradient:#AFA3FF:#AFA3FF>Репорты</gradient> <grey>➡</grey>"
 
   error:
     no-permission: "{prefix} &cУ вас нет прав для этого!"
@@ -182,35 +216,39 @@ messages:
     invalid-group: "{prefix} &cНеверная группа статуса репорта."
     report-not-found: "{prefix} &cРепорт не найден!"
     no-reports: "{prefix} &cУ вас нет активных репортов!"
-    no-status-reports: "{prefix} &cРепортов со статусом &f{status} &cне найдено."
-    status-invalid: "{prefix} &cНеверный статус! Доступные: &f{statuses}"
-    category-invalid: "{prefix} &cНеверная категория! Доступные: &f{categories}"
+    no-status-reports: "{prefix} &cРепортов со статусом {status} не найдено."
+    status-invalid: "{prefix} &cНеверный статус репорта! Доступные статусы: {statuses}"
+    category-invalid: "{prefix} &cНеверная категория репорта! Доступные категории: {categories}"
     custom-reason-disabled: "{prefix} &cСвои причины сейчас отключены."
-    custom-reason-too-short: "{prefix} &cПричина слишком короткая! Минимум: &f{min} &cсимволов"
-    custom-reason-too-long: "{prefix} &cПричина слишком длинная! Максимум: &f{max} &cсимволов"
-    usage-report: "{prefix} &fИспользование: &c/report <игрок> [причина]"
-    usage-viewreport: "{prefix} &fИспользование: &c/viewreport <id>"
-    usage-setstatus: "{prefix} &fИспользование: &c/setreportstatus <id> to <статус>"
-    invalid-report-id: "{prefix} &cНеверный ID репорта!"
-    status-already-set: "{prefix} &cРепорт уже имеет этот статус!"
-    cannot-report-self: "{prefix} &cВы не можете репортнуть самого себя."
+    custom-reason-too-short: "{prefix} &cВаша причина слишком короткая! Минимальная длина: {min} символов"
+    custom-reason-too-long: "{prefix} &cВаша причина слишком длинная! Максимальная длина: {max} символов"
+    usage-report: "&cИспользование: /report <игрок> [причина]"
+    usage-viewreport: "&cИспользование: /viewreport <id>"
+    usage-setstatus: "&cИспользование: /setreportstatus <id> to <статус>"
+    usage-reload: "&cИспользование: /{command} reload <all|config|lang>"
+    invalid-report-id: "&cНеверный ID репорта!"
+    status-already-set: "&cРепорт уже находится в этом статусе!"
+    cannot-report-self: "&cВы не можете отправить репорт на самого себя."
 
   success:
-    report-created: "{prefix} &fВаш репорт успешно &cотправлен&f!"
+    report-created: "{prefix} &aВаш репорт был успешно отправлен!"
 
   report:
-    cooldown: "{prefix} &fПодождите &c{time} &fперед отправкой следующего репорта."
+    cooldown: "{prefix} &cВы должны подождать {time} перед отправкой следующего репорта."
     limit-reached: "{prefix} &cВы достигли максимального количества активных репортов."
-    notification: "{prefix} &f{reporter} &cрепортнул &f{reported} &fпо причине: &c{category}"
-    status-change: "{prefix} &fСтатус репорта &c#{id} &fизменён на &c{status}&f."
-    custom-reason-prompt: "{prefix} &fВведите причину в чат. Сообщение будет приватным."
+    notification: "{prefix} <gradient:#BEFF00:#D2FF00>{reporter}</gradient> &fотправил репорт на <gradient:#FF0000:#FF003E>{reported}</gradient> &fза: <gradient:#00B7FF:#0098FF>{category}</gradient>"
+    status-change: "{prefix} &7Статус репорта #{id} был изменён на {color}{status}&7."
+    custom-reason-prompt: "{prefix} &fВведите свою причину в чат. Ваше сообщение будет приватным."
 
   admin:
-    reload-success: "{prefix} &fКонфигурация успешно &cперезагружена&f!"
-    reload-failure: "{prefix} &cОшибка перезагрузки конфигурации. Проверьте консоль."
+    reload-success: "{prefix} &aКонфигурация успешно перезагружена!"
+    reload-all-success: "{prefix} &aВся конфигурация и языковые файлы успешно перезагружены!"
+    reload-config-success: "{prefix} &aКонфигурация успешно перезагружена!"
+    reload-lang-success: "{prefix} &aЯзыковые файлы успешно перезагружены!"
+    reload-failure: "{prefix} &cНе удалось перезагрузить конфигурацию. Проверьте консоль."
 
-# Discord Messages
-# Текст, используемый Discord-командами, ответами и встраиваемыми сообщениями.
+# Сообщения Discord
+# Текст, используемый слэш-командами, ответами и эмбедами Discord.
 discord:
   commands:
     options:
@@ -240,11 +278,11 @@ discord:
   notifications:
     new-report:
       title: "Новый репорт (#{id})"
-      footer: "Время - {date}"
+      footer: "AevorinReports - {date}"
     status-update:
       title: "Репорт обновлён"
       description: "Репорт **#{id}** был **{status}** администратором {admin}."
-      footer: "AevorinReports — {date}"
+      footer: "AevorinReports - {date}"
   responses:
     guild-only: "Команды можно использовать только на сервере."
     no-permission: "У вас нет прав на управление репортами."
@@ -257,7 +295,7 @@ discord:
   help:
     title: "Помощь по AevorinReports"
     description: "Управляйте репортами Minecraft через Discord с помощью официальных слеш-команд."
-    reports: "Список всех ожидающих репортов."
+    reports: "Список всех активных ожидающих репортов."
     lookup: "Показать подробную информацию о репорте."
     resolve: "Отметить репорт как решённый."
     reject: "Отклонить репорт."
