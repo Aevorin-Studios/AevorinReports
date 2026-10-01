@@ -247,6 +247,17 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
     public void onDisable() {
         getLogger().info("Shutting down AevorinReports");
 
+        // Stop Discord bot
+        if (discordManager != null) {
+            discordManager.stop();
+        }
+
+        // Shutdown FastStats BEFORE closing the database so that any final metric
+        // flush happens while the connection pool is still open.
+        if (fastStats != null) {
+            fastStats.shutdown();
+        }
+
         // Gracefully close database connections
         if (databaseManager != null) {
             try {
@@ -257,16 +268,6 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                 ExceptionHandler.getInstance().handleException(e, "Database Shutdown");
                 getLogger().warning("Error while closing database connections.");
             }
-        }
-
-        // Stop Discord bot
-        if (discordManager != null) {
-            discordManager.stop();
-        }
-
-        // Shutdown FastStats
-        if (fastStats != null) {
-            fastStats.shutdown();
         }
 
         getLogger().info("AevorinReports has been disabled!");
@@ -512,11 +513,11 @@ public class BukkitPlugin extends JavaPlugin implements org.bukkit.command.Comma
                             .addMetric(Metric.number("pending_reports",
                                     () -> {
                                         DatabaseManager db = getDatabaseManager();
-                                        return db != null ? db.getReportCountByStatus(Report.ReportStatus.PENDING) : 0;
+                                        return db != null && db.isAvailable() ? db.getReportCountByStatus(Report.ReportStatus.PENDING) : 0;
                                     }))
                             .addMetric(Metric.number("total_reports", () -> {
                                 DatabaseManager db = getDatabaseManager();
-                                return db != null ? db.getTotalReportsCount() : 0;
+                                return db != null && db.isAvailable() ? db.getTotalReportsCount() : 0;
                             }))
                             .addMetric(Metric.string("gui_provider",
                                     () -> configManager != null && configManager.getConfig() != null

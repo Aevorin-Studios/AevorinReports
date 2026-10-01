@@ -3,9 +3,14 @@ package dev.aevorinstudios.aevorinReports.config;
 import dev.aevorinstudios.aevorinReports.reports.Report.ReportStatus;
 import dev.aevorinstudios.aevorinReports.utils.MessageUtils;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -116,9 +121,10 @@ public class LanguageManager {
                             ")"
                     );
 
-                    // Replace with the new file from JAR
-                    plugin.saveResource("lang/" + langName + ".yml", true);
-                    langConfig = YamlConfiguration.loadConfiguration(langFile); // Load the new config
+                    // Backup and merge — only the language configured in config.yml
+                    // ever reaches this branch, so no other lang file is touched.
+                    migrateLanguageFile(langFile, langConfig, defConfig);
+                    langConfig = YamlConfiguration.loadConfiguration(langFile);
                 } else if (currentVersion == 0 && langFile.exists()) {
                     // For files that didn't have version tracking before
                     logger.info(
@@ -167,6 +173,45 @@ public class LanguageManager {
                 }
 
                 langConfig.setDefaults(fallbackConfig);
+            }
+        }
+    }
+
+    /**
+     * Backs up the current on-disk language file and performs a key-merge: every key
+     * that already existed in the old file keeps its custom value; brand-new keys
+     * introduced in the JAR get the default value from the JAR.
+     * <p>
+     * Only the single language file configured in config.yml is ever passed here.
+     *
+     * @param langFile  the on-disk lang file to upgrade (e.g. lang/zh_CN.yml)
+     * @param oldConfig the existing, possibly customised configuration loaded from disk
+     * @param newConfig the fresh defaults loaded from the plugin JAR
+     */
+    private void migrateLanguageFile(File langFile, org.bukkit.configuration.file.FileConfiguration oldConfig, YamlConfiguration newConfig) {
+        // 1. Create a timestamped backup before touching anything
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        File backup = new File(langFile.getParentFile(), langFile.getName() + ".bak_" + timestamp);
+        try {
+            Files.copy(langFile.toPath(), backup.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            logger.info("Created language file backup: " + backup.getName());
+        } catch (IOException e) {
+            logger.warning("Could not create language file backup: " + e.getMessage());
+            // Continue — the merge is still safer than a silent overwrite
+        }
+
+        // 2. Use ConfigUpdater to perfectly merge values while keeping formatting and comments
+        try {
+            ConfigUpdater.update(plugin, "lang/" + langFile.getName(), langFile);
+            logger.info("Language file " + langFile.getName() + " migrated (custom values preserved).");
+        } catch (IOException e) {
+            logger.severe("Failed to save merged language file: " + e.getMessage());
+            // Restore from backup so the server is not left with a broken file
+            try {
+                Files.copy(backup.toPath(), langFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                logger.warning("Restored language file from backup after save failure.");
+            } catch (IOException re) {
+                logger.severe("Could not restore backup either: " + re.getMessage());
             }
         }
     }

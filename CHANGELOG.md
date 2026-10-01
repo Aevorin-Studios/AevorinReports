@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.3] - 2026-10-01
+
+### New Features & Improvements
+
+- **Language File Safety:** Plugin updates now safely merge your custom translations with new default language keys. A timestamped `.bak` backup is automatically created during migration, completely preventing the loss of custom language strings when the plugin updates.
+
+### Bug Fixes
+
+- **Database Shutdown Errors:** Fixed a recurring `HikariDataSource has been closed` error during server shutdown. This was caused by metrics systems attempting to query statistics after the database connection pool had already gracefully closed.
+- **Cross-Server Notifications:** Fixed an issue where cross-server report notifications would display the reporter and reported player names as "Unknown". Player names are now correctly cached in the database alongside their UUIDs to ensure notifications always show accurate information.
+
+---
+
 ## [1.1.2] - 2026-09-05
 
 ### New Features & Improvements

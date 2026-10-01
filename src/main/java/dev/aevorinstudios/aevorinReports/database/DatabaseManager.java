@@ -29,6 +29,15 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * Returns true if the underlying connection pool is still open and usable.
+     * Use this guard before any DB call that may be invoked during plugin shutdown
+     * (e.g. metric lambdas registered with external libraries).
+     */
+    public boolean isAvailable() {
+        return dataSource != null && !dataSource.isClosed();
+    }
+
     private HikariDataSource dataSource;
     @Getter
     private static DatabaseManager instance;
@@ -59,6 +68,8 @@ public class DatabaseManager {
                             .id(rs.getLong("id"))
                             .reporterUuid(UUID.fromString(rs.getString("reporter_uuid")))
                             .reportedUuid(UUID.fromString(rs.getString("reported_uuid")))
+                            .reporterName(rs.getString("reporter_name"))
+                            .reportedPlayerName(rs.getString("reported_name"))
                             .reason(rs.getString("reason"))
                             .serverName(rs.getString("server_name"))
                             .status(Report.ReportStatus.valueOf(rs.getString("status")))
@@ -93,6 +104,8 @@ public class DatabaseManager {
                             .id(rs.getLong("id"))
                             .reporterUuid(UUID.fromString(rs.getString("reporter_uuid")))
                             .reportedUuid(UUID.fromString(rs.getString("reported_uuid")))
+                            .reporterName(rs.getString("reporter_name"))
+                            .reportedPlayerName(rs.getString("reported_name"))
                             .reason(rs.getString("reason"))
                             .serverName(rs.getString("server_name"))
                             .status(Report.ReportStatus.valueOf(rs.getString("status")))
@@ -139,6 +152,8 @@ public class DatabaseManager {
                             .id(rs.getLong("id"))
                             .reporterUuid(UUID.fromString(rs.getString("reporter_uuid")))
                             .reportedUuid(UUID.fromString(rs.getString("reported_uuid")))
+                            .reporterName(rs.getString("reporter_name"))
+                            .reportedPlayerName(rs.getString("reported_name"))
                             .reason(rs.getString("reason"))
                             .serverName(rs.getString("server_name"))
                             .status(Report.ReportStatus.valueOf(rs.getString("status")))
@@ -173,6 +188,8 @@ public class DatabaseManager {
                             .id(rs.getLong("id"))
                             .reporterUuid(UUID.fromString(rs.getString("reporter_uuid")))
                             .reportedUuid(UUID.fromString(rs.getString("reported_uuid")))
+                            .reporterName(rs.getString("reporter_name"))
+                            .reportedPlayerName(rs.getString("reported_name"))
                             .reason(rs.getString("reason"))
                             .serverName(rs.getString("server_name"))
                             .status(Report.ReportStatus.valueOf(rs.getString("status")))
@@ -306,6 +323,8 @@ public class DatabaseManager {
                             .id(rs.getLong("id"))
                             .reporterUuid(UUID.fromString(rs.getString("reporter_uuid")))
                             .reportedUuid(UUID.fromString(rs.getString("reported_uuid")))
+                            .reporterName(rs.getString("reporter_name"))
+                            .reportedPlayerName(rs.getString("reported_name"))
                             .reason(rs.getString("reason"))
                             .serverName(rs.getString("server_name"))
                             .status(Report.ReportStatus.valueOf(rs.getString("status")))
@@ -339,6 +358,8 @@ public class DatabaseManager {
                             .id(rs.getLong("id"))
                             .reporterUuid(UUID.fromString(rs.getString("reporter_uuid")))
                             .reportedUuid(UUID.fromString(rs.getString("reported_uuid")))
+                            .reporterName(rs.getString("reporter_name"))
+                            .reportedPlayerName(rs.getString("reported_name"))
                             .reason(rs.getString("reason"))
                             .serverName(rs.getString("server_name"))
                             .status(Report.ReportStatus.valueOf(rs.getString("status")))
@@ -450,6 +471,8 @@ public class DatabaseManager {
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         reporter_uuid VARCHAR(36) NOT NULL,
                         reported_uuid VARCHAR(36) NOT NULL,
+                        reporter_name VARCHAR(64),
+                        reported_name VARCHAR(64),
                         reason TEXT NOT NULL,
                         server_name VARCHAR(64) NOT NULL,
                         status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
@@ -467,6 +490,8 @@ public class DatabaseManager {
                                 id BIGINT AUTO_INCREMENT PRIMARY KEY,
                                 reporter_uuid VARCHAR(36) NOT NULL,
                                 reported_uuid VARCHAR(36) NOT NULL,
+                                reporter_name VARCHAR(64),
+                                reported_name VARCHAR(64),
                                 reason TEXT NOT NULL,
                                 server_name VARCHAR(64) NOT NULL DEFAULT 'survival',
                                 status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
@@ -639,6 +664,14 @@ public class DatabaseManager {
                     logger.info("Column 'last_updated_by' missing. Adding...");
                     addColumn(conn, "reports", "last_updated_by", "VARCHAR(64)");
                 }
+                if (!columns.contains("reporter_name")) {
+                    logger.info("Column 'reporter_name' missing. Adding...");
+                    addColumn(conn, "reports", "reporter_name", "VARCHAR(64)");
+                }
+                if (!columns.contains("reported_name")) {
+                    logger.info("Column 'reported_name' missing. Adding...");
+                    addColumn(conn, "reports", "reported_name", "VARCHAR(64)");
+                }
             }
         } catch (SQLException e) {
             logger.error("Failed to check/update table schema: {}", e.getMessage(), e);
@@ -748,22 +781,24 @@ public class DatabaseManager {
     }
 
     public void saveReport(Report report) {
-        String sql = "INSERT INTO reports (reporter_uuid, reported_uuid, reason, server_name, status, is_anonymous, created_at, updated_at, evidence_data, coordinates, world) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO reports (reporter_uuid, reported_uuid, reporter_name, reported_name, reason, server_name, status, is_anonymous, created_at, updated_at, evidence_data, coordinates, world) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, report.getReporterUuid().toString());
             stmt.setString(2, report.getReportedUuid().toString());
-            stmt.setString(3, report.getReason());
-            stmt.setString(4, report.getServerName());
-            stmt.setString(5, report.getStatus().name());
-            stmt.setBoolean(6, report.isAnonymous());
-            stmt.setTimestamp(7, Timestamp.valueOf(report.getCreatedAt()));
-            stmt.setTimestamp(8, Timestamp.valueOf(report.getUpdatedAt()));
-            stmt.setString(9, report.getEvidenceData());
-            stmt.setString(10, report.getCoordinates());
-            stmt.setString(11, report.getWorld());
+            stmt.setString(3, report.getReporterName());
+            stmt.setString(4, report.getReportedPlayerName());
+            stmt.setString(5, report.getReason());
+            stmt.setString(6, report.getServerName());
+            stmt.setString(7, report.getStatus().name());
+            stmt.setBoolean(8, report.isAnonymous());
+            stmt.setTimestamp(9, Timestamp.valueOf(report.getCreatedAt()));
+            stmt.setTimestamp(10, Timestamp.valueOf(report.getUpdatedAt()));
+            stmt.setString(11, report.getEvidenceData());
+            stmt.setString(12, report.getCoordinates());
+            stmt.setString(13, report.getWorld());
 
             stmt.executeUpdate();
 

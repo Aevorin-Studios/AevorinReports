@@ -112,10 +112,22 @@ public class ConfigUpdater {
                         newLines.add(keyPart + commentPart);
                         List<?> list = (List<?>) value;
                         for (Object item : list) {
-                            newLines.add(getIndentString(currentIndentation + 2) + "- " + quoteValue(item));
+                            newLines.add(getIndentString(currentIndentation + 2) + "- " + quoteValue(item, currentIndentation + 2));
                         }
                     } else {
-                        newLines.add(keyPart + " " + quoteValue(value) + commentPart);
+                        String quoted = quoteValue(value, currentIndentation);
+                        if (quoted.startsWith("|-") || quoted.startsWith("|")) {
+                            int newlineIndex = quoted.indexOf('\n');
+                            if (newlineIndex != -1) {
+                                String firstLine = quoted.substring(0, newlineIndex);
+                                String rest = quoted.substring(newlineIndex);
+                                newLines.add(keyPart + " " + firstLine + commentPart + rest);
+                            } else {
+                                newLines.add(keyPart + " " + quoted + commentPart);
+                            }
+                        } else {
+                            newLines.add(keyPart + " " + quoted + commentPart);
+                        }
                     }
 
                     // Mark to skip the template's default value block (to prevent duplicates)
@@ -157,16 +169,17 @@ public class ConfigUpdater {
         return Math.max(0, (size - 1) * 2);
     }
 
-    private static String quoteValue(Object value) {
+    private static String quoteValue(Object value, int indent) {
         if (value == null)
             return "\"\"";
         if (value instanceof String) {
             String s = (String) value;
             if (s.isEmpty())
                 return "\"\"";
-            // Always quote strings for consistency and safety
-            // Replace newlines with \n for valid single-line YAML
-            return "\"" + s.replace("\"", "\\\"").replace("\n", "\\n") + "\"";
+            
+            // Always quote strings for consistency and safety, and properly escape newlines
+            // so they appear as \n in the file instead of converting to multiline yaml blocks.
+            return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + "\"";
         }
         return String.valueOf(value);
     }
